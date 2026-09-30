@@ -7,8 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { listManagedArticles, setArticleFlag } from "@/lib/admin.functions";
-import { categoryLabels, formatDate } from "@/lib/content";
-import { contentOptions } from "@/lib/content";
+import { categoryLabels, formatDate, contentOptions } from "@/lib/content";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   head: () => ({
