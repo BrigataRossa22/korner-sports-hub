@@ -78,6 +78,18 @@ export const getEditorStatus = createServerFn({ method: "GET" })
     };
   });
 
+/** Prvi korisnik sam preuzima urednička prava; poslije toga opcija nestaje. */
+export const claimFirstEditor = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase.rpc("claim_first_editor");
+    if (error) {
+      console.error("Preuzimanje uredničkih prava", error.message);
+      throw new Error("Preuzimanje prava nije uspjelo.");
+    }
+    return { claimed: Boolean(data) };
+  });
+
 /** Svi članci, uključujući one koji još nisu objavljeni. */
 export const listManagedArticles = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

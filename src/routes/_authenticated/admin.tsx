@@ -79,9 +79,12 @@ function AdminLayout() {
           <div className="mb-6 rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 text-sm text-amber-900">
             <p className="font-semibold">Račun još nema pristup uređivanju.</p>
             <p className="mt-1">
-              Prijavljeni si kao <strong>{status.data.email}</strong>. Administrator treba da ti
-              dodijeli ulogu urednika, pa osvježi stranicu.
+              Prijavljeni si kao <strong>{status.data.email}</strong>. Ako si prvi urednik, preuzmi
+              prava ispod; inače administrator treba da ih dodijeli, pa osvježi stranicu.
             </p>
+            <Button size="sm" className="mt-3" onClick={handleClaim}>
+              Preuzmi urednička prava
+            </Button>
           </div>
         )}
 
