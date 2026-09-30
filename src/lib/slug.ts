@@ -1,15 +1,6 @@
 /**
  * Pretvara naslov u adresu stranice: "Košarkaši BiH slavili" -> "kosarkasi-bih-slavili".
  */
-const REPLACEMENTS: Record<string, string> = {
-  č: "c",
-  ć: "c",
-  ž: "z",
-  š: "s",
-  đ: "d",
-  d: "d",
-};
-
 export function slugify(value: string): string {
   return value
     .toLowerCase()
