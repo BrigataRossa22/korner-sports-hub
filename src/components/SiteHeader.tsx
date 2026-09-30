@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
+import logoAsset from "@/assets/korner-logo.png.asset.json";
 
 const nav = [
   { to: "/", label: "Naslovnica" },
@@ -16,10 +17,17 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 bg-ink text-ink-foreground">
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
-        <Link to="/" className="flex items-baseline gap-1">
-          <span className="font-display text-3xl font-bold uppercase tracking-tight">Korner</span>
-          <span className="rounded-sm bg-primary px-1.5 py-0.5 font-display text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-primary-foreground">
-            BiH
+        <Link to="/" className="flex items-center gap-2.5">
+          <img
+            src={logoAsset.url}
+            alt="Korner BiH logo"
+            className="size-10 rounded-md"
+          />
+          <span className="flex items-baseline gap-1">
+            <span className="font-display text-3xl font-bold uppercase tracking-tight">Korner</span>
+            <span className="rounded-sm bg-primary px-1.5 py-0.5 font-display text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-primary-foreground">
+              BiH
+            </span>
           </span>
         </Link>
 
