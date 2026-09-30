@@ -8,5 +8,6 @@
 - [x] Provjeren tok: nova vijest s fotografijom → vidljiva na sajtu; brisanje radi
 - [x] Registracija radi odmah (email potvrda isključena)
 - [x] Racun bez prava više ne daje prazan ekran — prikazuje se poruka s dugmetom
-- [ ] Korisnik registruje svoj nalog i preuzima uređivačka prava
+- [x] Korisnik ima urednički nalog i prava
+- [ ] Puna ligaška tabela s golovima, gol-razlikom i formom; uređivanje u panelu
 - [ ] Korisnik šalje prave vijesti, fotografije i logo (trenutni sadržaj je zamjena)

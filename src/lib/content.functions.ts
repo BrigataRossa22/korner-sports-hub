@@ -42,6 +42,9 @@ export type StandingDTO = {
   draws: number;
   losses: number;
   points: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  recentForm: string;
 };
 
 export type SettingsDTO = {
@@ -162,6 +165,9 @@ export const getPublicContent = createServerFn({ method: "GET" }).handler(async 
       draws: row.draws,
       losses: row.losses,
       points: row.points,
+      goalsFor: row.goals_for,
+      goalsAgainst: row.goals_against,
+      recentForm: row.recent_form,
     })),
     settings: {
       about: settingsRes.data?.about ?? "",

@@ -28,6 +28,9 @@ const emptyStanding: StandingInput = {
   losses: 0,
   points: 0,
   sortOrder: 99,
+  goalsFor: 0,
+  goalsAgainst: 0,
+  recentForm: "",
 };
 
 function num(value: string): number {
@@ -82,8 +85,8 @@ function StandingRow({
   }
 
   return (
-    <div className="grid gap-3 p-4 sm:grid-cols-[1.4fr_repeat(6,70px)_auto]">
-      <Input value={form.team} onChange={(e) => set("team", e.target.value)} placeholder="Klub" />
+    <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
+      <Input aria-label="Klub" value={form.team} onChange={(e) => set("team", e.target.value)} placeholder="Klub" />
       <Input
         aria-label="Odigrano"
         inputMode="numeric"
@@ -114,6 +117,9 @@ function StandingRow({
         value={form.points}
         onChange={(e) => set("points", num(e.target.value))}
       />
+      <Input aria-label="Postignuti golovi" title="Postignuti golovi" placeholder="Golovi +" inputMode="numeric" value={form.goalsFor} onChange={(e) => set("goalsFor", num(e.target.value))} />
+      <Input aria-label="Primljeni golovi" title="Primljeni golovi" placeholder="Golovi −" inputMode="numeric" value={form.goalsAgainst} onChange={(e) => set("goalsAgainst", num(e.target.value))} />
+      <Input aria-label="Forma posljednjih pet utakmica" title="Forma: W pobjeda, D remi, L poraz; od najstarije do najnovije" placeholder="npr. WWDLW" value={form.recentForm} maxLength={12} onChange={(e) => set("recentForm", e.target.value.toUpperCase().replace(/[^WDL\s]/g, ""))} />
       <Input
         aria-label="Redoslijed"
         inputMode="numeric"
@@ -125,7 +131,7 @@ function StandingRow({
           Sačuvaj
         </Button>
         {form.id && (
-          <Button
+          <Button aria-label="Obriši klub" title="Obriši klub"
             size="sm"
             variant="ghost"
             className="text-destructive hover:text-destructive"
@@ -156,21 +162,10 @@ function TabelaPage() {
       </div>
 
       <p className="text-sm text-muted-foreground">
-        Manji broj u koloni <strong>Redoslijed</strong> znači više mjesto na tabeli.
+        Manji redoslijed znači više mjesto. Forma: W = pobjeda, D = remi, L = poraz; upiši do pet rezultata od najstarije do najnovije.
       </p>
 
       <div className="divide-y divide-border rounded-lg border border-border bg-card">
-        <div className="hidden grid-cols-[1.4fr_repeat(6,70px)_auto] gap-3 px-4 py-2 text-xs uppercase tracking-wide text-muted-foreground sm:grid">
-          <span>Klub</span>
-          <span>Odig</span>
-          <span>Pob</span>
-          <span>Ner</span>
-          <span>Por</span>
-          <span>Bod</span>
-          <span>Red</span>
-          <span />
-        </div>
-
         {standings.map((standing, index) => (
           <StandingRow
             key={standing.id}
@@ -182,6 +177,9 @@ function TabelaPage() {
               draws: standing.draws,
               losses: standing.losses,
               points: standing.points,
+              goalsFor: standing.goalsFor,
+              goalsAgainst: standing.goalsAgainst,
+              recentForm: standing.recentForm,
               sortOrder: index + 1,
             }}
             onSaved={() => content.refetch()}

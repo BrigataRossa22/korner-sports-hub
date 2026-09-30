@@ -334,6 +334,9 @@ export type StandingInput = {
   losses: number;
   points: number;
   sortOrder: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  recentForm: string;
 };
 
 export const saveStanding = createServerFn({ method: "POST" })
@@ -353,6 +356,9 @@ export const saveStanding = createServerFn({ method: "POST" })
       losses: num(data.losses),
       points: num(data.points),
       sort_order: num(data.sortOrder),
+      goals_for: num(data.goalsFor),
+      goals_against: num(data.goalsAgainst),
+      recent_form: (data.recentForm ?? "").toUpperCase().replace(/[^WDL]/g, "").slice(-5),
     };
 
     if (data.id) {
