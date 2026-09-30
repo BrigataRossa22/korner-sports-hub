@@ -32,21 +32,23 @@ function AdminLayout() {
   const fetchStatus = useServerFn(getEditorStatus);
   const claim = useServerFn(claimFirstEditor);
 
-  async function handleClaim() {
-    try {
-      await claim();
-      toast.success("Urednička prava su aktivirana.");
-      queryClient.invalidateQueries({ queryKey: ["editor-status"] });
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Preuzimanje prava nije uspjelo.");
-    }
-  }
-
   const status = useQuery({
     queryKey: ["editor-status"],
     queryFn: () => fetchStatus(),
     staleTime: 60_000,
   });
+
+  const isEditor = status.data?.isEditor === true;
+
+  async function handleClaim() {
+    try {
+      await claim();
+      toast.success("Urednička prava su aktivirana.");
+      await queryClient.invalidateQueries({ queryKey: ["editor-status"] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Preuzimanje prava nije uspjelo.");
+    }
+  }
 
   async function handleSignOut() {
     await queryClient.cancelQueries();
@@ -69,39 +71,32 @@ function AdminLayout() {
             Panel
           </span>
 
-          <nav className="ml-auto flex flex-wrap items-center gap-1">
-            {links.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                activeOptions={{ exact: link.exact }}
-                activeProps={{ className: "bg-primary text-primary-foreground" }}
-                className="rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
+          {isEditor && (
+            <nav className="ml-auto flex flex-wrap items-center gap-1">
+              {links.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  activeOptions={{ exact: link.exact }}
+                  activeProps={{ className: "bg-primary text-primary-foreground" }}
+                  className="rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+          )}
         </div>
       </header>
 
       <main className="mx-auto max-w-6xl px-4 py-6">
-        {status.data && !status.data.isEditor && (
-          <div className="mb-6 rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 text-sm text-amber-900">
-            <p className="font-semibold">Račun još nema pristup uređivanju.</p>
-            <p className="mt-1">
-              Prijavljeni si kao <strong>{status.data.email}</strong>. Ako si prvi urednik, preuzmi
-              prava ispod; inače administrator treba da ih dodijeli, pa osvježi stranicu.
-            </p>
-            <Button size="sm" className="mt-3" onClick={handleClaim}>
-              Preuzmi urednička prava
-            </Button>
-          </div>
-        )}
-
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-muted-foreground">
-            {status.data ? `Prijavljen kao ${status.data.email}` : ""}
+            {status.data
+              ? `Prijavljen kao ${status.data.email}`
+              : status.isError
+                ? "Podaci se nisu učitali."
+                : "Učitavanje..."}
           </p>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" asChild>
@@ -115,9 +110,30 @@ function AdminLayout() {
           </div>
         </div>
 
-        <div className="mt-6">
-          <Outlet />
-        </div>
+        {status.data && !isEditor && (
+          <div className="mt-6 rounded-lg border border-amber-500/40 bg-amber-500/10 p-5 text-sm text-amber-900">
+            <p className="font-semibold text-base">Račun još nema pristup uređivanju.</p>
+            <p className="mt-1">
+              Prijavljeni si kao <strong>{status.data.email}</strong>. Ako si prvi urednik, klikni
+              dugme ispod; inače ti administrator treba dodijeliti prava, pa osvježi stranicu.
+            </p>
+            <Button size="sm" className="mt-3" onClick={handleClaim}>
+              Preuzmi urednička prava
+            </Button>
+          </div>
+        )}
+
+        {status.isError && (
+          <div className="mt-6 rounded-lg border border-border bg-card p-5 text-sm text-muted-foreground">
+            Panel se nije mogao otvoriti. Provjeri internet vezu i osvježi stranicu.
+          </div>
+        )}
+
+        {isEditor && (
+          <div className="mt-6">
+            <Outlet />
+          </div>
+        )}
       </main>
     </div>
   );
