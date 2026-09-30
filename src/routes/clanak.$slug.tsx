@@ -3,10 +3,10 @@ import { ArticleRow } from "@/components/ArticleCard";
 import { Sidebar } from "@/components/Sidebar";
 import { ArticleMissing, LoadError } from "@/components/RouteFallbacks";
 import { formatDate } from "@/lib/content";
-import { getPublicContent } from "@/lib/content.functions";
+import { getPublicContent, type ArticleDTO, type PublicContent } from "@/lib/content.functions";
 
 export const Route = createFileRoute("/clanak/$slug")({
-  loader: async ({ params }) => {
+  loader: async ({ params }): Promise<{ content: PublicContent; article: ArticleDTO }> => {
     const content = await getPublicContent();
     const article = content.articles.find((a) => a.slug === params.slug);
     if (!article) throw notFound();
