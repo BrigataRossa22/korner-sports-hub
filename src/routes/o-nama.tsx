@@ -1,59 +1,53 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
 import { Sidebar } from "@/components/Sidebar";
 import { LoadError } from "@/components/RouteFallbacks";
-import { contentOptions } from "@/lib/content";
+import { getPublicContent } from "@/lib/content.functions";
 
 export const Route = createFileRoute("/o-nama")({
-  loader: ({ context }) => context.queryClient.ensureQueryData(contentOptions),
+  loader: () => getPublicContent(),
   head: () => ({
     meta: [
       { title: "O nama — Korner BiH" },
       {
         name: "description",
-        content: "Korner je bh. sportski portal nastao iz Instagram zajednice @korner_bih.",
+        content: "Ko stoji iza portala Korner BiH, čime se bavimo i kako nas kontaktirati.",
       },
       { property: "og:title", content: "O nama — Korner BiH" },
-      { property: "og:description", content: "Priča iza bh. sportskog portala Korner." },
+      { property: "og:description", content: "Ko stoji iza portala Korner BiH i kako nas kontaktirati." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   errorComponent: LoadError,
-  component: About,
+  component: ONama,
 });
 
-function About() {
-  const { data } = useSuspenseQuery(contentOptions);
-  const settings = data.settings;
+function ONama() {
+  const { settings } = Route.useLoaderData();
   const paragraphs = settings.about
-    .split(/\n\s*\n/)
-    .map((block) => block.replace(/\s*\n\s*/g, " ").trim())
+    .split(/\n{2,}/)
+    .map((part) => part.trim())
     .filter(Boolean);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12">
+    <div className="mx-auto max-w-6xl px-4 py-8">
       <div className="grid gap-10 lg:grid-cols-[1fr_320px]">
         <div>
-          <div className="rule-top pt-3">
-            <h1 className="text-4xl uppercase">O nama</h1>
-          </div>
-          <div className="mt-6 space-y-4 text-base leading-relaxed text-foreground/90">
+          <h1 className="rule-top pt-3 text-4xl uppercase">O nama</h1>
+          <div className="mt-6 space-y-4">
             {paragraphs.map((paragraph, index) => (
-              <p key={index}>{paragraph}</p>
-            ))}
-            {paragraphs.length === 0 && (
-              <p className="text-sm text-muted-foreground">
-                Tekst o nama još nije napisan. Urednici ga dodaju u panelu, u sekciji Postavke.
+              <p key={index} className="text-[1.05rem] leading-relaxed text-foreground/90">
+                {paragraph}
               </p>
-            )}
+            ))}
           </div>
-
           <div className="mt-8 flex flex-wrap gap-3">
             {settings.instagram && (
               <a
                 href={settings.instagram}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-block bg-primary px-5 py-2.5 font-display text-sm uppercase tracking-wide text-primary-foreground"
+                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
               >
                 Instagram
               </a>
@@ -63,7 +57,7 @@ function About() {
                 href={settings.facebook}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-block border border-primary px-5 py-2.5 font-display text-sm uppercase tracking-wide text-primary"
+                className="rounded-md border border-border px-4 py-2 text-sm font-medium"
               >
                 Facebook
               </a>
@@ -71,15 +65,14 @@ function About() {
             {settings.contactEmail && (
               <a
                 href={`mailto:${settings.contactEmail}`}
-                className="inline-block border border-border px-5 py-2.5 font-display text-sm uppercase tracking-wide text-muted-foreground hover:text-foreground"
+                className="rounded-md border border-border px-4 py-2 text-sm font-medium"
               >
-                {settings.contactEmail}
+                Pošalite nam email
               </a>
             )}
           </div>
         </div>
-
-        <Sidebar />
+        <Sidebar content={Route.useLoaderData()} />
       </div>
     </div>
   );
