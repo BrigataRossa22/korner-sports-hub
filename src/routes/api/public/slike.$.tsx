@@ -1,18 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-/**
- * Sluzi fotografije iz privatnog prostora za skladistenje.
- * Putanja: /api/public/slike/<putanja-u-bucketu>
- */
-const CONTENT_TYPES: Record<string, string> = {
-  jpg: "image/jpeg",
-  jpeg: "image/jpeg",
-  png: "image/png",
-  webp: "image/webp",
-  gif: "image/gif",
-  avif: "image/avif",
-};
-
 const PREFIX = "/api/public/slike/";
 
 export const Route = createFileRoute("/api/public/slike/$")({
@@ -27,20 +14,13 @@ export const Route = createFileRoute("/api/public/slike/$")({
           return new Response("Nije pronađeno", { status: 404 });
         }
 
-        const extension = key.split(".").pop()?.toLowerCase() ?? "";
-        const contentType = CONTENT_TYPES[extension];
-        if (!contentType) return new Response("Nije pronađeno", { status: 404 });
+        const base = process.env.SUPABASE_URL;
+        if (!base) return new Response("Nedostaje SUPABASE_URL", { status: 500 });
 
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { data, error } = await supabaseAdmin.storage.from("slike").download(key);
-        if (error || !data) return new Response("Nije pronađeno", { status: 404 });
-
-        return new Response(data, {
-          headers: {
-            "Content-Type": contentType,
-            "Cache-Control": "public, max-age=3600",
-          },
-        });
+        return Response.redirect(
+          `${base}/storage/v1/object/public/slike/${key}`,
+          302,
+        );
       },
     },
   },
