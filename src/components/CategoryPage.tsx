@@ -1,12 +1,18 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
 import { ArticleCard } from "@/components/ArticleCard";
 import { Sidebar } from "@/components/Sidebar";
-import { byCategory, categoryLabels, contentOptions } from "@/lib/content";
-import type { Category } from "@/lib/content.functions";
+import { byCategory, categoryLabels } from "@/lib/content";
+import type { Category, PublicContent } from "@/lib/content.functions";
 
-export function CategoryPage({ category, intro }: { category: Category; intro: string }) {
-  const { data } = useSuspenseQuery(contentOptions);
-  const list = byCategory(data.articles, category);
+export function CategoryPage({
+  category,
+  intro,
+  content,
+}: {
+  category: Category;
+  intro: string;
+  content: PublicContent;
+}) {
+  const list = byCategory(content.articles, category);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
@@ -26,7 +32,7 @@ export function CategoryPage({ category, intro }: { category: Category; intro: s
             </p>
           )}
         </div>
-        <Sidebar />
+        <Sidebar content={content} />
       </div>
     </div>
   );

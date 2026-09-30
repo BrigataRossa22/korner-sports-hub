@@ -2,9 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import logoAsset from "@/assets/korner-logo.png.asset.json";
 import { contentOptions } from "@/lib/content";
+import { useHydrated } from "@/lib/use-hydrated";
 
 export function SiteFooter() {
-  const { data } = useQuery(contentOptions);
+  const hydrated = useHydrated();
+  const { data } = useQuery({ ...contentOptions, enabled: hydrated });
   const settings = data?.settings;
 
   return (

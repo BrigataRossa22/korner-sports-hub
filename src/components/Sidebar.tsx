@@ -1,10 +1,9 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
 import { ArticleRow } from "@/components/ArticleCard";
-import { contentOptions, mostRead } from "@/lib/content";
+import { mostRead } from "@/lib/content";
+import type { PublicContent } from "@/lib/content.functions";
 
-export function Sidebar() {
-  const { data } = useSuspenseQuery(contentOptions);
-  const read = mostRead(data.articles);
+export function Sidebar({ content }: { content: PublicContent }) {
+  const read = mostRead(content.articles);
 
   return (
     <aside className="space-y-8">
@@ -20,7 +19,7 @@ export function Sidebar() {
       <section>
         <h3 className="rule-top pt-2 font-display text-lg uppercase">Raspored</h3>
         <ul className="mt-2 divide-y divide-border">
-          {data.fixtures.map((fixture) => (
+          {content.fixtures.map((fixture) => (
             <li key={fixture.id} className="py-2.5">
               <p className="text-sm font-medium">
                 {fixture.home} <span className="text-muted-foreground">–</span> {fixture.away}
@@ -47,7 +46,7 @@ export function Sidebar() {
             </tr>
           </thead>
           <tbody>
-            {data.standings.map((standing, index) => (
+            {content.standings.map((standing, index) => (
               <tr key={standing.id} className="border-b border-border last:border-0">
                 <td className="py-2">
                   <span className="mr-2 text-muted-foreground">{index + 1}.</span>

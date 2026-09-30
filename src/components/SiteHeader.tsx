@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Menu, X } from "lucide-react";
 import logoAsset from "@/assets/korner-logo.png.asset.json";
 import { contentOptions } from "@/lib/content";
+import { useHydrated } from "@/lib/use-hydrated";
 
 const nav = [
   { to: "/", label: "Naslovnica" },
@@ -14,7 +15,8 @@ const nav = [
 ] as const;
 
 function useTicker(): string {
-  const { data } = useQuery(contentOptions);
+  const hydrated = useHydrated();
+  const { data } = useQuery({ ...contentOptions, enabled: hydrated });
   if (!data || data.fixtures.length === 0) return "";
 
   const upcoming = data.fixtures.filter((f) => !f.finished);
