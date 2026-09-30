@@ -34,12 +34,21 @@ function ArticlePage() {
     <div className="mx-auto max-w-6xl px-4 py-8">
       <div className="grid gap-10 lg:grid-cols-[1fr_320px]">
         <article>
-          <Link
-            to={`/${article.category}` as "/fudbal"}
-            className="kicker hover:underline"
-          >
-            {categoryLabels[article.category]}
-          </Link>
+          {article.category === "fudbal" && (
+            <Link to="/fudbal" className="kicker hover:underline">
+              {categoryLabels.fudbal}
+            </Link>
+          )}
+          {article.category === "kosarka" && (
+            <Link to="/kosarka" className="kicker hover:underline">
+              {categoryLabels.kosarka}
+            </Link>
+          )}
+          {article.category === "ostali-sportovi" && (
+            <Link to="/ostali-sportovi" className="kicker hover:underline">
+              {categoryLabels["ostali-sportovi"]}
+            </Link>
+          )}
           <h1 className="mt-2 text-3xl leading-tight sm:text-4xl">{article.title}</h1>
           <p className="mt-3 text-lg text-muted-foreground">{article.lead}</p>
           <p className="mt-4 border-y border-border py-2 text-xs uppercase tracking-wide text-muted-foreground">
