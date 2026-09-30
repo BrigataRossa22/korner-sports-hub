@@ -9,6 +9,7 @@ import { useHydrated } from "@/lib/use-hydrated";
 const nav = [
   { to: "/", label: "Naslovnica" },
   { to: "/fudbal", label: "Fudbal" },
+  { to: "/tabela", label: "Tabela" },
   { to: "/kosarka", label: "Košarka" },
   { to: "/ostali-sportovi", label: "Ostali sportovi" },
   { to: "/o-nama", label: "O nama" },

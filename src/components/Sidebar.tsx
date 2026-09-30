@@ -1,6 +1,7 @@
 import { ArticleRow } from "@/components/ArticleCard";
 import { mostRead } from "@/lib/content";
 import type { PublicContent } from "@/lib/content.functions";
+import { Link } from "@tanstack/react-router";
 
 export function Sidebar({ content }: { content: PublicContent }) {
   const read = mostRead(content.articles);
@@ -36,7 +37,10 @@ export function Sidebar({ content }: { content: PublicContent }) {
       </section>
 
       <section>
-        <h3 className="rule-top pt-2 font-display text-lg uppercase">Tabela</h3>
+        <div className="rule-top flex items-center justify-between pt-2">
+          <h3 className="font-display text-lg uppercase">Tabela</h3>
+          <Link to="/tabela" className="text-xs font-semibold text-primary hover:underline">Cijela tabela →</Link>
+        </div>
         <table className="mt-2 w-full text-sm">
           <thead>
             <tr className="border-b border-border text-left text-xs uppercase text-muted-foreground">

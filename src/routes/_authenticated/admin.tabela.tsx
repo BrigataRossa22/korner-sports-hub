@@ -28,6 +28,9 @@ const emptyStanding: StandingInput = {
   losses: 0,
   points: 0,
   sortOrder: 99,
+  goalsFor: 0,
+  goalsAgainst: 0,
+  recentForm: "",
 };
 
 function num(value: string): number {
@@ -82,50 +85,73 @@ function StandingRow({
   }
 
   return (
-    <div className="grid gap-3 p-4 sm:grid-cols-[1.4fr_repeat(6,70px)_auto]">
-      <Input value={form.team} onChange={(e) => set("team", e.target.value)} placeholder="Klub" />
+    <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
+      <label className="space-y-1 text-xs text-muted-foreground">Klub
+        <Input value={form.team} onChange={(e) => set("team", e.target.value)} placeholder="Naziv kluba" />
+      </label>
+      <label className="space-y-1 text-xs text-muted-foreground">Utakmice
       <Input
         aria-label="Odigrano"
         inputMode="numeric"
         value={form.played}
         onChange={(e) => set("played", num(e.target.value))}
       />
+      </label>
+      <label className="space-y-1 text-xs text-muted-foreground">Pobjede
       <Input
         aria-label="Pobjede"
         inputMode="numeric"
         value={form.wins}
         onChange={(e) => set("wins", num(e.target.value))}
       />
+      </label>
+      <label className="space-y-1 text-xs text-muted-foreground">Remiji
       <Input
         aria-label="Neriješeno"
         inputMode="numeric"
         value={form.draws}
         onChange={(e) => set("draws", num(e.target.value))}
       />
+      </label>
+      <label className="space-y-1 text-xs text-muted-foreground">Porazi
       <Input
         aria-label="Porazi"
         inputMode="numeric"
         value={form.losses}
         onChange={(e) => set("losses", num(e.target.value))}
       />
+      </label>
+      <label className="space-y-1 text-xs text-muted-foreground">Bodovi
       <Input
         aria-label="Bodovi"
         inputMode="numeric"
         value={form.points}
         onChange={(e) => set("points", num(e.target.value))}
       />
+      </label>
+      <label className="space-y-1 text-xs text-muted-foreground">Postignuti golovi
+        <Input inputMode="numeric" value={form.goalsFor} onChange={(e) => set("goalsFor", num(e.target.value))} />
+      </label>
+      <label className="space-y-1 text-xs text-muted-foreground">Primljeni golovi
+        <Input inputMode="numeric" value={form.goalsAgainst} onChange={(e) => set("goalsAgainst", num(e.target.value))} />
+      </label>
+      <label className="space-y-1 text-xs text-muted-foreground">Forma (W, D, L)
+        <Input placeholder="npr. WWDLW" value={form.recentForm} maxLength={5} onChange={(e) => set("recentForm", e.target.value.toUpperCase().replace(/[^WDL]/g, "").slice(-5))} />
+      </label>
+      <label className="space-y-1 text-xs text-muted-foreground">Redoslijed
       <Input
         aria-label="Redoslijed"
         inputMode="numeric"
         value={form.sortOrder}
         onChange={(e) => set("sortOrder", num(e.target.value))}
       />
-      <div className="flex items-center gap-2">
+      </label>
+      <div className="flex items-end gap-2">
         <Button size="sm" onClick={handleSave} disabled={busy}>
           Sačuvaj
         </Button>
         {form.id && (
-          <Button
+          <Button aria-label="Obriši klub" title="Obriši klub"
             size="sm"
             variant="ghost"
             className="text-destructive hover:text-destructive"
@@ -156,21 +182,10 @@ function TabelaPage() {
       </div>
 
       <p className="text-sm text-muted-foreground">
-        Manji broj u koloni <strong>Redoslijed</strong> znači više mjesto na tabeli.
+        Manji redoslijed znači više mjesto. Forma: W = pobjeda, D = remi, L = poraz; upiši do pet rezultata od najstarije do najnovije.
       </p>
 
       <div className="divide-y divide-border rounded-lg border border-border bg-card">
-        <div className="hidden grid-cols-[1.4fr_repeat(6,70px)_auto] gap-3 px-4 py-2 text-xs uppercase tracking-wide text-muted-foreground sm:grid">
-          <span>Klub</span>
-          <span>Odig</span>
-          <span>Pob</span>
-          <span>Ner</span>
-          <span>Por</span>
-          <span>Bod</span>
-          <span>Red</span>
-          <span />
-        </div>
-
         {standings.map((standing, index) => (
           <StandingRow
             key={standing.id}
@@ -182,6 +197,9 @@ function TabelaPage() {
               draws: standing.draws,
               losses: standing.losses,
               points: standing.points,
+              goalsFor: standing.goalsFor,
+              goalsAgainst: standing.goalsAgainst,
+              recentForm: standing.recentForm,
               sortOrder: index + 1,
             }}
             onSaved={() => content.refetch()}

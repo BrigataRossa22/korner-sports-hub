@@ -17,6 +17,7 @@ import { Route as KosarkaRouteImport } from './routes/kosarka'
 import { Route as ONamaRouteImport } from './routes/o-nama'
 import { Route as OstaliSportoviRouteImport } from './routes/ostali-sportovi'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as TabelaRouteImport } from './routes/tabela'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as ClanakSlugRouteImport } from './routes/clanak.$slug'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
@@ -64,6 +65,11 @@ const OstaliSportoviRoute = OstaliSportoviRouteImport.update({
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TabelaRoute = TabelaRouteImport.update({
+  id: '/tabela',
+  path: '/tabela',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
@@ -123,6 +129,7 @@ export interface FileRoutesByFullPath {
   '/o-nama': typeof ONamaRoute
   '/ostali-sportovi': typeof OstaliSportoviRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/tabela': typeof TabelaRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/clanak/$slug': typeof ClanakSlugRoute
   '/admin/$id': typeof AuthenticatedAdminIdRoute
@@ -141,6 +148,7 @@ export interface FileRoutesByTo {
   '/o-nama': typeof ONamaRoute
   '/ostali-sportovi': typeof OstaliSportoviRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/tabela': typeof TabelaRoute
   '/clanak/$slug': typeof ClanakSlugRoute
   '/admin/$id': typeof AuthenticatedAdminIdRoute
   '/admin/nova': typeof AuthenticatedAdminNovaRoute
@@ -160,6 +168,7 @@ export interface FileRoutesById {
   '/o-nama': typeof ONamaRoute
   '/ostali-sportovi': typeof OstaliSportoviRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/tabela': typeof TabelaRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/clanak/$slug': typeof ClanakSlugRoute
   '/_authenticated/admin/$id': typeof AuthenticatedAdminIdRoute
@@ -180,6 +189,7 @@ export interface FileRouteTypes {
     | '/o-nama'
     | '/ostali-sportovi'
     | '/reset-password'
+    | '/tabela'
     | '/admin'
     | '/clanak/$slug'
     | '/admin/$id'
@@ -198,6 +208,7 @@ export interface FileRouteTypes {
     | '/o-nama'
     | '/ostali-sportovi'
     | '/reset-password'
+    | '/tabela'
     | '/clanak/$slug'
     | '/admin/$id'
     | '/admin/nova'
@@ -216,6 +227,7 @@ export interface FileRouteTypes {
     | '/o-nama'
     | '/ostali-sportovi'
     | '/reset-password'
+    | '/tabela'
     | '/_authenticated/admin'
     | '/clanak/$slug'
     | '/_authenticated/admin/$id'
@@ -236,6 +248,7 @@ export interface RootRouteChildren {
   ONamaRoute: typeof ONamaRoute
   OstaliSportoviRoute: typeof OstaliSportoviRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  TabelaRoute: typeof TabelaRoute
   ClanakSlugRoute: typeof ClanakSlugRoute
   ApiPublicSlikeSplatRoute: typeof ApiPublicSlikeSplatRoute
 }
@@ -296,6 +309,13 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tabela': {
+      id: '/tabela'
+      path: '/tabela'
+      fullPath: '/tabela'
+      preLoaderRoute: typeof TabelaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin': {
@@ -405,6 +425,7 @@ const rootRouteChildren: RootRouteChildren = {
   ONamaRoute: ONamaRoute,
   OstaliSportoviRoute: OstaliSportoviRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  TabelaRoute: TabelaRoute,
   ClanakSlugRoute: ClanakSlugRoute,
   ApiPublicSlikeSplatRoute: ApiPublicSlikeSplatRoute,
 }

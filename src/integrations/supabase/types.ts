@@ -137,30 +137,39 @@ export type Database = {
       standings: {
         Row: {
           draws: number
+          goals_against: number
+          goals_for: number
           id: string
           losses: number
           played: number
           points: number
+          recent_form: string
           sort_order: number
           team: string
           wins: number
         }
         Insert: {
           draws?: number
+          goals_against?: number
+          goals_for?: number
           id?: string
           losses?: number
           played?: number
           points?: number
+          recent_form?: string
           sort_order?: number
           team: string
           wins?: number
         }
         Update: {
           draws?: number
+          goals_against?: number
+          goals_for?: number
           id?: string
           losses?: number
           played?: number
           points?: number
+          recent_form?: string
           sort_order?: number
           team?: string
           wins?: number
