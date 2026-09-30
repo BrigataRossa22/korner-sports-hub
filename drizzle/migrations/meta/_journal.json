@@ -8,6 +8,13 @@
       "when": 1790779928282,
       "tag": "0000_korner_cms_content",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790780298201,
+      "tag": "0001_claim_first_editor",
+      "breakpoints": true
     }
   ]
 }
