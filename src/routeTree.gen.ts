@@ -22,6 +22,9 @@ import { Route as ClanakSlugRouteImport } from './routes/clanak.$slug'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminIdRouteImport } from './routes/_authenticated/admin.$id'
 import { Route as AuthenticatedAdminNovaRouteImport } from './routes/_authenticated/admin.nova'
+import { Route as AuthenticatedAdminPostavkeRouteImport } from './routes/_authenticated/admin.postavke'
+import { Route as AuthenticatedAdminRasporedRouteImport } from './routes/_authenticated/admin.raspored'
+import { Route as AuthenticatedAdminTabelaRouteImport } from './routes/_authenticated/admin.tabela'
 import { Route as ApiPublicSlikeSplatRouteImport } from './routes/api/public/slike.$'
 
 const IndexRoute = IndexRouteImport.update({
@@ -88,6 +91,24 @@ const AuthenticatedAdminNovaRoute = AuthenticatedAdminNovaRouteImport.update({
   path: '/nova',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminPostavkeRoute =
+  AuthenticatedAdminPostavkeRouteImport.update({
+    id: '/postavke',
+    path: '/postavke',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminRasporedRoute =
+  AuthenticatedAdminRasporedRouteImport.update({
+    id: '/raspored',
+    path: '/raspored',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminTabelaRoute =
+  AuthenticatedAdminTabelaRouteImport.update({
+    id: '/tabela',
+    path: '/tabela',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const ApiPublicSlikeSplatRoute = ApiPublicSlikeSplatRouteImport.update({
   id: '/api/public/slike/$',
   path: '/api/public/slike/$',
@@ -106,6 +127,9 @@ export interface FileRoutesByFullPath {
   '/clanak/$slug': typeof ClanakSlugRoute
   '/admin/$id': typeof AuthenticatedAdminIdRoute
   '/admin/nova': typeof AuthenticatedAdminNovaRoute
+  '/admin/postavke': typeof AuthenticatedAdminPostavkeRoute
+  '/admin/raspored': typeof AuthenticatedAdminRasporedRoute
+  '/admin/tabela': typeof AuthenticatedAdminTabelaRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/api/public/slike/$': typeof ApiPublicSlikeSplatRoute
 }
@@ -120,6 +144,9 @@ export interface FileRoutesByTo {
   '/clanak/$slug': typeof ClanakSlugRoute
   '/admin/$id': typeof AuthenticatedAdminIdRoute
   '/admin/nova': typeof AuthenticatedAdminNovaRoute
+  '/admin/postavke': typeof AuthenticatedAdminPostavkeRoute
+  '/admin/raspored': typeof AuthenticatedAdminRasporedRoute
+  '/admin/tabela': typeof AuthenticatedAdminTabelaRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/api/public/slike/$': typeof ApiPublicSlikeSplatRoute
 }
@@ -137,6 +164,9 @@ export interface FileRoutesById {
   '/clanak/$slug': typeof ClanakSlugRoute
   '/_authenticated/admin/$id': typeof AuthenticatedAdminIdRoute
   '/_authenticated/admin/nova': typeof AuthenticatedAdminNovaRoute
+  '/_authenticated/admin/postavke': typeof AuthenticatedAdminPostavkeRoute
+  '/_authenticated/admin/raspored': typeof AuthenticatedAdminRasporedRoute
+  '/_authenticated/admin/tabela': typeof AuthenticatedAdminTabelaRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/api/public/slike/$': typeof ApiPublicSlikeSplatRoute
 }
@@ -154,6 +184,9 @@ export interface FileRouteTypes {
     | '/clanak/$slug'
     | '/admin/$id'
     | '/admin/nova'
+    | '/admin/postavke'
+    | '/admin/raspored'
+    | '/admin/tabela'
     | '/admin/'
     | '/api/public/slike/$'
   fileRoutesByTo: FileRoutesByTo
@@ -168,6 +201,9 @@ export interface FileRouteTypes {
     | '/clanak/$slug'
     | '/admin/$id'
     | '/admin/nova'
+    | '/admin/postavke'
+    | '/admin/raspored'
+    | '/admin/tabela'
     | '/admin'
     | '/api/public/slike/$'
   id:
@@ -184,6 +220,9 @@ export interface FileRouteTypes {
     | '/clanak/$slug'
     | '/_authenticated/admin/$id'
     | '/_authenticated/admin/nova'
+    | '/_authenticated/admin/postavke'
+    | '/_authenticated/admin/raspored'
+    | '/_authenticated/admin/tabela'
     | '/_authenticated/admin/'
     | '/api/public/slike/$'
   fileRoutesById: FileRoutesById
@@ -294,6 +333,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminNovaRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/postavke': {
+      id: '/_authenticated/admin/postavke'
+      path: '/postavke'
+      fullPath: '/admin/postavke'
+      preLoaderRoute: typeof AuthenticatedAdminPostavkeRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/raspored': {
+      id: '/_authenticated/admin/raspored'
+      path: '/raspored'
+      fullPath: '/admin/raspored'
+      preLoaderRoute: typeof AuthenticatedAdminRasporedRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/tabela': {
+      id: '/_authenticated/admin/tabela'
+      path: '/tabela'
+      fullPath: '/admin/tabela'
+      preLoaderRoute: typeof AuthenticatedAdminTabelaRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/api/public/slike/$': {
       id: '/api/public/slike/$'
       path: '/api/public/slike/$'
@@ -307,12 +367,18 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminIdRoute: typeof AuthenticatedAdminIdRoute
   AuthenticatedAdminNovaRoute: typeof AuthenticatedAdminNovaRoute
+  AuthenticatedAdminPostavkeRoute: typeof AuthenticatedAdminPostavkeRoute
+  AuthenticatedAdminRasporedRoute: typeof AuthenticatedAdminRasporedRoute
+  AuthenticatedAdminTabelaRoute: typeof AuthenticatedAdminTabelaRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminIdRoute: AuthenticatedAdminIdRoute,
   AuthenticatedAdminNovaRoute: AuthenticatedAdminNovaRoute,
+  AuthenticatedAdminPostavkeRoute: AuthenticatedAdminPostavkeRoute,
+  AuthenticatedAdminRasporedRoute: AuthenticatedAdminRasporedRoute,
+  AuthenticatedAdminTabelaRoute: AuthenticatedAdminTabelaRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }
 

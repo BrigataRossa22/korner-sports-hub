@@ -70,7 +70,7 @@ function PostavkePage() {
             onChange={(e) => setAbout(e.target.value)}
           />
           <p className="text-xs text-muted-foreground">
-            Prazne redove smatrajse novim pasusom na stranici.
+            Prazne redove ra010dunamo kao novi pasus na stranici.
           </p>
         </div>
 
