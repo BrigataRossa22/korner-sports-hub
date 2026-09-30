@@ -1,14 +1,18 @@
-import { articles, fixtures, standings } from "@/data/articles";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { ArticleRow } from "@/components/ArticleCard";
+import { contentOptions, mostRead } from "@/lib/content";
 
 export function Sidebar() {
+  const { data } = useSuspenseQuery(contentOptions);
+  const read = mostRead(data.articles);
+
   return (
     <aside className="space-y-8">
       <section>
         <h3 className="rule-top pt-2 font-display text-lg uppercase">Najčitanije</h3>
         <div className="mt-2">
-          {articles.slice(0, 5).map((a) => (
-            <ArticleRow key={a.slug} article={a} />
+          {read.map((article) => (
+            <ArticleRow key={article.id} article={article} />
           ))}
         </div>
       </section>
@@ -16,13 +20,16 @@ export function Sidebar() {
       <section>
         <h3 className="rule-top pt-2 font-display text-lg uppercase">Raspored</h3>
         <ul className="mt-2 divide-y divide-border">
-          {fixtures.map((f) => (
-            <li key={`${f.home}-${f.away}`} className="py-2.5">
+          {data.fixtures.map((fixture) => (
+            <li key={fixture.id} className="py-2.5">
               <p className="text-sm font-medium">
-                {f.home} <span className="text-muted-foreground">–</span> {f.away}
+                {fixture.home} <span className="text-muted-foreground">–</span> {fixture.away}
               </p>
               <p className="text-xs text-muted-foreground">
-                {f.comp} · {f.time}
+                {fixture.comp} ·{" "}
+                {fixture.finished && fixture.scoreHome !== null && fixture.scoreAway !== null
+                  ? `${fixture.scoreHome}:${fixture.scoreAway}`
+                  : fixture.when}
               </p>
             </li>
           ))}
@@ -40,14 +47,14 @@ export function Sidebar() {
             </tr>
           </thead>
           <tbody>
-            {standings.map((s, i) => (
-              <tr key={s.team} className="border-b border-border last:border-0">
+            {data.standings.map((standing, index) => (
+              <tr key={standing.id} className="border-b border-border last:border-0">
                 <td className="py-2">
-                  <span className="mr-2 text-muted-foreground">{i + 1}.</span>
-                  {s.team}
+                  <span className="mr-2 text-muted-foreground">{index + 1}.</span>
+                  {standing.team}
                 </td>
-                <td className="py-2 text-right text-muted-foreground">{s.played}</td>
-                <td className="py-2 text-right font-semibold">{s.points}</td>
+                <td className="py-2 text-right text-muted-foreground">{standing.played}</td>
+                <td className="py-2 text-right font-semibold">{standing.points}</td>
               </tr>
             ))}
           </tbody>
