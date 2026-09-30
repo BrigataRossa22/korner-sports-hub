@@ -10,33 +10,102 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as FudbalRouteImport } from './routes/fudbal'
+import { Route as KosarkaRouteImport } from './routes/kosarka'
+import { Route as ONamaRouteImport } from './routes/o-nama'
+import { Route as OstaliSportoviRouteImport } from './routes/ostali-sportovi'
+import { Route as ClanakSlugRouteImport } from './routes/clanak.$slug'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FudbalRoute = FudbalRouteImport.update({
+  id: '/fudbal',
+  path: '/fudbal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KosarkaRoute = KosarkaRouteImport.update({
+  id: '/kosarka',
+  path: '/kosarka',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ONamaRoute = ONamaRouteImport.update({
+  id: '/o-nama',
+  path: '/o-nama',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OstaliSportoviRoute = OstaliSportoviRouteImport.update({
+  id: '/ostali-sportovi',
+  path: '/ostali-sportovi',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClanakSlugRoute = ClanakSlugRouteImport.update({
+  id: '/clanak/$slug',
+  path: '/clanak/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/fudbal': typeof FudbalRoute
+  '/kosarka': typeof KosarkaRoute
+  '/o-nama': typeof ONamaRoute
+  '/ostali-sportovi': typeof OstaliSportoviRoute
+  '/clanak/$slug': typeof ClanakSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/fudbal': typeof FudbalRoute
+  '/kosarka': typeof KosarkaRoute
+  '/o-nama': typeof ONamaRoute
+  '/ostali-sportovi': typeof OstaliSportoviRoute
+  '/clanak/$slug': typeof ClanakSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/fudbal': typeof FudbalRoute
+  '/kosarka': typeof KosarkaRoute
+  '/o-nama': typeof ONamaRoute
+  '/ostali-sportovi': typeof OstaliSportoviRoute
+  '/clanak/$slug': typeof ClanakSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/fudbal'
+    | '/kosarka'
+    | '/o-nama'
+    | '/ostali-sportovi'
+    | '/clanak/$slug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/fudbal'
+    | '/kosarka'
+    | '/o-nama'
+    | '/ostali-sportovi'
+    | '/clanak/$slug'
+  id:
+    | '__root__'
+    | '/'
+    | '/fudbal'
+    | '/kosarka'
+    | '/o-nama'
+    | '/ostali-sportovi'
+    | '/clanak/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  FudbalRoute: typeof FudbalRoute
+  KosarkaRoute: typeof KosarkaRoute
+  ONamaRoute: typeof ONamaRoute
+  OstaliSportoviRoute: typeof OstaliSportoviRoute
+  ClanakSlugRoute: typeof ClanakSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +117,51 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/fudbal': {
+      id: '/fudbal'
+      path: '/fudbal'
+      fullPath: '/fudbal'
+      preLoaderRoute: typeof FudbalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/kosarka': {
+      id: '/kosarka'
+      path: '/kosarka'
+      fullPath: '/kosarka'
+      preLoaderRoute: typeof KosarkaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/o-nama': {
+      id: '/o-nama'
+      path: '/o-nama'
+      fullPath: '/o-nama'
+      preLoaderRoute: typeof ONamaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ostali-sportovi': {
+      id: '/ostali-sportovi'
+      path: '/ostali-sportovi'
+      fullPath: '/ostali-sportovi'
+      preLoaderRoute: typeof OstaliSportoviRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/clanak/$slug': {
+      id: '/clanak/$slug'
+      path: '/clanak/$slug'
+      fullPath: '/clanak/$slug'
+      preLoaderRoute: typeof ClanakSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  FudbalRoute: FudbalRoute,
+  KosarkaRoute: KosarkaRoute,
+  ONamaRoute: ONamaRoute,
+  OstaliSportoviRoute: OstaliSportoviRoute,
+  ClanakSlugRoute: ClanakSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
