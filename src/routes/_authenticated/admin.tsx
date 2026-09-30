@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { ExternalLink, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { getEditorStatus } from "@/lib/admin.functions";
+import { getEditorStatus, claimFirstEditor } from "@/lib/admin.functions";
 import logoAsset from "@/assets/korner-logo.png.asset.json";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -30,6 +30,17 @@ function AdminLayout() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const fetchStatus = useServerFn(getEditorStatus);
+  const claim = useServerFn(claimFirstEditor);
+
+  async function handleClaim() {
+    try {
+      await claim();
+      toast.success("Urednička prava su aktivirana.");
+      queryClient.invalidateQueries({ queryKey: ["editor-status"] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Preuzimanje prava nije uspjelo.");
+    }
+  }
 
   const status = useQuery({
     queryKey: ["editor-status"],
