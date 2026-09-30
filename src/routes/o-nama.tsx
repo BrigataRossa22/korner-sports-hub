@@ -1,49 +1,80 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Sidebar } from "@/components/Sidebar";
+import { LoadError } from "@/components/RouteFallbacks";
+import { getPublicContent } from "@/lib/content.functions";
 
 export const Route = createFileRoute("/o-nama")({
+  loader: () => getPublicContent(),
   head: () => ({
     meta: [
       { title: "O nama — Korner BiH" },
       {
         name: "description",
-        content: "Korner je bh. sportski portal nastao iz Instagram zajednice @korner_bih.",
+        content: "Ko stoji iza portala Korner BiH, čime se bavimo i kako nas kontaktirati.",
       },
       { property: "og:title", content: "O nama — Korner BiH" },
-      { property: "og:description", content: "Priča iza bh. sportskog portala Korner." },
+      { property: "og:description", content: "Ko stoji iza portala Korner BiH i kako nas kontaktirati." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: About,
+  errorComponent: LoadError,
+  component: ONama,
 });
 
-function About() {
+function ONama() {
+  const content = Route.useLoaderData();
+  const { settings } = content;
+  const paragraphs = settings.about
+    .split(/\n{2,}/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12">
-      <div className="rule-top pt-3">
-        <h1 className="text-4xl uppercase">O nama</h1>
+    <div className="mx-auto max-w-6xl px-4 py-8">
+      <div className="grid gap-10 lg:grid-cols-[1fr_320px]">
+        <div>
+          <h1 className="rule-top pt-3 text-4xl uppercase">O nama</h1>
+          <div className="mt-6 space-y-4">
+            {paragraphs.map((paragraph, index) => (
+              <p key={index} className="text-[1.05rem] leading-relaxed text-foreground/90">
+                {paragraph}
+              </p>
+            ))}
+          </div>
+          <div className="mt-8 flex flex-wrap gap-3">
+            {settings.instagram && (
+              <a
+                href={settings.instagram}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+              >
+                Instagram
+              </a>
+            )}
+            {settings.facebook && (
+              <a
+                href={settings.facebook}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-md border border-border px-4 py-2 text-sm font-medium"
+              >
+                Facebook
+              </a>
+            )}
+            {settings.contactEmail && (
+              <a
+                href={`mailto:${settings.contactEmail}`}
+                className="rounded-md border border-border px-4 py-2 text-sm font-medium"
+              >
+                Pošalite nam email
+              </a>
+            )}
+          </div>
+        </div>
+        <Sidebar content={content} />
       </div>
-      <div className="mt-6 space-y-4 text-base leading-relaxed text-foreground/90">
-        <p>
-          Korner je sportski portal iz Bosne i Hercegovine. Krenuli smo kao Instagram zajednica
-          @korner_bih, a danas pratimo fudbal, košarku i sve ostale sportove u kojima naši
-          sportisti ostavljaju trag.
-        </p>
-        <p>
-          Pišemo brzo, kratko i bez fraza — vijesti sa terena, transferi, analize kola i priče o
-          ljudima koji stoje iza rezultata.
-        </p>
-        <p className="text-sm text-muted-foreground">
-          Napomena: tekstovi na ovom sajtu su primjeri sadržaja. Pošaljite nam prave vijesti,
-          kontakt podatke i logo pa ćemo ih ubaciti.
-        </p>
-      </div>
-      <a
-        href="https://www.instagram.com/korner_bih/"
-        target="_blank"
-        rel="noreferrer"
-        className="mt-8 inline-block bg-primary px-5 py-2.5 font-display text-sm uppercase tracking-wide text-primary-foreground"
-      >
-        Instagram @korner_bih
-      </a>
     </div>
   );
 }

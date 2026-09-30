@@ -10,15 +10,35 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as FudbalRouteImport } from './routes/fudbal'
 import { Route as KosarkaRouteImport } from './routes/kosarka'
 import { Route as ONamaRouteImport } from './routes/o-nama'
 import { Route as OstaliSportoviRouteImport } from './routes/ostali-sportovi'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as ClanakSlugRouteImport } from './routes/clanak.$slug'
+import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
+import { Route as AuthenticatedAdminIdRouteImport } from './routes/_authenticated/admin.$id'
+import { Route as AuthenticatedAdminNovaRouteImport } from './routes/_authenticated/admin.nova'
+import { Route as AuthenticatedAdminPostavkeRouteImport } from './routes/_authenticated/admin.postavke'
+import { Route as AuthenticatedAdminRasporedRouteImport } from './routes/_authenticated/admin.raspored'
+import { Route as AuthenticatedAdminTabelaRouteImport } from './routes/_authenticated/admin.tabela'
+import { Route as ApiPublicSlikeSplatRouteImport } from './routes/api/public/slike.$'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FudbalRoute = FudbalRouteImport.update({
@@ -41,71 +61,183 @@ const OstaliSportoviRoute = OstaliSportoviRouteImport.update({
   path: '/ostali-sportovi',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const ClanakSlugRoute = ClanakSlugRouteImport.update({
   id: '/clanak/$slug',
   path: '/clanak/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const AuthenticatedAdminIdRoute = AuthenticatedAdminIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const AuthenticatedAdminNovaRoute = AuthenticatedAdminNovaRouteImport.update({
+  id: '/nova',
+  path: '/nova',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const AuthenticatedAdminPostavkeRoute =
+  AuthenticatedAdminPostavkeRouteImport.update({
+    id: '/postavke',
+    path: '/postavke',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminRasporedRoute =
+  AuthenticatedAdminRasporedRouteImport.update({
+    id: '/raspored',
+    path: '/raspored',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminTabelaRoute =
+  AuthenticatedAdminTabelaRouteImport.update({
+    id: '/tabela',
+    path: '/tabela',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const ApiPublicSlikeSplatRoute = ApiPublicSlikeSplatRouteImport.update({
+  id: '/api/public/slike/$',
+  path: '/api/public/slike/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/fudbal': typeof FudbalRoute
   '/kosarka': typeof KosarkaRoute
   '/o-nama': typeof ONamaRoute
   '/ostali-sportovi': typeof OstaliSportoviRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/clanak/$slug': typeof ClanakSlugRoute
+  '/admin/$id': typeof AuthenticatedAdminIdRoute
+  '/admin/nova': typeof AuthenticatedAdminNovaRoute
+  '/admin/postavke': typeof AuthenticatedAdminPostavkeRoute
+  '/admin/raspored': typeof AuthenticatedAdminRasporedRoute
+  '/admin/tabela': typeof AuthenticatedAdminTabelaRoute
+  '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/api/public/slike/$': typeof ApiPublicSlikeSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/fudbal': typeof FudbalRoute
   '/kosarka': typeof KosarkaRoute
   '/o-nama': typeof ONamaRoute
   '/ostali-sportovi': typeof OstaliSportoviRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/clanak/$slug': typeof ClanakSlugRoute
+  '/admin/$id': typeof AuthenticatedAdminIdRoute
+  '/admin/nova': typeof AuthenticatedAdminNovaRoute
+  '/admin/postavke': typeof AuthenticatedAdminPostavkeRoute
+  '/admin/raspored': typeof AuthenticatedAdminRasporedRoute
+  '/admin/tabela': typeof AuthenticatedAdminTabelaRoute
+  '/admin': typeof AuthenticatedAdminIndexRoute
+  '/api/public/slike/$': typeof ApiPublicSlikeSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
   '/fudbal': typeof FudbalRoute
   '/kosarka': typeof KosarkaRoute
   '/o-nama': typeof ONamaRoute
   '/ostali-sportovi': typeof OstaliSportoviRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/clanak/$slug': typeof ClanakSlugRoute
+  '/_authenticated/admin/$id': typeof AuthenticatedAdminIdRoute
+  '/_authenticated/admin/nova': typeof AuthenticatedAdminNovaRoute
+  '/_authenticated/admin/postavke': typeof AuthenticatedAdminPostavkeRoute
+  '/_authenticated/admin/raspored': typeof AuthenticatedAdminRasporedRoute
+  '/_authenticated/admin/tabela': typeof AuthenticatedAdminTabelaRoute
+  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/api/public/slike/$': typeof ApiPublicSlikeSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/auth'
     | '/fudbal'
     | '/kosarka'
     | '/o-nama'
     | '/ostali-sportovi'
+    | '/reset-password'
+    | '/admin'
     | '/clanak/$slug'
+    | '/admin/$id'
+    | '/admin/nova'
+    | '/admin/postavke'
+    | '/admin/raspored'
+    | '/admin/tabela'
+    | '/admin/'
+    | '/api/public/slike/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/auth'
     | '/fudbal'
     | '/kosarka'
     | '/o-nama'
     | '/ostali-sportovi'
+    | '/reset-password'
     | '/clanak/$slug'
+    | '/admin/$id'
+    | '/admin/nova'
+    | '/admin/postavke'
+    | '/admin/raspored'
+    | '/admin/tabela'
+    | '/admin'
+    | '/api/public/slike/$'
   id:
     | '__root__'
     | '/'
+    | '/_authenticated'
+    | '/auth'
     | '/fudbal'
     | '/kosarka'
     | '/o-nama'
     | '/ostali-sportovi'
+    | '/reset-password'
+    | '/_authenticated/admin'
     | '/clanak/$slug'
+    | '/_authenticated/admin/$id'
+    | '/_authenticated/admin/nova'
+    | '/_authenticated/admin/postavke'
+    | '/_authenticated/admin/raspored'
+    | '/_authenticated/admin/tabela'
+    | '/_authenticated/admin/'
+    | '/api/public/slike/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
   FudbalRoute: typeof FudbalRoute
   KosarkaRoute: typeof KosarkaRoute
   ONamaRoute: typeof ONamaRoute
   OstaliSportoviRoute: typeof OstaliSportoviRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   ClanakSlugRoute: typeof ClanakSlugRoute
+  ApiPublicSlikeSplatRoute: typeof ApiPublicSlikeSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -115,6 +247,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/fudbal': {
@@ -145,6 +291,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OstaliSportoviRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/clanak/$slug': {
       id: '/clanak/$slug'
       path: '/clanak/$slug'
@@ -152,16 +312,101 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClanakSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin/': {
+      id: '/_authenticated/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/$id': {
+      id: '/_authenticated/admin/$id'
+      path: '/$id'
+      fullPath: '/admin/$id'
+      preLoaderRoute: typeof AuthenticatedAdminIdRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/nova': {
+      id: '/_authenticated/admin/nova'
+      path: '/nova'
+      fullPath: '/admin/nova'
+      preLoaderRoute: typeof AuthenticatedAdminNovaRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/postavke': {
+      id: '/_authenticated/admin/postavke'
+      path: '/postavke'
+      fullPath: '/admin/postavke'
+      preLoaderRoute: typeof AuthenticatedAdminPostavkeRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/raspored': {
+      id: '/_authenticated/admin/raspored'
+      path: '/raspored'
+      fullPath: '/admin/raspored'
+      preLoaderRoute: typeof AuthenticatedAdminRasporedRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/tabela': {
+      id: '/_authenticated/admin/tabela'
+      path: '/tabela'
+      fullPath: '/admin/tabela'
+      preLoaderRoute: typeof AuthenticatedAdminTabelaRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/api/public/slike/$': {
+      id: '/api/public/slike/$'
+      path: '/api/public/slike/$'
+      fullPath: '/api/public/slike/$'
+      preLoaderRoute: typeof ApiPublicSlikeSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
+interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminIdRoute: typeof AuthenticatedAdminIdRoute
+  AuthenticatedAdminNovaRoute: typeof AuthenticatedAdminNovaRoute
+  AuthenticatedAdminPostavkeRoute: typeof AuthenticatedAdminPostavkeRoute
+  AuthenticatedAdminRasporedRoute: typeof AuthenticatedAdminRasporedRoute
+  AuthenticatedAdminTabelaRoute: typeof AuthenticatedAdminTabelaRoute
+  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+}
+
+const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminIdRoute: AuthenticatedAdminIdRoute,
+  AuthenticatedAdminNovaRoute: AuthenticatedAdminNovaRoute,
+  AuthenticatedAdminPostavkeRoute: AuthenticatedAdminPostavkeRoute,
+  AuthenticatedAdminRasporedRoute: AuthenticatedAdminRasporedRoute,
+  AuthenticatedAdminTabelaRoute: AuthenticatedAdminTabelaRoute,
+  AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+}
+
+const AuthenticatedAdminRouteWithChildren =
+  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
+
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
   FudbalRoute: FudbalRoute,
   KosarkaRoute: KosarkaRoute,
   ONamaRoute: ONamaRoute,
   OstaliSportoviRoute: OstaliSportoviRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   ClanakSlugRoute: ClanakSlugRoute,
+  ApiPublicSlikeSplatRoute: ApiPublicSlikeSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

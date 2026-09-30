@@ -1,7 +1,14 @@
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import logoAsset from "@/assets/korner-logo.png.asset.json";
+import { contentOptions } from "@/lib/content";
+import { useHydrated } from "@/lib/use-hydrated";
 
 export function SiteFooter() {
+  const hydrated = useHydrated();
+  const { data } = useQuery({ ...contentOptions, enabled: hydrated });
+  const settings = data?.settings;
+
   return (
     <footer className="mt-16 bg-ink text-ink-foreground">
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:grid-cols-3">
@@ -33,15 +40,42 @@ export function SiteFooter() {
           </ul>
         </div>
         <div>
-          <p className="font-display text-sm uppercase tracking-[0.15em] text-primary">Pratite nas</p>
-          <a
-            href="https://www.instagram.com/korner_bih/"
-            target="_blank"
-            rel="noreferrer"
-            className="mt-3 inline-block text-sm text-ink-foreground/75 underline underline-offset-4"
-          >
-            Instagram @korner_bih
-          </a>
+          <p className="font-display text-sm uppercase tracking-[0.15em] text-primary">
+            Pratite nas
+          </p>
+          <ul className="mt-3 space-y-2 text-sm text-ink-foreground/75">
+            {settings?.instagram && (
+              <li>
+                <a
+                  href={settings.instagram}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline underline-offset-4"
+                >
+                  Instagram
+                </a>
+              </li>
+            )}
+            {settings?.facebook && (
+              <li>
+                <a
+                  href={settings.facebook}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline underline-offset-4"
+                >
+                  Facebook
+                </a>
+              </li>
+            )}
+            {settings?.contactEmail && (
+              <li>
+                <a href={`mailto:${settings.contactEmail}`} className="underline underline-offset-4">
+                  {settings.contactEmail}
+                </a>
+              </li>
+            )}
+          </ul>
         </div>
       </div>
       <div className="border-t border-white/10 py-4 text-center text-xs text-ink-foreground/50">

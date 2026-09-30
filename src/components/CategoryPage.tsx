@@ -1,9 +1,18 @@
 import { ArticleCard } from "@/components/ArticleCard";
 import { Sidebar } from "@/components/Sidebar";
-import { byCategory, categoryLabels, type Category } from "@/data/articles";
+import { byCategory, categoryLabels } from "@/lib/content";
+import type { Category, PublicContent } from "@/lib/content.functions";
 
-export function CategoryPage({ category, intro }: { category: Category; intro: string }) {
-  const list = byCategory(category);
+export function CategoryPage({
+  category,
+  intro,
+  content,
+}: {
+  category: Category;
+  intro: string;
+  content: PublicContent;
+}) {
+  const list = byCategory(content.articles, category);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
@@ -14,11 +23,16 @@ export function CategoryPage({ category, intro }: { category: Category; intro: s
 
       <div className="mt-8 grid gap-10 lg:grid-cols-[1fr_320px]">
         <div className="grid gap-8 sm:grid-cols-2">
-          {list.map((a) => (
-            <ArticleCard key={a.slug} article={a} />
+          {list.map((article) => (
+            <ArticleCard key={article.id} article={article} />
           ))}
+          {list.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              U ovoj rubrici još nema vijesti. Navratite uskoro.
+            </p>
+          )}
         </div>
-        <Sidebar />
+        <Sidebar content={content} />
       </div>
     </div>
   );
