@@ -23,7 +23,8 @@ export const Route = createFileRoute("/o-nama")({
 });
 
 function ONama() {
-  const { settings } = Route.useLoaderData();
+  const content = Route.useLoaderData();
+  const { settings } = content;
   const paragraphs = settings.about
     .split(/\n{2,}/)
     .map((part) => part.trim())
