@@ -23,7 +23,8 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const [lead, ...rest] = articles;
+  const lead = articles[0]!;
+  const rest = articles.slice(1);
   const secondary = rest.slice(0, 2);
   const grid = rest.slice(2);
 
