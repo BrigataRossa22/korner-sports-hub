@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Menu, X } from "lucide-react";
-import logoAsset from "@/assets/korner-logo.png.asset.json";
+<img src="/korner-logo.png" alt="Korner BiH logo" className="size-10 rounded-md" />
 import { contentOptions } from "@/lib/content";
 import { useHydrated } from "@/lib/use-hydrated";
 
