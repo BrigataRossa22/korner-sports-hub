@@ -73,7 +73,7 @@ function ONama() {
             )}
           </div>
         </div>
-        <Sidebar content={Route.useLoaderData()} />
+        <Sidebar content={content} />
       </div>
     </div>
   );
