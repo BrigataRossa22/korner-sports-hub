@@ -37,6 +37,7 @@ function Index() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
+      <h1 className="sr-only">Korner BiH — sportske vijesti iz Bosne i Hercegovine</h1>
       <div className="grid gap-10 lg:grid-cols-[1fr_320px]">
         <div>
           {lead ? (
