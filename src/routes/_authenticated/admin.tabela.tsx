@@ -86,47 +86,67 @@ function StandingRow({
 
   return (
     <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
-      <Input aria-label="Klub" value={form.team} onChange={(e) => set("team", e.target.value)} placeholder="Klub" />
+      <label className="space-y-1 text-xs text-muted-foreground">Klub
+        <Input value={form.team} onChange={(e) => set("team", e.target.value)} placeholder="Naziv kluba" />
+      </label>
+      <label className="space-y-1 text-xs text-muted-foreground">Utakmice
       <Input
         aria-label="Odigrano"
         inputMode="numeric"
         value={form.played}
         onChange={(e) => set("played", num(e.target.value))}
       />
+      </label>
+      <label className="space-y-1 text-xs text-muted-foreground">Pobjede
       <Input
         aria-label="Pobjede"
         inputMode="numeric"
         value={form.wins}
         onChange={(e) => set("wins", num(e.target.value))}
       />
+      </label>
+      <label className="space-y-1 text-xs text-muted-foreground">Remiji
       <Input
         aria-label="Neriješeno"
         inputMode="numeric"
         value={form.draws}
         onChange={(e) => set("draws", num(e.target.value))}
       />
+      </label>
+      <label className="space-y-1 text-xs text-muted-foreground">Porazi
       <Input
         aria-label="Porazi"
         inputMode="numeric"
         value={form.losses}
         onChange={(e) => set("losses", num(e.target.value))}
       />
+      </label>
+      <label className="space-y-1 text-xs text-muted-foreground">Bodovi
       <Input
         aria-label="Bodovi"
         inputMode="numeric"
         value={form.points}
         onChange={(e) => set("points", num(e.target.value))}
       />
-      <Input aria-label="Postignuti golovi" title="Postignuti golovi" placeholder="Golovi +" inputMode="numeric" value={form.goalsFor} onChange={(e) => set("goalsFor", num(e.target.value))} />
-      <Input aria-label="Primljeni golovi" title="Primljeni golovi" placeholder="Golovi −" inputMode="numeric" value={form.goalsAgainst} onChange={(e) => set("goalsAgainst", num(e.target.value))} />
-      <Input aria-label="Forma posljednjih pet utakmica" title="Forma: W pobjeda, D remi, L poraz; od najstarije do najnovije" placeholder="npr. WWDLW" value={form.recentForm} maxLength={12} onChange={(e) => set("recentForm", e.target.value.toUpperCase().replace(/[^WDL\s]/g, ""))} />
+      </label>
+      <label className="space-y-1 text-xs text-muted-foreground">Postignuti golovi
+        <Input inputMode="numeric" value={form.goalsFor} onChange={(e) => set("goalsFor", num(e.target.value))} />
+      </label>
+      <label className="space-y-1 text-xs text-muted-foreground">Primljeni golovi
+        <Input inputMode="numeric" value={form.goalsAgainst} onChange={(e) => set("goalsAgainst", num(e.target.value))} />
+      </label>
+      <label className="space-y-1 text-xs text-muted-foreground">Forma (W, D, L)
+        <Input placeholder="npr. WWDLW" value={form.recentForm} maxLength={5} onChange={(e) => set("recentForm", e.target.value.toUpperCase().replace(/[^WDL]/g, "").slice(-5))} />
+      </label>
+      <label className="space-y-1 text-xs text-muted-foreground">Redoslijed
       <Input
         aria-label="Redoslijed"
         inputMode="numeric"
         value={form.sortOrder}
         onChange={(e) => set("sortOrder", num(e.target.value))}
       />
-      <div className="flex items-center gap-2">
+      </label>
+      <div className="flex items-end gap-2">
         <Button size="sm" onClick={handleSave} disabled={busy}>
           Sačuvaj
         </Button>
