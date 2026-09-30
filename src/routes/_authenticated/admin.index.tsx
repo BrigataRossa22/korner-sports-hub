@@ -39,7 +39,7 @@ function AdminArticlesPage() {
     }
   }
 
-  if (articles.isLoading) {
+  if (articles.isLoading || !articles.data) {
     return <p className="text-sm text-muted-foreground">Učitavam vijesti...</p>;
   }
 

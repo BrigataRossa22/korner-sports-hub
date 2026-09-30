@@ -23,7 +23,7 @@ function EditArticlePage() {
     queryFn: () => fetch({ data: { id } }),
   });
 
-  if (article.isLoading) {
+  if (article.isLoading || !article.data) {
     return <p className="text-sm text-muted-foreground">Učitavam vijest...</p>;
   }
 

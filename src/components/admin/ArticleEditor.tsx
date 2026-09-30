@@ -26,6 +26,16 @@ import { categoryLabels } from "@/lib/content";
 
 const CATEGORIES = Object.keys(categoryLabels) as Category[];
 
+function swapItems(list: string[], a: number, b: number): string[] {
+  const first = list[a];
+  const second = list[b];
+  if (first === undefined || second === undefined) return list;
+  const next = [...list];
+  next[a] = second;
+  next[b] = first;
+  return next;
+}
+
 export function ArticleEditor({ initial = null }: { initial?: AdminArticle | null }) {
   const navigate = useNavigate();
   const save = useServerFn(saveManagedArticle);
@@ -183,13 +193,7 @@ export function ArticleEditor({ initial = null }: { initial?: AdminArticle | nul
                     size="icon"
                     aria-label="Pomjeri gore"
                     disabled={index === 0}
-                    onClick={() =>
-                      setBody((prev) => {
-                        const next = [...prev];
-                        [next[index - 1], next[index]] = [next[index], next[index - 1]];
-                        return next;
-                      })
-                    }
+                    onClick={() => setBody((prev) => swapItems(prev, index - 1, index))}
                   >
                     <ArrowUp className="size-4" />
                   </Button>
@@ -199,13 +203,7 @@ export function ArticleEditor({ initial = null }: { initial?: AdminArticle | nul
                     size="icon"
                     aria-label="Pomjeri dolje"
                     disabled={index === body.length - 1}
-                    onClick={() =>
-                      setBody((prev) => {
-                        const next = [...prev];
-                        [next[index + 1], next[index]] = [next[index], next[index + 1]];
-                        return next;
-                      })
-                    }
+                    onClick={() => setBody((prev) => swapItems(prev, index + 1, index))}
                   >
                     <ArrowDown className="size-4" />
                   </Button>
