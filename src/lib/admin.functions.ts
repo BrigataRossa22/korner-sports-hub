@@ -58,6 +58,12 @@ function toAdminArticle(row: ArticleRow): AdminArticle {
   };
 }
 
+function firstId(rows: { id: string }[] | null | undefined): string {
+  const id = rows?.[0]?.id;
+  if (!id) throw new Error("Zapis nije sačuvan.");
+  return id;
+}
+
 /** Da li je prijavljeni korisnik urednik (za prikaz upozorenja u panelu). */
 export const getEditorStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -171,7 +177,7 @@ export const saveManagedArticle = createServerFn({ method: "POST" })
         .select("id");
       if (error) throw new Error(error.message);
       if (!updated?.length) throw new Error("Vijest nije pronađena.");
-      return { id: updated[0].id, slug: finalSlug };
+      return { id: firstId(updated), slug: finalSlug };
     }
 
     const { data: created, error } = await context.supabase
@@ -179,7 +185,7 @@ export const saveManagedArticle = createServerFn({ method: "POST" })
       .insert(payload)
       .select("id");
     if (error) throw new Error(error.message);
-    return { id: created[0].id, slug: finalSlug };
+    return { id: firstId(created), slug: finalSlug };
   });
 
 export const setArticleFlag = createServerFn({ method: "POST" })
@@ -195,16 +201,16 @@ export const setArticleFlag = createServerFn({ method: "POST" })
         .neq("id", data.id);
     }
 
-    const column =
+    const patch: Database["public"]["Tables"]["articles"]["Update"] =
       data.flag === "published"
-        ? "is_published"
+        ? { is_published: data.value }
         : data.flag === "headline"
-          ? "is_headline"
-          : "is_featured";
+          ? { is_headline: data.value }
+          : { is_featured: data.value };
 
     const { data: updated, error } = await context.supabase
       .from("articles")
-      .update({ [column]: data.value })
+      .update(patch)
       .eq("id", data.id)
       .select("id");
     if (error) throw new Error(error.message);
@@ -286,7 +292,7 @@ export const saveFixture = createServerFn({ method: "POST" })
         .select("id");
       if (error) throw new Error(error.message);
       if (!updated?.length) throw new Error("Utakmica nije pronađena.");
-      return { id: updated[0].id };
+      return { id: firstId(updated) };
     }
 
     const { data: created, error } = await context.supabase
@@ -294,7 +300,7 @@ export const saveFixture = createServerFn({ method: "POST" })
       .insert(payload)
       .select("id");
     if (error) throw new Error(error.message);
-    return { id: created[0].id };
+    return { id: firstId(created) };
   });
 
 export const deleteFixture = createServerFn({ method: "POST" })
@@ -345,7 +351,7 @@ export const saveStanding = createServerFn({ method: "POST" })
         .select("id");
       if (error) throw new Error(error.message);
       if (!updated?.length) throw new Error("Klub nije pronađen.");
-      return { id: updated[0].id };
+      return { id: firstId(updated) };
     }
 
     const { data: created, error } = await context.supabase
@@ -353,7 +359,7 @@ export const saveStanding = createServerFn({ method: "POST" })
       .insert(payload)
       .select("id");
     if (error) throw new Error(error.message);
-    return { id: created[0].id };
+    return { id: firstId(created) };
   });
 
 export const deleteStanding = createServerFn({ method: "POST" })
