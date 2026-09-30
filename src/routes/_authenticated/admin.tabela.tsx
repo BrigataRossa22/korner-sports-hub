@@ -91,7 +91,6 @@ function StandingRow({
       </label>
       <label className="space-y-1 text-xs text-muted-foreground">Utakmice
       <Input
-        aria-label="Odigrano"
         inputMode="numeric"
         value={form.played}
         onChange={(e) => set("played", num(e.target.value))}
@@ -99,7 +98,6 @@ function StandingRow({
       </label>
       <label className="space-y-1 text-xs text-muted-foreground">Pobjede
       <Input
-        aria-label="Pobjede"
         inputMode="numeric"
         value={form.wins}
         onChange={(e) => set("wins", num(e.target.value))}
@@ -107,7 +105,6 @@ function StandingRow({
       </label>
       <label className="space-y-1 text-xs text-muted-foreground">Remiji
       <Input
-        aria-label="Neriješeno"
         inputMode="numeric"
         value={form.draws}
         onChange={(e) => set("draws", num(e.target.value))}
@@ -115,7 +112,6 @@ function StandingRow({
       </label>
       <label className="space-y-1 text-xs text-muted-foreground">Porazi
       <Input
-        aria-label="Porazi"
         inputMode="numeric"
         value={form.losses}
         onChange={(e) => set("losses", num(e.target.value))}
@@ -123,7 +119,6 @@ function StandingRow({
       </label>
       <label className="space-y-1 text-xs text-muted-foreground">Bodovi
       <Input
-        aria-label="Bodovi"
         inputMode="numeric"
         value={form.points}
         onChange={(e) => set("points", num(e.target.value))}
@@ -140,7 +135,6 @@ function StandingRow({
       </label>
       <label className="space-y-1 text-xs text-muted-foreground">Redoslijed
       <Input
-        aria-label="Redoslijed"
         inputMode="numeric"
         value={form.sortOrder}
         onChange={(e) => set("sortOrder", num(e.target.value))}
