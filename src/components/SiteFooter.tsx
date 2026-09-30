@@ -80,6 +80,10 @@ export function SiteFooter() {
       </div>
       <div className="border-t border-white/10 py-4 text-center text-xs text-ink-foreground/50">
         © {new Date().getFullYear()} Korner BiH. Sva prava zadržana.
+        <span className="mx-2">·</span>
+        <Link to="/auth" className="underline underline-offset-4 hover:text-ink-foreground">
+          Prijava za urednike
+        </Link>
       </div>
     </footer>
   );
