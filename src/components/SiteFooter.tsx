@@ -1,11 +1,15 @@
 import { Link } from "@tanstack/react-router";
+import logoAsset from "@/assets/korner-logo.png.asset.json";
 
 export function SiteFooter() {
   return (
     <footer className="mt-16 bg-ink text-ink-foreground">
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:grid-cols-3">
         <div>
-          <p className="font-display text-2xl font-bold uppercase">Korner</p>
+          <p className="flex items-center gap-2 font-display text-2xl font-bold uppercase">
+            <img src={logoAsset.url} alt="Korner BiH logo" className="size-8 rounded-md" />
+            Korner
+          </p>
           <p className="mt-2 max-w-xs text-sm text-ink-foreground/70">
             Sportski portal iz Bosne i Hercegovine. Fudbal, košarka i sve što se dešava na terenu i
             oko njega.
