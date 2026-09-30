@@ -14,16 +14,195 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      articles: {
+        Row: {
+          author: string
+          body: string[]
+          category: string
+          comments: number
+          created_at: string
+          id: string
+          image_path: string | null
+          is_featured: boolean
+          is_headline: boolean
+          is_published: boolean
+          kicker: string
+          lead: string
+          published_at: string
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author?: string
+          body?: string[]
+          category?: string
+          comments?: number
+          created_at?: string
+          id?: string
+          image_path?: string | null
+          is_featured?: boolean
+          is_headline?: boolean
+          is_published?: boolean
+          kicker?: string
+          lead?: string
+          published_at?: string
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author?: string
+          body?: string[]
+          category?: string
+          comments?: number
+          created_at?: string
+          id?: string
+          image_path?: string | null
+          is_featured?: boolean
+          is_headline?: boolean
+          is_published?: boolean
+          kicker?: string
+          lead?: string
+          published_at?: string
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fixtures: {
+        Row: {
+          away: string
+          comp: string
+          finished: boolean
+          home: string
+          id: string
+          score_away: number | null
+          score_home: number | null
+          sort_order: number
+          when_text: string
+        }
+        Insert: {
+          away: string
+          comp?: string
+          finished?: boolean
+          home: string
+          id?: string
+          score_away?: number | null
+          score_home?: number | null
+          sort_order?: number
+          when_text?: string
+        }
+        Update: {
+          away?: string
+          comp?: string
+          finished?: boolean
+          home?: string
+          id?: string
+          score_away?: number | null
+          score_home?: number | null
+          sort_order?: number
+          when_text?: string
+        }
+        Relationships: []
+      }
+      site_settings: {
+        Row: {
+          about: string
+          contact_email: string
+          facebook: string
+          id: number
+          instagram: string
+          updated_at: string
+        }
+        Insert: {
+          about?: string
+          contact_email?: string
+          facebook?: string
+          id?: number
+          instagram?: string
+          updated_at?: string
+        }
+        Update: {
+          about?: string
+          contact_email?: string
+          facebook?: string
+          id?: number
+          instagram?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      standings: {
+        Row: {
+          draws: number
+          id: string
+          losses: number
+          played: number
+          points: number
+          sort_order: number
+          team: string
+          wins: number
+        }
+        Insert: {
+          draws?: number
+          id?: string
+          losses?: number
+          played?: number
+          points?: number
+          sort_order?: number
+          team: string
+          wins?: number
+        }
+        Update: {
+          draws?: number
+          id?: string
+          losses?: number
+          played?: number
+          points?: number
+          sort_order?: number
+          team?: string
+          wins?: number
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "editor"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +329,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["editor"],
+    },
   },
 } as const

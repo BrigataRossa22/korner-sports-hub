@@ -1,5 +1,13 @@
 {
   "version": "7",
   "dialect": "postgresql",
-  "entries": []
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1790779928282,
+      "tag": "0000_korner_cms_content",
+      "breakpoints": true
+    }
+  ]
 }
