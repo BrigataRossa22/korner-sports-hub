@@ -10,4 +10,5 @@
 - [x] Racun bez prava više ne daje prazan ekran — prikazuje se poruka s dugmetom
 - [x] Korisnik ima urednički nalog i prava
 - [ ] Puna ligaška tabela s golovima, gol-razlikom i formom; uređivanje u panelu
+- [ ] Objasniti korisniku kako povezati projekt s GitHubom i preuzeti kod
 - [ ] Korisnik šalje prave vijesti, fotografije i logo (trenutni sadržaj je zamjena)
