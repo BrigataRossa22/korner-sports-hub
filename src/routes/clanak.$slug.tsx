@@ -63,7 +63,7 @@ function Clanak() {
 
           <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 border-y border-border py-3 text-sm text-muted-foreground">
             <span>{article.author}</span>
-            <span>{formatDate(article.published)}</span>
+            <span>{formatDate(article.publishedAt)}</span>
             <span>{article.comments} komentara</span>
           </div>
 

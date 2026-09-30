@@ -19,25 +19,46 @@ function Thumb({ article, className }: { article: ArticleDTO; className: string 
   );
 }
 
-export function ArticleCard({ article, size = "md" }: { article: ArticleDTO; size?: "sm" | "md" }) {
+export function ArticleCard({
+  article,
+  size = "md",
+}: {
+  article: ArticleDTO;
+  size?: "sm" | "md" | "hero";
+}) {
+  const hero = size === "hero";
+
   return (
     <article className="group">
       <Link to="/clanak/$slug" params={{ slug: article.slug }} className="block">
         <div className="overflow-hidden bg-muted">
-          <Thumb article={article} className="aspect-[3/2] w-full" />
+          <Thumb
+            article={article}
+            className={hero ? "aspect-[16/9] w-full" : "aspect-[3/2] w-full"}
+          />
         </div>
         <p className="kicker mt-3">{article.kicker}</p>
         <h3
           className={
-            size === "sm"
-              ? "mt-1 text-base group-hover:text-primary"
-              : "mt-1 text-xl group-hover:text-primary"
+            hero
+              ? "mt-1 text-3xl leading-tight group-hover:text-primary"
+              : size === "sm"
+                ? "mt-1 text-base group-hover:text-primary"
+                : "mt-1 text-xl group-hover:text-primary"
           }
         >
           {article.title}
         </h3>
-        {size === "md" && (
-          <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{article.lead}</p>
+        {size !== "sm" && (
+          <p
+            className={
+              hero
+                ? "mt-3 line-clamp-3 text-base text-muted-foreground"
+                : "mt-2 line-clamp-2 text-sm text-muted-foreground"
+            }
+          >
+            {article.lead}
+          </p>
         )}
         <p className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
           <span>{formatDate(article.publishedAt)}</span>
