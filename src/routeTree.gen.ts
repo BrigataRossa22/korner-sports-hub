@@ -15,6 +15,7 @@ import { Route as KosarkaRouteImport } from './routes/kosarka'
 import { Route as ONamaRouteImport } from './routes/o-nama'
 import { Route as OstaliSportoviRouteImport } from './routes/ostali-sportovi'
 import { Route as ClanakSlugRouteImport } from './routes/clanak.$slug'
+import { Route as ApiPublicSlikeSplatRouteImport } from './routes/api/public/slike.$'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -46,6 +47,11 @@ const ClanakSlugRoute = ClanakSlugRouteImport.update({
   path: '/clanak/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicSlikeSplatRoute = ApiPublicSlikeSplatRouteImport.update({
+  id: '/api/public/slike/$',
+  path: '/api/public/slike/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -54,6 +60,7 @@ export interface FileRoutesByFullPath {
   '/o-nama': typeof ONamaRoute
   '/ostali-sportovi': typeof OstaliSportoviRoute
   '/clanak/$slug': typeof ClanakSlugRoute
+  '/api/public/slike/$': typeof ApiPublicSlikeSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +69,7 @@ export interface FileRoutesByTo {
   '/o-nama': typeof ONamaRoute
   '/ostali-sportovi': typeof OstaliSportoviRoute
   '/clanak/$slug': typeof ClanakSlugRoute
+  '/api/public/slike/$': typeof ApiPublicSlikeSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,6 +79,7 @@ export interface FileRoutesById {
   '/o-nama': typeof ONamaRoute
   '/ostali-sportovi': typeof OstaliSportoviRoute
   '/clanak/$slug': typeof ClanakSlugRoute
+  '/api/public/slike/$': typeof ApiPublicSlikeSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -81,6 +90,7 @@ export interface FileRouteTypes {
     | '/o-nama'
     | '/ostali-sportovi'
     | '/clanak/$slug'
+    | '/api/public/slike/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -89,6 +99,7 @@ export interface FileRouteTypes {
     | '/o-nama'
     | '/ostali-sportovi'
     | '/clanak/$slug'
+    | '/api/public/slike/$'
   id:
     | '__root__'
     | '/'
@@ -97,6 +108,7 @@ export interface FileRouteTypes {
     | '/o-nama'
     | '/ostali-sportovi'
     | '/clanak/$slug'
+    | '/api/public/slike/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -106,6 +118,7 @@ export interface RootRouteChildren {
   ONamaRoute: typeof ONamaRoute
   OstaliSportoviRoute: typeof OstaliSportoviRoute
   ClanakSlugRoute: typeof ClanakSlugRoute
+  ApiPublicSlikeSplatRoute: typeof ApiPublicSlikeSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -152,6 +165,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClanakSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/slike/$': {
+      id: '/api/public/slike/$'
+      path: '/api/public/slike/$'
+      fullPath: '/api/public/slike/$'
+      preLoaderRoute: typeof ApiPublicSlikeSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -162,6 +182,7 @@ const rootRouteChildren: RootRouteChildren = {
   ONamaRoute: ONamaRoute,
   OstaliSportoviRoute: OstaliSportoviRoute,
   ClanakSlugRoute: ClanakSlugRoute,
+  ApiPublicSlikeSplatRoute: ApiPublicSlikeSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
