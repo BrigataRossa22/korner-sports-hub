@@ -1,7 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Menu, X } from "lucide-react";
 import logoAsset from "@/assets/korner-logo.png.asset.json";
+import { contentOptions } from "@/lib/content";
 
 const nav = [
   { to: "/", label: "Naslovnica" },
@@ -11,18 +13,31 @@ const nav = [
   { to: "/o-nama", label: "O nama" },
 ] as const;
 
+function useTicker(): string {
+  const { data } = useQuery(contentOptions);
+  if (!data || data.fixtures.length === 0) return "";
+
+  const upcoming = data.fixtures.filter((f) => !f.finished);
+  const shown = (upcoming.length ? upcoming : data.fixtures).slice(0, 2);
+
+  return shown
+    .map((f) =>
+      f.finished && f.scoreHome !== null && f.scoreAway !== null
+        ? `${f.home} ${f.scoreHome}:${f.scoreAway} ${f.away}`
+        : `${f.home} – ${f.away} ${f.when}`,
+    )
+    .join(" · ");
+}
+
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
+  const ticker = useTicker();
 
   return (
     <header className="sticky top-0 z-50 bg-ink text-ink-foreground">
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
         <Link to="/" className="flex items-center gap-2.5">
-          <img
-            src={logoAsset.url}
-            alt="Korner BiH logo"
-            className="size-10 rounded-md"
-          />
+          <img src={logoAsset.url} alt="Korner BiH logo" className="size-10 rounded-md" />
           <span className="flex items-baseline gap-1">
             <span className="font-display text-3xl font-bold uppercase tracking-tight">Korner</span>
             <span className="rounded-sm bg-primary px-1.5 py-0.5 font-display text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-primary-foreground">
@@ -70,16 +85,16 @@ export function SiteHeader() {
         </nav>
       )}
 
-      <div className="bg-primary">
-        <div className="mx-auto flex max-w-6xl items-center gap-3 overflow-hidden px-4 py-1.5 text-xs text-primary-foreground">
-          <span className="shrink-0 font-display font-semibold uppercase tracking-[0.15em]">
-            Uživo
-          </span>
-          <span className="truncate">
-            BiH – Švedska u petak 20:45 · Sarajevo – Željezničar u subotu 17:00
-          </span>
+      {ticker && (
+        <div className="bg-primary">
+          <div className="mx-auto flex max-w-6xl items-center gap-3 overflow-hidden px-4 py-1.5 text-xs text-primary-foreground">
+            <span className="shrink-0 font-display font-semibold uppercase tracking-[0.15em]">
+              Uživo
+            </span>
+            <span className="truncate">{ticker}</span>
+          </div>
         </div>
-      </div>
+      )}
     </header>
   );
 }
