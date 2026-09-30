@@ -99,7 +99,7 @@ function ResetPasswordPage() {
               </p>
             )}
             <Button type="submit" className="w-full" disabled={busy}>
-              {busy ? "Seka..." : "Sačuvaj lozinku"}
+              {busy ? "Čeka se..." : "Sačuvaj lozinku"}
             </Button>
           </form>
         )}

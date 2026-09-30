@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { createFileRoute, navigate, useNavigate } from "@tanstack/react-router";
-import { Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import logoUrl from "@/assets/korner-logo.png.asset.json";
+import logoAsset from "@/assets/korner-logo.png.asset.json";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -94,7 +93,7 @@ function AuthPage() {
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <Link to="/" className="flex items-center gap-2">
-            <img src={logoUrl} alt="Korner BiH" className="size-9" />
+            <img src={logoAsset.url} alt="Korner BiH" className="size-9" />
             <span className="font-heading text-xl font-extrabold tracking-tight">
               Korner <span className="text-primary">BiH</span>
             </span>
@@ -154,7 +153,7 @@ function AuthPage() {
 
               <Button type="submit" className="w-full" disabled={busy}>
                 {busy
-                  ? "Seka..."
+                  ? "Čeka se..."
                   : mode === "signin"
                     ? "Prijavi se"
                     : "Napravi račun"}
