@@ -12,12 +12,18 @@ export const categoryLabels: Record<Category, string> = {
   fudbal: "Fudbal",
   kosarka: "Košarka",
   "ostali-sportovi": "Ostali sportovi",
+  "wwin-liga": "WWiN liga",
+  reprezentacija: "Reprezentacija",
+  "nize-lige": "Niže lige",
 };
 
 export const categoryHrefs: Record<Category, string> = {
   fudbal: "/fudbal",
   kosarka: "/kosarka",
   "ostali-sportovi": "/ostali-sportovi",
+  "wwin-liga": "/wwin-liga",
+  reprezentacija: "/reprezentacija",
+  "nize-lige": "/nize-lige",
 };
 
 /** "2026-09-30T12:00:00+02:00" -> "30.09.2026." */
