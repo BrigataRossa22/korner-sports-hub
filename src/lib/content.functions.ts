@@ -4,7 +4,13 @@ import { createClient } from "@supabase/supabase-js";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 
-export type Category = "fudbal" | "kosarka" | "ostali-sportovi";
+export type Category =
+  | "fudbal"
+  | "kosarka"
+  | "ostali-sportovi"
+  | "wwin-liga"
+  | "reprezentacija"
+  | "nize-lige";
 
 export type ArticleDTO = {
   id: string;
