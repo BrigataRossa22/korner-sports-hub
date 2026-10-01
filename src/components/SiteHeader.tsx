@@ -6,12 +6,10 @@ import { contentOptions } from "@/lib/content";
 import { useHydrated } from "@/lib/use-hydrated";
 
 const nav = [
-  { to: "/", label: "Naslovnica" },
-  { to: "/fudbal", label: "Fudbal" },
+  { to: "/wwin-liga", label: "WWiN liga" },
   { to: "/tabela", label: "Tabela" },
-  { to: "/kosarka", label: "Košarka" },
-  { to: "/ostali-sportovi", label: "Ostali sportovi" },
-  { to: "/o-nama", label: "O nama" },
+  { to: "/reprezentacija", label: "Reprezentacija" },
+  { to: "/nize-lige", label: "Niže lige" },
 ] as const;
 
 function useTicker(): string {
@@ -53,7 +51,7 @@ export function SiteHeader() {
             <Link
               key={item.to}
               to={item.to}
-              activeOptions={{ exact: item.to === "/" }}
+              activeOptions={{ exact: false }}
               activeProps={{ className: "text-primary-foreground border-primary" }}
               className="border-b-2 border-transparent pb-0.5 font-display text-sm font-medium uppercase tracking-wide text-ink-foreground/75 transition-colors hover:text-primary-foreground"
             >
