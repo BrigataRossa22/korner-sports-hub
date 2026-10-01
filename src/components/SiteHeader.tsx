@@ -2,7 +2,6 @@ import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Menu, X } from "lucide-react";
-<img src="/korner-logo.png" alt="Korner BiH logo" className="size-10 rounded-md" />
 import { contentOptions } from "@/lib/content";
 import { useHydrated } from "@/lib/use-hydrated";
 
@@ -40,7 +39,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-50 bg-ink text-ink-foreground">
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
         <Link to="/" className="flex items-center gap-2.5">
-          <img src={logoAsset.url} alt="Korner BiH logo" className="size-10 rounded-md" />
+          <img src="/korner-logo.png" alt="Korner BiH logo" className="size-10 rounded-md" />
           <span className="flex items-baseline gap-1">
             <span className="font-display text-3xl font-bold uppercase tracking-tight">Korner</span>
             <span className="rounded-sm bg-primary px-1.5 py-0.5 font-display text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-primary-foreground">
