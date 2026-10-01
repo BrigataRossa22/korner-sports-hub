@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { StandingsTable } from "@/components/StandingsTable";
+import { TopPlayers } from "@/components/TopPlayers";
 import { LoadError } from "@/components/RouteFallbacks";
 import { getPublicContent } from "@/lib/content.functions";
 
@@ -33,6 +34,8 @@ function Tabela() {
         <p className="border-y border-border py-8 text-muted-foreground">Tabela još nije unesena.</p>
       )}
       <p className="mt-4 text-xs text-muted-foreground">Ut: utakmice · P: pobjede · N: neriješeno · I: porazi · GR: gol-razlika · Bod: bodovi. W: pobjeda · D: remi · L: poraz.</p>
+
+      <TopPlayers />
     </div>
   );
 }
