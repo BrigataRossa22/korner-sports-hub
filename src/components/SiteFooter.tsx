@@ -25,13 +25,16 @@ export function SiteFooter() {
           <p className="font-display text-sm uppercase tracking-[0.15em] text-primary">Rubrike</p>
           <ul className="mt-3 space-y-2 text-sm text-ink-foreground/75">
             <li>
-              <Link to="/fudbal">Fudbal</Link>
+              <Link to="/wwin-liga">WWiN liga</Link>
             </li>
             <li>
-              <Link to="/kosarka">Košarka</Link>
+              <Link to="/tabela">Tabela</Link>
             </li>
             <li>
-              <Link to="/ostali-sportovi">Ostali sportovi</Link>
+              <Link to="/reprezentacija">Reprezentacija</Link>
+            </li>
+            <li>
+              <Link to="/nize-lige">Niže lige</Link>
             </li>
             <li>
               <Link to="/o-nama">O nama</Link>
