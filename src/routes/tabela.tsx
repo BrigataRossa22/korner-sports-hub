@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { StandingsTable } from "@/components/StandingsTable";
 import { TopPlayers } from "@/components/TopPlayers";
+import { Attendance } from "@/components/Attendance";
 import { LoadError } from "@/components/RouteFallbacks";
 import { getPublicContent } from "@/lib/content.functions";
 
@@ -36,6 +37,7 @@ function Tabela() {
       <p className="mt-4 text-xs text-muted-foreground">Ut: utakmice · P: pobjede · N: neriješeno · I: porazi · GR: gol-razlika · Bod: bodovi. W: pobjeda · D: remi · L: poraz.</p>
 
       <TopPlayers />
+      <Attendance />
     </div>
   );
 }
