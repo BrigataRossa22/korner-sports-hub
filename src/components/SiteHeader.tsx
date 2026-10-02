@@ -10,6 +10,7 @@ const nav = [
   { to: "/tabela", label: "Tabela" },
   { to: "/reprezentacija", label: "Reprezentacija" },
   { to: "/nize-lige", label: "Niže lige" },
+  { to: "/all-time-lista", label: "All-time lista" },
 ] as const;
 
 function useTicker(): string {
