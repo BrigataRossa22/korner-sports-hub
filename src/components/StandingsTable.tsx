@@ -30,7 +30,16 @@ export function StandingsTable({ standings }: { standings: StandingDTO[] }) {
             return (
               <tr key={row.id} className="border-b border-border/70 last:border-0 even:bg-surface/50">
                 <td className="px-2 py-3 text-center font-semibold text-primary">{index + 1}</td>
-                <th scope="row" className="px-2 py-3 text-left font-semibold text-foreground">{row.team}</th>
+                <th scope="row" className="px-2 py-3 text-left font-semibold text-foreground">
+                  <span className="flex items-center gap-2">
+                    {row.crest ? (
+                      <img src={row.crest} alt="" className="size-6 shrink-0 object-contain" />
+                    ) : (
+                      <span className="size-6 shrink-0" />
+                    )}
+                    {row.team}
+                  </span>
+                </th>
                 <td className="px-1 py-3 text-center">{row.played}</td>
                 <td className="px-1 py-3 text-center">{row.wins}</td>
                 <td className="px-1 py-3 text-center">{row.draws}</td>
