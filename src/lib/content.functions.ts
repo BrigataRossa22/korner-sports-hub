@@ -43,6 +43,7 @@ export type FixtureDTO = {
 export type StandingDTO = {
   id: string;
   team: string;
+  crest: string;
   played: number;
   wins: number;
   draws: number;
@@ -166,6 +167,7 @@ export const getPublicContent = createServerFn({ method: "GET" }).handler(async 
     standings: (standingsRes.data ?? []).map((row) => ({
       id: row.id,
       team: row.team,
+      crest: ((row as unknown as { crest?: string }).crest) ?? "",
       played: row.played,
       wins: row.wins,
       draws: row.draws,
