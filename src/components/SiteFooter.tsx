@@ -31,6 +31,9 @@ export function SiteFooter() {
               <Link to="/tabela">Tabela</Link>
             </li>
             <li>
+  <Link to="/kup-bih">Kup BiH</Link>
+</li>
+            <li>
               <Link to="/reprezentacija">Reprezentacija</Link>
             </li>
             <li>
