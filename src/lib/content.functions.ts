@@ -11,7 +11,8 @@ export type Category =
   | "wwin-liga"
   | "reprezentacija"
   | "nize-lige"
-  | "kup-bih";
+  | "kup-bih"
+  | "u-evropi";
 
 export type ArticleDTO = {
   id: string;
