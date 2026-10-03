@@ -16,8 +16,8 @@ export const categoryLabels: Record<Category, string> = {
   reprezentacija: "Reprezentacija",
   "nize-lige": "Niže lige",
   "kup-bih": "Kup BiH",
+  "u-evropi": "U Evropi",
 };
-
 
 export const categoryHrefs: Record<Category, string> = {
   fudbal: "/fudbal",
@@ -27,6 +27,7 @@ export const categoryHrefs: Record<Category, string> = {
   reprezentacija: "/reprezentacija",
   "nize-lige": "/nize-lige",
   "kup-bih": "/kup-bih",
+  "u-evropi": "/u-evropi",
 };
 
 /** "2026-09-30T12:00:00+02:00" -> "30.09.2026." */
