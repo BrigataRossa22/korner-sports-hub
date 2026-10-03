@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { CategoryPage } from "@/components/CategoryPage";
+import { EuroTables } from "@/components/EuroTables";
 import { LoadError } from "@/components/RouteFallbacks";
 import { getPublicContent } from "@/lib/content.functions";
 
@@ -16,11 +17,20 @@ export const Route = createFileRoute("/u-evropi")({
     ],
   }),
   errorComponent: LoadError,
-  component: () => (
-    <CategoryPage
-      category="u-evropi"
-      intro="Naši klubovi u Ligi prvaka, Evropskoj i Konferencijskoj ligi: rezultati, najave i analize."
-      content={Route.useLoaderData()}
-    />
-  ),
+  component: UEvropi,
 });
+
+function UEvropi() {
+  return (
+    <>
+      <CategoryPage
+        category="u-evropi"
+        intro="Naši klubovi u Ligi prvaka, Evropskoj i Konferencijskoj ligi: rezultati, najave i analize."
+        content={Route.useLoaderData()}
+      />
+      <div className="mx-auto max-w-6xl px-4 pb-12">
+        <EuroTables />
+      </div>
+    </>
+  );
+}
