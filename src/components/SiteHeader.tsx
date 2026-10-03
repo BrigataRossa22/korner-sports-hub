@@ -11,6 +11,7 @@ const nav = [
   { to: "/reprezentacija", label: "Reprezentacija" },
   { to: "/nize-lige", label: "Niže lige" },
   { to: "/kup-bih", label: "Kup BiH" },
+  { to: "/u-evropi", label: "U Evropi" },
   { to: "/all-time-lista", label: "All-time lista" },
 ] as const;
 
