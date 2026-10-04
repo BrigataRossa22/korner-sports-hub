@@ -1,4 +1,5 @@
 import type { StandingDTO } from "@/lib/content.functions";
+import { useCrest } from "@/lib/use-crest";
 
 const resultStyle: Record<string, string> = {
   W: "bg-primary text-primary-foreground",
@@ -7,6 +8,7 @@ const resultStyle: Record<string, string> = {
 };
 
 export function StandingsTable({ standings }: { standings: StandingDTO[] }) {
+  const crestFor = useCrest();
   return (
     <div className="overflow-x-auto border-y border-border">
       <table className="w-full min-w-[660px] border-collapse text-sm tabular-nums">
@@ -27,13 +29,14 @@ export function StandingsTable({ standings }: { standings: StandingDTO[] }) {
         <tbody>
           {standings.map((row, index) => {
             const knownGoals = row.played === 0 || row.goalsFor !== 0 || row.goalsAgainst !== 0;
+            const crest = crestFor(row.team) || row.crest;
             return (
               <tr key={row.id} className="border-b border-border/70 last:border-0 even:bg-surface/50">
                 <td className="px-2 py-3 text-center font-semibold text-primary">{index + 1}</td>
                 <th scope="row" className="px-2 py-3 text-left font-semibold text-foreground">
                   <span className="flex items-center gap-2">
-                    {row.crest ? (
-                      <img src={row.crest} alt="" className="size-6 shrink-0 object-contain" />
+                    {crest ? (
+                      <img src={crest} alt="" className="size-6 shrink-0 object-contain" />
                     ) : (
                       <span className="size-6 shrink-0" />
                     )}
