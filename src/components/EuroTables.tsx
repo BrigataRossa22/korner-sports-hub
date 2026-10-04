@@ -8,7 +8,23 @@ const COMPETITIONS: { key: EuroMatch["competition"]; title: string }[] = [
   { key: "KPK", title: "Kup pobjednika kupova" },
 ];
 
-function Table({ title, rows }: { title: string; rows: EuroMatch[] }) {
+const SUPA = "https://wxyxcfalnqttwchxebpn.supabase.co/storage/v1/object/public/slike/";
+
+function Table({ title, rows: rawRows }: { title: string; rows: EuroMatch[] }) {
+  // Redoslijed klubova u sezoni = redoslijed po najmanjem sort_order tog kluba
+  const firstOrder = new Map<string, number>();
+  for (const r of rawRows) {
+    const k = `${r.season}|${r.club}`;
+    firstOrder.set(k, Math.min(firstOrder.get(k) ?? Infinity, r.sort_order));
+  }
+  const rows = [...rawRows].sort(
+    (a, b) =>
+      a.season.localeCompare(b.season) ||
+      firstOrder.get(`${a.season}|${a.club}`)! - firstOrder.get(`${b.season}|${b.club}`)! ||
+      a.club.localeCompare(b.club) ||
+      a.sort_order - b.sort_order,
+  );
+
   const info = rows.map((row, i) => {
     const prev = rows[i - 1];
     const next = rows[i + 1];
@@ -58,18 +74,36 @@ function Table({ title, rows }: { title: string; rows: EuroMatch[] }) {
                 : x.lastOfClub
                   ? "border-b border-border"
                   : "";
+              const flag = r.opponent_flag
+                ? r.opponent_flag.startsWith("http")
+                  ? r.opponent_flag
+                  : `https://flagcdn.com/w40/${r.opponent_flag.toLowerCase()}.png`
+                : "";
+              const crest = r.club_crest
+                ? r.club_crest.startsWith("http")
+                  ? r.club_crest
+                  : `${SUPA}${r.club_crest}`
+                : "";
               return (
                 <tr key={r.id} className={border}>
                   {x.newSeason && (
-                    <td rowSpan={x.seasonCount} className="border-r border-border px-3 py-2 align-middle font-semibold">
+                    <td
+                      rowSpan={x.seasonCount}
+                      className="border-r border-border px-3 py-2 align-middle font-semibold"
+                    >
                       {r.season}
                     </td>
                   )}
                   {x.newClub && (
-                    <td rowSpan={x.clubCount} className="border-r border-border px-3 py-2 align-middle">
+                    <td
+                      rowSpan={x.clubCount}
+                      className={`border-r border-border px-3 py-2 align-middle ${
+                        x.lastOfSeason || true ? "border-b border-border" : ""
+                      }`}
+                    >
                       <span className="flex items-center gap-2 font-semibold">
-                        {r.club_crest && (
-                          <img src={r.club_crest} alt="" className="size-6 shrink-0 object-contain" />
+                        {crest && (
+                          <img src={crest} alt="" className="size-6 shrink-0 object-contain" />
                         )}
                         {r.club}
                       </span>
@@ -78,17 +112,7 @@ function Table({ title, rows }: { title: string; rows: EuroMatch[] }) {
                   <td className="px-3 py-2">{r.round}</td>
                   <td className="px-3 py-2">
                     <span className="flex items-center gap-2">
-                      {r.opponent_flag && (
-                      <img
-  src={
-    r.opponent_flag.startsWith("http")
-      ? r.opponent_flag
-      : `https://flagcdn.com/w40/${r.opponent_flag.toLowerCase()}.png`
-  }
-  alt=""
-  className="h-4 w-6 shrink-0 object-cover"
-/>
-                      )}
+                      {flag && <img src={flag} alt="" className="h-4 w-6 shrink-0 object-cover" />}
                       {r.opponent}
                     </span>
                   </td>
