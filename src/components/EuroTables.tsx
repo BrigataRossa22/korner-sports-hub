@@ -79,7 +79,15 @@ function Table({ title, rows }: { title: string; rows: EuroMatch[] }) {
                   <td className="px-3 py-2">
                     <span className="flex items-center gap-2">
                       {r.opponent_flag && (
-                        <img src={r.opponent_flag} alt="" className="h-4 w-6 shrink-0 object-cover" />
+                      <img
+  src={
+    r.opponent_flag.startsWith("http")
+      ? r.opponent_flag
+      : `https://flagcdn.com/w40/${r.opponent_flag.toLowerCase()}.png`
+  }
+  alt=""
+  className="h-4 w-6 shrink-0 object-cover"
+/>
                       )}
                       {r.opponent}
                     </span>
