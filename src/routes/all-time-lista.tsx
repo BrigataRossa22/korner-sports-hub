@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { LoadError } from "@/components/RouteFallbacks";
 import { getAllTimeTeams } from "@/lib/alltimeteams.functions";
+import { useCrest } from "@/lib/use-crest";
 
 export const Route = createFileRoute("/all-time-lista")({
   head: () => ({
@@ -19,6 +20,7 @@ export const Route = createFileRoute("/all-time-lista")({
 
 function AllTime() {
   const { data } = useQuery({ queryKey: ["all-time-teams"], queryFn: () => getAllTimeTeams() });
+  const crestFor = useCrest();
   const rows = data ?? [];
 
   return (
@@ -46,28 +48,31 @@ function AllTime() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((r, i) => (
-                <tr key={r.id} className="border-t border-border">
-                  <td className="px-3 py-2">{i + 1}</td>
-                  <td className="px-3 py-2">
-                    <span className="flex items-center gap-2 font-medium">
-                      {r.crest ? (
-                        <img src={r.crest} alt="" className="size-6 object-contain" />
-                      ) : (
-                        <span className="size-6" />
-                      )}
-                      {r.team}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2 text-right">{r.played}</td>
-                  <td className="px-3 py-2 text-right">{r.wins}</td>
-                  <td className="px-3 py-2 text-right">{r.draws}</td>
-                  <td className="px-3 py-2 text-right">{r.losses}</td>
-                  <td className="px-3 py-2 text-right">{r.goals_for}</td>
-                  <td className="px-3 py-2 text-right">{r.goals_against}</td>
-                  <td className="px-3 py-2 text-right font-bold">{r.points}</td>
-                </tr>
-              ))}
+              {rows.map((r, i) => {
+                const crest = crestFor(r.team) || r.crest;
+                return (
+                  <tr key={r.id} className="border-t border-border">
+                    <td className="px-3 py-2">{i + 1}</td>
+                    <td className="px-3 py-2">
+                      <span className="flex items-center gap-2 font-medium">
+                        {crest ? (
+                          <img src={crest} alt="" className="size-6 object-contain" />
+                        ) : (
+                          <span className="size-6" />
+                        )}
+                        {r.team}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 text-right">{r.played}</td>
+                    <td className="px-3 py-2 text-right">{r.wins}</td>
+                    <td className="px-3 py-2 text-right">{r.draws}</td>
+                    <td className="px-3 py-2 text-right">{r.losses}</td>
+                    <td className="px-3 py-2 text-right">{r.goals_for}</td>
+                    <td className="px-3 py-2 text-right">{r.goals_against}</td>
+                    <td className="px-3 py-2 text-right font-bold">{r.points}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
