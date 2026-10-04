@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { CategoryPage } from "@/components/CategoryPage";
 import { EuroTables } from "@/components/EuroTables";
+import { EuroTotals } from "@/components/EuroTotals";
 import { LoadError } from "@/components/RouteFallbacks";
 import { getPublicContent } from "@/lib/content.functions";
 
@@ -30,6 +31,7 @@ function UEvropi() {
       />
       <div className="mx-auto max-w-6xl px-4 pb-12">
         <EuroTables />
+        <EuroTotals />
       </div>
     </>
   );
