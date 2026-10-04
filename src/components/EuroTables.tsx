@@ -13,10 +13,10 @@ const SUPA = "https://wxyxcfalnqttwchxebpn.supabase.co/storage/v1/object/public/
 
 function Table({ title, rows: rawRows }: { title: string; rows: EuroMatch[] }) {
   // Redoslijed klubova u sezoni = redoslijed po najmanjem sort_order tog kluba
+      const crestFor = useCrest();
   const firstOrder = new Map<string, number>();
   for (const r of rawRows) {
     const k = `${r.season}|${r.club}`;
-    const crestFor = useCrest();
     firstOrder.set(k, Math.min(firstOrder.get(k) ?? Infinity, r.sort_order));
   }
   const rows = [...rawRows].sort(
