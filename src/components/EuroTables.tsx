@@ -1,3 +1,4 @@
+import { useCrest } from "@/lib/use-crest";
 import { useQuery } from "@tanstack/react-query";
 import { getEuroMatches, type EuroMatch } from "@/lib/euromatches.functions";
 
@@ -15,6 +16,7 @@ function Table({ title, rows: rawRows }: { title: string; rows: EuroMatch[] }) {
   const firstOrder = new Map<string, number>();
   for (const r of rawRows) {
     const k = `${r.season}|${r.club}`;
+    const crestFor = useCrest();
     firstOrder.set(k, Math.min(firstOrder.get(k) ?? Infinity, r.sort_order));
   }
   const rows = [...rawRows].sort(
@@ -79,11 +81,11 @@ function Table({ title, rows: rawRows }: { title: string; rows: EuroMatch[] }) {
                   ? r.opponent_flag
                   : `https://flagcdn.com/w40/${r.opponent_flag.toLowerCase()}.png`
                 : "";
-              const crest = r.club_crest
-                ? r.club_crest.startsWith("http")
-                  ? r.club_crest
-                  : `${SUPA}${r.club_crest}`
-                : "";
+             const crest = crestFor(r.club) || (r.club_crest
+  ? r.club_crest.startsWith("http")
+    ? r.club_crest
+    : `${SUPA}${r.club_crest}`
+  : "");
               return (
                 <tr key={r.id} className={border}>
                   {x.newSeason && (
