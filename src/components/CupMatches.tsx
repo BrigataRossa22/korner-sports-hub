@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getCupMatches, type CupMatch } from "@/lib/cupmatches.functions";
+import { useCrest } from "@/lib/use-crest";
 
 const ROUNDS: { key: string; title: string }[] = [
   { key: "Q2", title: "Q2" },
@@ -42,6 +43,7 @@ function Team({ name, crest, align }: { name: string; crest: string; align: "lef
 }
 
 function RoundTable({ title, rows }: { title: string; rows: CupMatch[] }) {
+  const crestFor = useCrest();
   return (
     <section className="mt-10 rounded-lg border border-border bg-card">
       <h2 className="border-b border-border px-4 py-3 font-display text-lg font-bold uppercase">
@@ -62,13 +64,13 @@ function RoundTable({ title, rows }: { title: string; rows: CupMatch[] }) {
                 <td className="whitespace-nowrap px-4 py-3">{fmtDate(m.match_date)}</td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
-                    <Team name={m.home} crest={m.home_crest} align="right" />
+                    <Team name={m.home} crest={crestFor(m.home) || m.home_crest} align="right" />
                     <span className="min-w-14 text-center font-bold">
                       {m.score_home !== null && m.score_away !== null
                         ? `${m.score_home}:${m.score_away}`
                         : "–"}
                     </span>
-                    <Team name={m.away} crest={m.away_crest} align="left" />
+                    <Team name={m.away} crest={crestFor(m.away) || m.away_crest} align="left" />
                   </div>
                 </td>
                 <td className="px-4 py-3 text-right">
