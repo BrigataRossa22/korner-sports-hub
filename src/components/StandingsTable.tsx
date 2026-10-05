@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import type { StandingDTO } from "@/lib/content.functions";
 import { useCrest } from "@/lib/use-crest";
 
@@ -34,14 +35,18 @@ export function StandingsTable({ standings }: { standings: StandingDTO[] }) {
               <tr key={row.id} className="border-b border-border/70 last:border-0 even:bg-surface/50">
                 <td className="px-2 py-3 text-center font-semibold text-primary">{index + 1}</td>
                 <th scope="row" className="px-2 py-3 text-left font-semibold text-foreground">
-                  <span className="flex items-center gap-2">
+                  <Link
+                    to="/klub/$name"
+                    params={{ name: row.team }}
+                    className="flex items-center gap-2 hover:underline"
+                  >
                     {crest ? (
                       <img src={crest} alt="" className="size-6 shrink-0 object-contain" />
                     ) : (
                       <span className="size-6 shrink-0" />
                     )}
                     {row.team}
-                  </span>
+                  </Link>
                 </th>
                 <td className="px-1 py-3 text-center">{row.played}</td>
                 <td className="px-1 py-3 text-center">{row.wins}</td>
