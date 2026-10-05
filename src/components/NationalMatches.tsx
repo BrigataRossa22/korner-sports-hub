@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { TableSkeleton } from "@/components/TableSkeleton";
 import { getNationalMatches } from "@/lib/nationalmatches.functions";
 
 function fmtDate(iso: string): string {
@@ -33,7 +34,7 @@ function Team({ name, flag, align }: { name: string; flag: string; align: "left"
 }
 
 export function NationalMatches() {
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["national-matches"],
     queryFn: () => getNationalMatches(),
   });
@@ -44,7 +45,9 @@ export function NationalMatches() {
       <h2 className="border-b border-border px-4 py-3 font-display text-lg font-bold uppercase">
         Utakmice reprezentacije BiH 2026.
       </h2>
-      {rows.length === 0 ? (
+      {isLoading ? (
+        <TableSkeleton rows={5} cols={3} />
+      ) : rows.length === 0 ? (
         <p className="px-4 py-6 text-sm text-muted-foreground">Još nema podataka.</p>
       ) : (
         <div className="overflow-x-auto">
