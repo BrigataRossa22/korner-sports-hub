@@ -1,13 +1,26 @@
 import { useQuery } from "@tanstack/react-query";
+import { TableSkeleton } from "@/components/TableSkeleton";
 import { getPlayerStats, type PlayerStat } from "@/lib/players.functions";
 
-function Board({ title, label, rows }: { title: string; label: string; rows: PlayerStat[] }) {
+function Board({
+  title,
+  label,
+  rows,
+  loading,
+}: {
+  title: string;
+  label: string;
+  rows: PlayerStat[];
+  loading: boolean;
+}) {
   return (
     <div className="rounded-lg border border-border bg-card">
       <h2 className="border-b border-border px-4 py-3 font-display text-lg font-bold uppercase">
         {title}
       </h2>
-      {rows.length === 0 ? (
+      {loading ? (
+        <TableSkeleton rows={5} cols={3} />
+      ) : rows.length === 0 ? (
         <p className="px-4 py-6 text-sm text-muted-foreground">Još nema podataka.</p>
       ) : (
         <table className="w-full text-sm">
@@ -37,12 +50,25 @@ function Board({ title, label, rows }: { title: string; label: string; rows: Pla
 }
 
 export function TopPlayers() {
-  const { data } = useQuery({ queryKey: ["player-stats"], queryFn: () => getPlayerStats() });
+  const { data, isLoading } = useQuery({
+    queryKey: ["player-stats"],
+    queryFn: () => getPlayerStats(),
+  });
   const all = data ?? [];
   return (
     <section className="mt-10 grid gap-6 md:grid-cols-2">
-      <Board title="Strijelci" label="Golovi" rows={all.filter((p) => p.kind === "scorer").slice(0, 10)} />
-      <Board title="Asistenti" label="Asistencije" rows={all.filter((p) => p.kind === "assist").slice(0, 10)} />
+      <Board
+        title="Strijelci"
+        label="Golovi"
+        loading={isLoading}
+        rows={all.filter((p) => p.kind === "scorer").slice(0, 10)}
+      />
+      <Board
+        title="Asistenti"
+        label="Asistencije"
+        loading={isLoading}
+        rows={all.filter((p) => p.kind === "assist").slice(0, 10)}
+      />
     </section>
   );
 }
