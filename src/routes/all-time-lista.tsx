@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { LoadError } from "@/components/RouteFallbacks";
+import { TableSkeleton } from "@/components/TableSkeleton";
 import { getAllTimeTeams } from "@/lib/alltimeteams.functions";
 import { useCrest } from "@/lib/use-crest";
 
@@ -19,7 +20,10 @@ export const Route = createFileRoute("/all-time-lista")({
 });
 
 function AllTime() {
-  const { data } = useQuery({ queryKey: ["all-time-teams"], queryFn: () => getAllTimeTeams() });
+  const { data, isLoading } = useQuery({
+    queryKey: ["all-time-teams"],
+    queryFn: () => getAllTimeTeams(),
+  });
   const crestFor = useCrest();
   const rows = data ?? [];
 
@@ -29,7 +33,11 @@ function AllTime() {
         <p className="kicker">Historija</p>
         <h1 className="mt-2 font-display text-3xl uppercase sm:text-4xl">All-time lista</h1>
       </div>
-      {rows.length === 0 ? (
+      {isLoading ? (
+        <div className="rounded-lg border border-border bg-card">
+          <TableSkeleton rows={10} cols={8} />
+        </div>
+      ) : rows.length === 0 ? (
         <p className="border-y border-border py-8 text-muted-foreground">Lista još nije unesena.</p>
       ) : (
         <div className="overflow-x-auto rounded-lg border border-border bg-card">
