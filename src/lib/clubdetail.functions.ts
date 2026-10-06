@@ -37,9 +37,21 @@ export const getClubDetail = createServerFn({ method: "GET" })
       return res.ok ? await res.json() : [];
     };
     const [matches, trophies, achievements] = await Promise.all([
-      get(`club_matches?club=eq.${club}&order=match_date.asc&limit=200`),
+      get(
+        `club_matches?or=(home.eq.${club},away.eq.${club},club.eq.${club})&order=match_date.asc&limit=500`,
+      ),
       get(`club_trophies?club=eq.${club}&order=sort_order.asc&limit=100`),
       get(`club_achievements?club=eq.${club}&order=sort_order.asc&limit=100`),
     ]);
-    return { matches, trophies, achievements };
+
+    // ukloni duplikate (ista utakmica upisana dva puta)
+    const seen = new Set<string>();
+    const unique = (matches as ClubMatch[]).filter((m) => {
+      const k = `${m.match_date}|${m.home}|${m.away}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+
+    return { matches: unique, trophies, achievements };
   });
