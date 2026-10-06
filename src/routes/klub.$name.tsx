@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { LoadError } from "@/components/RouteFallbacks";
 import { TableSkeleton } from "@/components/TableSkeleton";
 import { getClubDetail } from "@/lib/clubdetail.functions";
+import { getEuroMatches } from "@/lib/euromatches.functions";
 import { useCrest } from "@/lib/use-crest";
 
 const SUPA = "https://wxyxcfalnqttwchxebpn.supabase.co/storage/v1/object/public/slike/";
@@ -24,6 +25,14 @@ function fmtDate(iso: string): string {
   return `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}.`;
 }
 
+function norm(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
 function Klub() {
   const { name } = Route.useParams();
   const crestFor = useCrest();
@@ -31,11 +40,30 @@ function Klub() {
     queryKey: ["club-detail", name],
     queryFn: () => getClubDetail({ data: { name } }),
   });
+  const { data: euro } = useQuery({
+    queryKey: ["euro-matches"],
+    queryFn: () => getEuroMatches(),
+  });
+
+  // ime protivnika -> zastava (iz tabele euro_matches)
+  const flags = new Map<string, string>();
+  for (const e of euro ?? []) {
+    if (e.opponent_flag) flags.set(norm(e.opponent), e.opponent_flag);
+  }
+  const flagFor = (club: string): string => {
+    const f = flags.get(norm(club));
+    if (!f) return "";
+    return f.startsWith("http") ? f : `https://flagcdn.com/w40/${f.toLowerCase()}.png`;
+  };
+
   const crest = crestFor(name);
 
-  const Crest = ({ club }: { club: string }) => {
+  const Badge = ({ club }: { club: string }) => {
     const c = crestFor(club);
-    return c ? <img src={c} alt="" className="size-6 shrink-0 object-contain" /> : null;
+    if (c) return <img src={c} alt="" className="size-6 shrink-0 object-contain" />;
+    const f = flagFor(club);
+    if (f) return <img src={f} alt="" className="h-4 w-6 shrink-0 object-cover" />;
+    return null;
   };
 
   return (
@@ -79,7 +107,7 @@ function Klub() {
                       <div className="flex items-center gap-3">
                         <span className="flex flex-1 items-center justify-end gap-2 text-right font-medium">
                           {m.home}
-                          <Crest club={m.home} />
+                          <Badge club={m.home} />
                         </span>
                         <span className="min-w-14 text-center font-bold">
                           {m.score_home !== null && m.score_away !== null
@@ -87,7 +115,7 @@ function Klub() {
                             : "–"}
                         </span>
                         <span className="flex flex-1 items-center gap-2 font-medium">
-                          <Crest club={m.away} />
+                          <Badge club={m.away} />
                           {m.away}
                         </span>
                       </div>
