@@ -1,7 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { TableSkeleton } from "@/components/TableSkeleton";
 import { getSeasonStandings } from "@/lib/seasons.functions";
+import { getAllTimeTeams } from "@/lib/alltimeteams.functions";
 import { useCrest } from "@/lib/use-crest";
+
+const SUPA = "https://wxyxcfalnqttwchxebpn.supabase.co/storage/v1/object/public/slike/";
 
 export function useSeasons() {
   const { data, isLoading } = useQuery({
@@ -13,8 +16,46 @@ export function useSeasons() {
   return { rows, seasons, isLoading };
 }
 
+const PREFIXES = new Set(["fk", "nk", "hsk", "hnk", "sk", "gnk", "fc", "nogometni", "klub"]);
+
+function norm(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/đ/g, "d")
+    .replace(/[^a-z0-9 ]+/g, " ")
+    .split(/\s+/)
+    .filter((w) => w && !PREFIXES.has(w))
+    .join(" ");
+}
+
+function useAllTimeCrest(): (team: string) => string {
+  const { data } = useQuery({
+    queryKey: ["all-time-teams"],
+    queryFn: () => getAllTimeTeams(),
+  });
+  const list = (data ?? [])
+    .filter((t) => t.crest)
+    .map((t) => ({ key: norm(t.team), crest: t.crest }));
+
+  return (team: string) => {
+    const n = norm(team);
+    if (!n) return "";
+    let hit = list.find((t) => t.key === n);
+    if (!hit) {
+      hit = list
+        .filter((t) => t.key.length >= 4 && (n.includes(t.key) || t.key.includes(n)))
+        .sort((a, b) => b.key.length - a.key.length)[0];
+    }
+    if (!hit) return "";
+    return hit.crest.startsWith("http") ? hit.crest : `${SUPA}${hit.crest}`;
+  };
+}
+
 export function ArchiveTable({ season }: { season: string }) {
   const { rows, isLoading } = useSeasons();
+  const allTimeCrest = useAllTimeCrest();
   const crestFor = useCrest();
   const list = rows.filter((r) => r.season === season).sort((a, b) => a.position - b.position);
 
@@ -47,7 +88,7 @@ export function ArchiveTable({ season }: { season: string }) {
         </thead>
         <tbody>
           {list.map((r) => {
-            const crest = crestFor(r.team);
+            const crest = allTimeCrest(r.team) || crestFor(r.team);
             const gd = r.goals_for - r.goals_against;
             return (
               <tr key={r.id} className="border-b border-border/70 last:border-0 even:bg-surface/50">
