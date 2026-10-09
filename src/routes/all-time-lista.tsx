@@ -10,9 +10,9 @@ const SUPA = "https://wxyxcfalnqttwchxebpn.supabase.co/storage/v1/object/public/
 export const Route = createFileRoute("/all-time-lista")({
   head: () => ({
     meta: [
-      { title: "All-time lista — Korner BiH" },
-      { name: "description", content: "All-time lista klubova: utakmice, pobjede, golovi i bodovi." },
-      { property: "og:title", content: "All-time lista — Korner BiH" },
+      { title: "Vječna lista — Korner BiH" },
+      { name: "description", content: "Vječna lista klubova: utakmice, pobjede, golovi i bodovi." },
+      { property: "og:title", content: "Vječna lista — Korner BiH" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -34,8 +34,8 @@ function AllTime() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
       <div className="rule-top mb-5 pt-3">
-        <p className="kicker">Historija</p>
-        <h1 className="mt-2 font-display text-3xl uppercase sm:text-4xl">All-time lista</h1>
+        <p className="kicker">Statistika</p>
+        <h1 className="mt-2 font-display text-3xl uppercase sm:text-4xl">Vječna lista</h1>
       </div>
       {isLoading ? (
         <div className="rounded-lg border border-border bg-card">
