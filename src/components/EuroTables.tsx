@@ -1,6 +1,7 @@
-import { useCrest } from "@/lib/use-crest";
 import { useQuery } from "@tanstack/react-query";
+import { TableSkeleton } from "@/components/TableSkeleton";
 import { getEuroMatches, type EuroMatch } from "@/lib/euromatches.functions";
+import { useClubCrest } from "@/lib/use-club-crest";
 
 const COMPETITIONS: { key: EuroMatch["competition"]; title: string }[] = [
   { key: "LP", title: "Liga prvaka" },
@@ -9,11 +10,9 @@ const COMPETITIONS: { key: EuroMatch["competition"]; title: string }[] = [
   { key: "KPK", title: "Kup pobjednika kupova" },
 ];
 
-const SUPA = "https://wxyxcfalnqttwchxebpn.supabase.co/storage/v1/object/public/slike/";
-
 function Table({ title, rows: rawRows }: { title: string; rows: EuroMatch[] }) {
-  // Redoslijed klubova u sezoni = redoslijed po najmanjem sort_order tog kluba
-      const crestFor = useCrest();
+  const crestFor = useClubCrest();
+
   const firstOrder = new Map<string, number>();
   for (const r of rawRows) {
     const k = `${r.season}|${r.club}`;
@@ -81,11 +80,7 @@ function Table({ title, rows: rawRows }: { title: string; rows: EuroMatch[] }) {
                   ? r.opponent_flag
                   : `https://flagcdn.com/w40/${r.opponent_flag.toLowerCase()}.png`
                 : "";
-             const crest = crestFor(r.club) || (r.club_crest
-  ? r.club_crest.startsWith("http")
-    ? r.club_crest
-    : `${SUPA}${r.club_crest}`
-  : "");
+              const crest = crestFor(r.club) || r.club_crest;
               return (
                 <tr key={r.id} className={border}>
                   {x.newSeason && (
@@ -99,9 +94,7 @@ function Table({ title, rows: rawRows }: { title: string; rows: EuroMatch[] }) {
                   {x.newClub && (
                     <td
                       rowSpan={x.clubCount}
-                      className={`border-r border-border px-3 py-2 align-middle ${
-                        x.lastOfSeason || true ? "border-b border-border" : ""
-                      }`}
+                      className="border-b border-r border-border px-3 py-2 align-middle"
                     >
                       <span className="flex items-center gap-2 font-semibold">
                         {crest && (
@@ -132,8 +125,20 @@ function Table({ title, rows: rawRows }: { title: string; rows: EuroMatch[] }) {
 }
 
 export function EuroTables() {
-  const { data } = useQuery({ queryKey: ["euro-matches"], queryFn: () => getEuroMatches() });
+  const { data, isLoading } = useQuery({
+    queryKey: ["euro-matches"],
+    queryFn: () => getEuroMatches(),
+  });
   const rows = data ?? [];
+
+  if (isLoading) {
+    return (
+      <div className="mt-10 rounded-lg border border-border bg-card">
+        <TableSkeleton rows={8} cols={6} />
+      </div>
+    );
+  }
+
   return (
     <>
       {COMPETITIONS.map(({ key, title }) => {
