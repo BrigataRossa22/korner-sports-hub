@@ -5,6 +5,8 @@ import { TableSkeleton } from "@/components/TableSkeleton";
 import { getAllTimeTeams } from "@/lib/alltimeteams.functions";
 import { useCrest } from "@/lib/use-crest";
 
+const SUPA = "https://wxyxcfalnqttwchxebpn.supabase.co/storage/v1/object/public/slike/";
+
 export const Route = createFileRoute("/all-time-lista")({
   head: () => ({
     meta: [
@@ -26,6 +28,8 @@ function AllTime() {
   });
   const crestFor = useCrest();
   const rows = data ?? [];
+
+  const own = (c: string) => (!c ? "" : c.startsWith("http") ? c : `${SUPA}${c}`);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
@@ -57,7 +61,7 @@ function AllTime() {
             </thead>
             <tbody>
               {rows.map((r, i) => {
-                const crest = crestFor(r.team) || r.crest;
+                const crest = own(r.crest) || crestFor(r.team);
                 return (
                   <tr key={r.id} className="border-t border-border">
                     <td className="px-3 py-2">{i + 1}</td>
