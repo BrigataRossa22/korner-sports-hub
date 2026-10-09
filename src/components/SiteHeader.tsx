@@ -1,13 +1,21 @@
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Menu, X } from "lucide-react";
+import { ChevronDown, Menu, X } from "lucide-react";
 import { contentOptions } from "@/lib/content";
 import { useHydrated } from "@/lib/use-hydrated";
 
-const nav = [
-  { to: "/wwin-liga", label: "WWiN liga" },
+const linkClass =
+  "border-b-2 border-transparent pb-0.5 font-display text-sm font-medium uppercase tracking-wide text-ink-foreground/75 transition-colors hover:text-primary-foreground";
+const activeProps = { className: "text-primary-foreground border-primary" };
+
+const wwinSub = [
   { to: "/tabela", label: "Tabela" },
+  { to: "/raspored-i-rezultati", label: "Raspored i rezultati" },
+] as const;
+
+const navAfter = [
+  { to: "/statistika", label: "Statistika" },
   { to: "/reprezentacija", label: "Reprezentacija" },
   { to: "/nize-lige", label: "Niže lige" },
   { to: "/kup-bih", label: "Kup BiH" },
@@ -50,14 +58,29 @@ export function SiteHeader() {
         </Link>
 
         <nav className="ml-6 hidden items-center gap-5 md:flex">
-          {nav.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              activeOptions={{ exact: false }}
-              activeProps={{ className: "text-primary-foreground border-primary" }}
-              className="border-b-2 border-transparent pb-0.5 font-display text-sm font-medium uppercase tracking-wide text-ink-foreground/75 transition-colors hover:text-primary-foreground"
-            >
+          <div className="group relative">
+            <Link to="/wwin-liga" activeProps={activeProps} className={`${linkClass} inline-flex items-center gap-1`}>
+              WWiN liga
+              <ChevronDown className="size-3.5" />
+            </Link>
+            <div className="invisible absolute left-0 top-full z-50 pt-3 opacity-0 transition group-hover:visible group-hover:opacity-100">
+              <div className="min-w-52 rounded-md border border-white/10 bg-ink py-2 shadow-lg">
+                {wwinSub.map((item) => (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    activeProps={{ className: "text-primary-foreground" }}
+                    className="block px-4 py-2 font-display text-sm uppercase tracking-wide text-ink-foreground/80 hover:bg-white/10 hover:text-primary-foreground"
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {navAfter.map((item) => (
+            <Link key={item.to} to={item.to} activeProps={activeProps} className={linkClass}>
               {item.label}
             </Link>
           ))}
@@ -75,7 +98,24 @@ export function SiteHeader() {
 
       {open && (
         <nav className="border-t border-white/10 px-4 pb-4 md:hidden">
-          {nav.map((item) => (
+          <Link
+            to="/wwin-liga"
+            onClick={() => setOpen(false)}
+            className="block border-b border-white/10 py-3 font-display text-sm uppercase tracking-wide"
+          >
+            WWiN liga
+          </Link>
+          {wwinSub.map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              onClick={() => setOpen(false)}
+              className="block border-b border-white/10 py-3 pl-5 font-display text-sm uppercase tracking-wide text-ink-foreground/75"
+            >
+              {item.label}
+            </Link>
+          ))}
+          {navAfter.map((item) => (
             <Link
               key={item.to}
               to={item.to}
