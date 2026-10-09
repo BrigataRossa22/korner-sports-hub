@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getEuroMatches } from "@/lib/euromatches.functions";
-import { useCrest } from "@/lib/use-crest";
+import { useClubCrest } from "@/lib/use-club-crest";
 
 type Stat = { club: string; played: number; w: number; d: number; l: number; gf: number; ga: number };
 
@@ -11,7 +11,7 @@ function parse(score: string): [number, number] | null {
 
 export function EuroTotals() {
   const { data } = useQuery({ queryKey: ["euro-matches"], queryFn: () => getEuroMatches() });
-  const crestFor = useCrest();
+  const crestFor = useClubCrest();
   const rows = data ?? [];
 
   const map = new Map<string, Stat>();
