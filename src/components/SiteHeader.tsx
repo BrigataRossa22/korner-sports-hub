@@ -14,13 +14,16 @@ const wwinSub = [
   { to: "/raspored-i-rezultati", label: "Raspored i rezultati" },
 ] as const;
 
-const navAfter = [
-  { to: "/statistika", label: "Statistika" },
+const statSub = [
+  { to: "/u-evropi", label: "U Evropi" },
+  { to: "/all-time-lista", label: "Vječna lista" },
+  { to: "/stare-sezone", label: "Stare sezone" },
+] as const;
+
+const navPlain = [
   { to: "/reprezentacija", label: "Reprezentacija" },
   { to: "/nize-lige", label: "Niže lige" },
   { to: "/kup-bih", label: "Kup BiH" },
-  { to: "/u-evropi", label: "U Evropi" },
-  { to: "/all-time-lista", label: "All-time lista" },
 ] as const;
 
 function useTicker(): string {
@@ -38,6 +41,39 @@ function useTicker(): string {
         : `${f.home} – ${f.away} ${f.when}`,
     )
     .join(" · ");
+}
+
+function Dropdown({
+  to,
+  label,
+  items,
+}: {
+  to: "/wwin-liga" | "/statistika";
+  label: string;
+  items: ReadonlyArray<{ to: string; label: string }>;
+}) {
+  return (
+    <div className="group relative">
+      <Link to={to} activeProps={activeProps} className={`${linkClass} inline-flex items-center gap-1`}>
+        {label}
+        <ChevronDown className="size-3.5" />
+      </Link>
+      <div className="invisible absolute left-0 top-full z-50 pt-3 opacity-0 transition group-hover:visible group-hover:opacity-100">
+        <div className="min-w-52 rounded-md border border-white/10 bg-ink py-2 shadow-lg">
+          {items.map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              activeProps={{ className: "text-primary-foreground" }}
+              className="block px-4 py-2 font-display text-sm uppercase tracking-wide text-ink-foreground/80 hover:bg-white/10 hover:text-primary-foreground"
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function SiteHeader() {
@@ -58,28 +94,9 @@ export function SiteHeader() {
         </Link>
 
         <nav className="ml-6 hidden items-center gap-5 md:flex">
-          <div className="group relative">
-            <Link to="/wwin-liga" activeProps={activeProps} className={`${linkClass} inline-flex items-center gap-1`}>
-              WWiN liga
-              <ChevronDown className="size-3.5" />
-            </Link>
-            <div className="invisible absolute left-0 top-full z-50 pt-3 opacity-0 transition group-hover:visible group-hover:opacity-100">
-              <div className="min-w-52 rounded-md border border-white/10 bg-ink py-2 shadow-lg">
-                {wwinSub.map((item) => (
-                  <Link
-                    key={item.to}
-                    to={item.to}
-                    activeProps={{ className: "text-primary-foreground" }}
-                    className="block px-4 py-2 font-display text-sm uppercase tracking-wide text-ink-foreground/80 hover:bg-white/10 hover:text-primary-foreground"
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {navAfter.map((item) => (
+          <Dropdown to="/wwin-liga" label="WWiN liga" items={wwinSub} />
+          <Dropdown to="/statistika" label="Statistika" items={statSub} />
+          {navPlain.map((item) => (
             <Link key={item.to} to={item.to} activeProps={activeProps} className={linkClass}>
               {item.label}
             </Link>
@@ -115,7 +132,24 @@ export function SiteHeader() {
               {item.label}
             </Link>
           ))}
-          {navAfter.map((item) => (
+          <Link
+            to="/statistika"
+            onClick={() => setOpen(false)}
+            className="block border-b border-white/10 py-3 font-display text-sm uppercase tracking-wide"
+          >
+            Statistika
+          </Link>
+          {statSub.map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              onClick={() => setOpen(false)}
+              className="block border-b border-white/10 py-3 pl-5 font-display text-sm uppercase tracking-wide text-ink-foreground/75"
+            >
+              {item.label}
+            </Link>
+          ))}
+          {navPlain.map((item) => (
             <Link
               key={item.to}
               to={item.to}
