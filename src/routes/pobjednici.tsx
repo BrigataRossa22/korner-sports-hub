@@ -35,6 +35,17 @@ function Pobjednici() {
     );
   };
 
+  const Scorer = ({ name, club }: { name: string; club: string }) => {
+    if (!name) return <span className="text-muted-foreground">—</span>;
+    const c = club ? crestFor(club) : "";
+    return (
+      <span className="flex items-center gap-2 font-medium" title={club || undefined}>
+        {c ? <img src={c} alt="" className="size-6 shrink-0 object-contain" /> : <span className="size-6 shrink-0" />}
+        {name}
+      </span>
+    );
+  };
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
       <div className="rule-top mb-5 pt-3">
@@ -68,7 +79,7 @@ function Pobjednici() {
                   <td className="px-3 py-3"><Club name={r.champion} bold /></td>
                   <td className="px-3 py-3"><Club name={r.second} /></td>
                   <td className="px-3 py-3"><Club name={r.third} /></td>
-                  <td className="px-3 py-3 font-medium">{r.top_scorer || "—"}</td>
+                  <td className="px-3 py-3"><Scorer name={r.top_scorer} club={r.scorer_club} /></td>
                   <td className="px-3 py-3 text-right font-bold">{r.goals > 0 ? r.goals : "—"}</td>
                 </tr>
               ))}
