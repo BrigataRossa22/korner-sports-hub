@@ -7,6 +7,7 @@ export type SeasonWinner = {
   second: string;
   third: string;
   top_scorer: string;
+  scorer_club: string;
   goals: number;
 };
 
