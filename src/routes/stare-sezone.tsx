@@ -6,15 +6,15 @@ import { LoadError } from "@/components/RouteFallbacks";
 export const Route = createFileRoute("/stare-sezone")({
   head: () => ({
     meta: [
-      { title: "Stare sezone — Korner BiH" },
+      { title: "Arhiva sezona — Korner BiH" },
       { name: "description", content: "Tabele Premijer lige BiH iz prošlih sezona." },
     ],
   }),
   errorComponent: LoadError,
-  component: StareSezone,
+  component: ArhivaSezona,
 });
 
-function StareSezone() {
+function ArhivaSezona() {
   const { seasons } = useSeasons();
   const [picked, setPicked] = useState("");
   const season = picked || seasons[0] || "";
@@ -23,7 +23,7 @@ function StareSezone() {
     <div className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
       <div className="rule-top mb-5 pt-3">
         <p className="kicker">Statistika</p>
-        <h1 className="mt-2 font-display text-3xl uppercase sm:text-4xl">Stare sezone</h1>
+        <h1 className="mt-2 font-display text-3xl uppercase sm:text-4xl">Arhiva sezona</h1>
       </div>
 
       <div className="mb-4 flex items-center gap-3">
