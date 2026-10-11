@@ -41,22 +41,25 @@ function useAllTimeCrest(): (team: string) => string {
 
   return (team: string) => {
     const n = norm(team);
-    if (!n) return "";
-    let hit = list.find((t) => t.key === n);
-    if (!hit) {
-      hit = list
-        .filter((t) => t.key.length >= 4 && (n.includes(t.key) || t.key.includes(n)))
-        .sort((a, b) => b.key.length - a.key.length)[0];
-    }
-    if (!hit) return "";
-    return hit.crest.startsWith("http") ? hit.crest : `${SUPA}${hit.crest}`;
-  };
+import { Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { TableSkeleton } from "@/components/TableSkeleton";
+import { getSeasonStandings } from "@/lib/seasons.functions";
+import { useClubCrest } from "@/lib/use-club-crest";
+
+export function useSeasons() {
+  const { data, isLoading } = useQuery({
+    queryKey: ["season-standings"],
+    queryFn: () => getSeasonStandings(),
+  });
+  const rows = data ?? [];
+  const seasons = [...new Set(rows.map((r) => r.season))];
+  return { rows, seasons, isLoading };
 }
 
 export function ArchiveTable({ season }: { season: string }) {
   const { rows, isLoading } = useSeasons();
-  const allTimeCrest = useAllTimeCrest();
-  const crestFor = useCrest();
+  const crestFor = useClubCrest();
   const list = rows.filter((r) => r.season === season).sort((a, b) => a.position - b.position);
 
   if (isLoading) {
@@ -88,20 +91,24 @@ export function ArchiveTable({ season }: { season: string }) {
         </thead>
         <tbody>
           {list.map((r) => {
-            const crest = allTimeCrest(r.team) || crestFor(r.team);
+            const crest = crestFor(r.team);
             const gd = r.goals_for - r.goals_against;
             return (
               <tr key={r.id} className="border-b border-border/70 last:border-0 even:bg-surface/50">
                 <td className="px-2 py-3 text-center font-semibold text-primary">{r.position}</td>
                 <td className="px-2 py-3 text-left font-semibold">
-                  <span className="flex items-center gap-2">
+                  <Link
+                    to="/arhiva/$season/$club"
+                    params={{ season, club: r.team }}
+                    className="flex items-center gap-2 hover:underline"
+                  >
                     {crest ? (
                       <img src={crest} alt="" className="size-6 shrink-0 object-contain" />
                     ) : (
                       <span className="size-6 shrink-0" />
                     )}
                     {r.team}
-                  </span>
+                  </Link>
                 </td>
                 <td className="px-1 py-3 text-center">{r.played}</td>
                 <td className="px-1 py-3 text-center">{r.wins}</td>
