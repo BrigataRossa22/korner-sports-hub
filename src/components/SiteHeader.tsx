@@ -16,9 +16,9 @@ const wwinSub = [
 
 const statSub = [
   { to: "/pobjednici", label: "Pobjednici" },
-  { to: "/u-evropi", label: "U Evropi" },
+  { to: "/u-evropi", label: "Evropska takmičenja" },
   { to: "/all-time-lista", label: "Vječna lista" },
-  { to: "/stare-sezone", label: "Stare sezone" },
+  { to: "/stare-sezone", label: "Arhiva sezona" },
 ] as const;
 
 const navPlain = [
