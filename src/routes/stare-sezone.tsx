@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { ArchiveTable, useSeasons } from "@/components/ArchiveTable";
 import { LoadError } from "@/components/RouteFallbacks";
@@ -14,10 +14,31 @@ export const Route = createFileRoute("/stare-sezone")({
   component: ArhivaSezona,
 });
 
+const KEY = "arhiva-sezona";
+
 function ArhivaSezona() {
   const { seasons } = useSeasons();
   const [picked, setPicked] = useState("");
-  const season = picked || seasons[0] || "";
+
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem(KEY);
+      if (saved) setPicked(saved);
+    } catch {
+      /* ignoriši */
+    }
+  }, []);
+
+  const choose = (s: string) => {
+    setPicked(s);
+    try {
+      sessionStorage.setItem(KEY, s);
+    } catch {
+      /* ignoriši */
+    }
+  };
+
+  const season = seasons.includes(picked) ? picked : seasons[0] || "";
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
@@ -33,7 +54,7 @@ function ArhivaSezona() {
         <select
           id="season"
           value={season}
-          onChange={(e) => setPicked(e.target.value)}
+          onChange={(e) => choose(e.target.value)}
           className="rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold"
         >
           {seasons.map((s) => (
