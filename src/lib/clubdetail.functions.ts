@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { sameClub } from "@/lib/club-match";
 
 export type ClubMatch = {
   id: string;
@@ -31,27 +32,32 @@ export const getClubDetail = createServerFn({ method: "GET" })
     const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
     const empty: ClubDetail = { matches: [], trophies: [], achievements: [] };
     if (!url || !key) return empty;
-    const club = encodeURIComponent(data.name);
     const get = async (path: string) => {
       const res = await fetch(`${url}/rest/v1/${path}`, { headers: { apikey: key } });
       return res.ok ? await res.json() : [];
     };
-    const [matches, trophies, achievements] = await Promise.all([
-      get(
-        `club_matches?or=(home.eq.${club},away.eq.${club},club.eq.${club})&order=match_date.asc&limit=500`,
-      ),
-      get(`club_trophies?club=eq.${club}&order=sort_order.asc&limit=100`),
-      get(`club_achievements?club=eq.${club}&order=sort_order.asc&limit=100`),
+    const [allMatches, allTrophies, allAch] = await Promise.all([
+      get("club_matches?select=*&order=match_date.asc&limit=1000"),
+      get("club_trophies?select=*&order=sort_order.asc&limit=1000"),
+      get("club_achievements?select=*&order=sort_order.asc&limit=1000"),
     ]);
 
-    // ukloni duplikate (ista utakmica upisana dva puta)
     const seen = new Set<string>();
-    const unique = (matches as ClubMatch[]).filter((m) => {
-      const k = `${m.match_date}|${m.home}|${m.away}`;
-      if (seen.has(k)) return false;
-      seen.add(k);
-      return true;
-    });
+    const matches = (allMatches as ClubMatch[])
+      .filter((m) => sameClub(m.home, data.name) || sameClub(m.away, data.name))
+      .filter((m) => {
+        const k = `${m.match_date}|${m.home}|${m.away}`;
+        if (seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      });
 
-    return { matches: unique, trophies, achievements };
+    const trophies = (allTrophies as (ClubTrophy & { club: string })[]).filter((t) =>
+      sameClub(t.club, data.name),
+    );
+    const achievements = (allAch as (ClubAchievement & { club: string })[]).filter((a) =>
+      sameClub(a.club, data.name),
+    );
+
+    return { matches, trophies, achievements };
   });
