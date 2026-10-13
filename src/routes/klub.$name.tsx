@@ -3,8 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { LoadError } from "@/components/RouteFallbacks";
 import { TableSkeleton } from "@/components/TableSkeleton";
 import { getClubDetail } from "@/lib/clubdetail.functions";
+import { getClubHistory } from "@/lib/clubhistory.functions";
 import { getEuroMatches } from "@/lib/euromatches.functions";
+import { normClub } from "@/lib/club-match";
 import { useCrest } from "@/lib/use-crest";
+import { useClubCrest } from "@/lib/use-club-crest";
 
 const SUPA = "https://wxyxcfalnqttwchxebpn.supabase.co/storage/v1/object/public/slike/";
 
@@ -25,44 +28,43 @@ function fmtDate(iso: string): string {
   return `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}.`;
 }
 
-function norm(s: string): string {
-  return s
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim();
-}
-
 function Klub() {
   const { name } = Route.useParams();
   const crestFor = useCrest();
+  const clubCrest = useClubCrest();
+
   const { data, isLoading } = useQuery({
     queryKey: ["club-detail", name],
     queryFn: () => getClubDetail({ data: { name } }),
+  });
+  const { data: history, isLoading: historyLoading } = useQuery({
+    queryKey: ["club-history", name],
+    queryFn: () => getClubHistory({ data: { name } }),
   });
   const { data: euro } = useQuery({
     queryKey: ["euro-matches"],
     queryFn: () => getEuroMatches(),
   });
 
-  // ime protivnika -> zastava (iz tabele euro_matches)
   const flags = new Map<string, string>();
   for (const e of euro ?? []) {
-    if (e.opponent_flag) flags.set(norm(e.opponent), e.opponent_flag);
+    if (e.opponent_flag) flags.set(normClub(e.opponent), e.opponent_flag);
   }
   const flagFor = (club: string): string => {
-    const f = flags.get(norm(club));
+    const f = flags.get(normClub(club));
     if (!f) return "";
     return f.startsWith("http") ? f : `https://flagcdn.com/w40/${f.toLowerCase()}.png`;
   };
 
-  const crest = crestFor(name);
+  const crest = clubCrest(name) || crestFor(name);
 
   const Badge = ({ club }: { club: string }) => {
     const c = crestFor(club);
     if (c) return <img src={c} alt="" className="size-6 shrink-0 object-contain" />;
     const f = flagFor(club);
     if (f) return <img src={f} alt="" className="h-4 w-6 shrink-0 object-cover" />;
+    const b = clubCrest(club);
+    if (b) return <img src={b} alt="" className="size-6 shrink-0 object-contain" />;
     return null;
   };
 
@@ -154,6 +156,64 @@ function Klub() {
           </div>
         </section>
       )}
+
+      <section className="mt-10 rounded-lg border border-border bg-card">
+        <h2 className="border-b border-border px-4 py-3 font-display text-lg font-bold uppercase">
+          Sezone
+        </h2>
+        {historyLoading ? (
+          <TableSkeleton rows={6} cols={9} />
+        ) : !history || history.length === 0 ? (
+          <p className="px-4 py-6 text-sm text-muted-foreground">Još nema podataka.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[760px] text-sm tabular-nums">
+              <thead>
+                <tr className="border-b border-border bg-surface text-xs uppercase text-muted-foreground">
+                  <th className="px-3 py-3 text-left">Sezona</th>
+                  <th className="px-3 py-3 text-right">Utakmica</th>
+                  <th className="px-3 py-3 text-right">Pobjeda</th>
+                  <th className="px-3 py-3 text-right">Neriješeno</th>
+                  <th className="px-3 py-3 text-right">Poraza</th>
+                  <th className="px-3 py-3 text-right">Golovi</th>
+                  <th className="px-3 py-3 text-right">Primljeni</th>
+                  <th className="px-3 py-3 text-right">Bodova</th>
+                  <th className="px-3 py-3 text-right">Prosjek gledalaca</th>
+                </tr>
+              </thead>
+              <tbody>
+                {history.map((r) => (
+                  <tr key={r.season} className="border-t border-border">
+                    <td className="px-3 py-3 font-semibold">
+                      {r.current ? (
+                        <span>{r.season} <span className="text-xs font-normal text-muted-foreground">(u toku)</span></span>
+                      ) : (
+                        <Link
+                          to="/arhiva/$season/$club"
+                          params={{ season: r.season, club: r.team }}
+                          className="hover:underline"
+                        >
+                          {r.season}
+                        </Link>
+                      )}
+                    </td>
+                    <td className="px-3 py-3 text-right">{r.played}</td>
+                    <td className="px-3 py-3 text-right">{r.wins}</td>
+                    <td className="px-3 py-3 text-right">{r.draws}</td>
+                    <td className="px-3 py-3 text-right">{r.losses}</td>
+                    <td className="px-3 py-3 text-right">{r.gf}</td>
+                    <td className="px-3 py-3 text-right">{r.ga}</td>
+                    <td className="px-3 py-3 text-right font-bold">{r.points}</td>
+                    <td className="px-3 py-3 text-right">
+                      {r.avg !== null ? r.avg.toLocaleString("de-DE") : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
 
       {data && data.achievements.length > 0 && (
         <section className="mt-10 rounded-lg border border-border bg-card">
