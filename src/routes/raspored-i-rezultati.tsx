@@ -57,9 +57,9 @@ function Raspored() {
   const goalsOf = (m: LeagueMatch) =>
     m.round === null
       ? []
-      : goals.filter(
-          (g) => g.round === m.round && sameClub(g.home, m.home) && sameClub(g.away, m.away),
-        );
+      : goals
+          .filter((g) => g.round === m.round && sameClub(g.home, m.home) && sameClub(g.away, m.away))
+          .sort((a, b) => a.minute - b.minute || a.extra - b.extra);
 
   const toggle = (id: string) =>
     setOpen((prev) => {
@@ -69,12 +69,12 @@ function Raspored() {
       return next;
     });
 
-  const Crest = ({ club, size = "size-6" }: { club: string; size?: string }) => {
+  const Crest = ({ club }: { club: string }) => {
     const c = crestFor(club);
     return c ? (
-      <img src={c} alt="" className={`${size} shrink-0 object-contain`} />
+      <img src={c} alt="" className="size-6 shrink-0 object-contain" />
     ) : (
-      <span className={`${size} shrink-0`} />
+      <span className="size-6 shrink-0" />
     );
   };
 
@@ -133,8 +133,6 @@ function Raspored() {
                     const hasResult = m.score_home !== null && m.score_away !== null;
                     const canOpen = hasResult || mg.length > 0;
                     const isOpen = open.has(m.id);
-                    const homeGoals = mg.filter((g) => sameClub(g.team, m.home));
-                    const awayGoals = mg.filter((g) => !sameClub(g.team, m.home));
 
                     const rowStyle = isOpen
                       ? "bg-primary text-primary-foreground"
@@ -193,49 +191,25 @@ function Raspored() {
                         {isOpen && (
                           <tr>
                             <td colSpan={3} className="p-0">
-                              <div className="bg-card px-4 py-4 text-foreground">
-                                <div className="grid grid-cols-2 gap-6">
-                                  <div>
-                                    <div className="mb-2 flex items-center gap-2 font-display text-sm font-bold uppercase">
-                                      <Crest club={m.home} size="size-7" />
-                                      {m.home}
-                                    </div>
-                                    <ul className="space-y-1 text-sm">
-                                      {homeGoals.map((g) => (
-                                        <li key={g.id}>
-                                          <span className="font-semibold">{minuteOf(g)}</span>{" "}
-                                          <span className="font-semibold">{g.player}</span>
-                                          {g.assist && g.kind !== "own" && (
-                                            <span className="text-muted-foreground"> ({g.assist})</span>
-                                          )}
-                                          <span className="text-muted-foreground">{tagOf(g)}</span>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                  <div className="text-right">
-                                    <div className="mb-2 flex items-center justify-end gap-2 font-display text-sm font-bold uppercase">
-                                      {m.away}
-                                      <Crest club={m.away} size="size-7" />
-                                    </div>
-                                    <ul className="space-y-1 text-sm">
-                                      {awayGoals.map((g) => (
-                                        <li key={g.id}>
-                                          <span className="font-semibold">{g.player}</span>
-                                          {g.assist && g.kind !== "own" && (
-                                            <span className="text-muted-foreground"> ({g.assist})</span>
-                                          )}
-                                          <span className="text-muted-foreground">{tagOf(g)}</span>{" "}
-                                          <span className="font-semibold">{minuteOf(g)}</span>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                </div>
-                                {mg.length === 0 && (
-                                  <p className="mt-2 text-center text-sm text-muted-foreground">
+                              <div className="bg-muted px-4 py-4 text-center text-foreground">
+                                {mg.length === 0 ? (
+                                  <p className="text-sm text-muted-foreground">
                                     Strijelci još nisu uneseni.
                                   </p>
+                                ) : (
+                                  <ul className="space-y-1 text-sm">
+                                    {mg.map((g) => (
+                                      <li key={g.id}>
+                                        <span className="font-semibold">{minuteOf(g)}</span>{" "}
+                                        <span className="font-semibold">{g.player}</span>
+                                        {g.assist && g.kind !== "own" && (
+                                          <span className="text-muted-foreground"> ({g.assist})</span>
+                                        )}
+                                        <span className="text-muted-foreground">{tagOf(g)}</span>
+                                        <span className="text-muted-foreground"> · {g.team}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
                                 )}
                               </div>
                             </td>
