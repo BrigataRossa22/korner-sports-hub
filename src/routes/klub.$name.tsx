@@ -68,6 +68,12 @@ function Klub() {
     return null;
   };
 
+  // Ukupno po svim sezonama
+  const sum = (pick: (r: NonNullable<typeof history>[number]) => number) =>
+    (history ?? []).reduce((s, r) => s + pick(r), 0);
+  const avgs = (history ?? []).map((r) => r.avg).filter((a): a is number => a !== null);
+  const totalAvg = avgs.length ? Math.round(avgs.reduce((s, a) => s + a, 0) / avgs.length) : null;
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
       <Link to="/tabela" className="text-sm text-muted-foreground hover:underline">
@@ -162,15 +168,16 @@ function Klub() {
           Sezone
         </h2>
         {historyLoading ? (
-          <TableSkeleton rows={6} cols={9} />
+          <TableSkeleton rows={6} cols={10} />
         ) : !history || history.length === 0 ? (
           <p className="px-4 py-6 text-sm text-muted-foreground">Još nema podataka.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] text-sm tabular-nums">
+            <table className="w-full min-w-[820px] text-sm tabular-nums">
               <thead>
                 <tr className="border-b border-border bg-surface text-xs uppercase text-muted-foreground">
                   <th className="px-3 py-3 text-left">Sezona</th>
+                  <th className="px-3 py-3 text-center">Poz.</th>
                   <th className="px-3 py-3 text-right">Utakmica</th>
                   <th className="px-3 py-3 text-right">Pobjeda</th>
                   <th className="px-3 py-3 text-right">Neriješeno</th>
@@ -186,7 +193,10 @@ function Klub() {
                   <tr key={r.season} className="border-t border-border">
                     <td className="px-3 py-3 font-semibold">
                       {r.current ? (
-                        <span>{r.season} <span className="text-xs font-normal text-muted-foreground">(u toku)</span></span>
+                        <span>
+                          {r.season}{" "}
+                          <span className="text-xs font-normal text-muted-foreground">(u toku)</span>
+                        </span>
                       ) : (
                         <Link
                           to="/arhiva/$season/$club"
@@ -196,6 +206,9 @@ function Klub() {
                           {r.season}
                         </Link>
                       )}
+                    </td>
+                    <td className="px-3 py-3 text-center font-semibold text-primary">
+                      {r.position ?? "—"}
                     </td>
                     <td className="px-3 py-3 text-right">{r.played}</td>
                     <td className="px-3 py-3 text-right">{r.wins}</td>
@@ -210,6 +223,22 @@ function Klub() {
                   </tr>
                 ))}
               </tbody>
+              <tfoot>
+                <tr className="border-t-4 border-foreground/30 bg-surface font-bold">
+                  <td className="px-3 py-3 uppercase">Ukupno</td>
+                  <td className="px-3 py-3 text-center">—</td>
+                  <td className="px-3 py-3 text-right">{sum((r) => r.played)}</td>
+                  <td className="px-3 py-3 text-right">{sum((r) => r.wins)}</td>
+                  <td className="px-3 py-3 text-right">{sum((r) => r.draws)}</td>
+                  <td className="px-3 py-3 text-right">{sum((r) => r.losses)}</td>
+                  <td className="px-3 py-3 text-right">{sum((r) => r.gf)}</td>
+                  <td className="px-3 py-3 text-right">{sum((r) => r.ga)}</td>
+                  <td className="px-3 py-3 text-right">{sum((r) => r.points)}</td>
+                  <td className="px-3 py-3 text-right">
+                    {totalAvg !== null ? totalAvg.toLocaleString("de-DE") : "—"}
+                  </td>
+                </tr>
+              </tfoot>
             </table>
           </div>
         )}
