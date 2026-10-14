@@ -33,16 +33,15 @@ function tagOf(g: MatchGoal): string {
 
 function Ball() {
   return (
-    <svg viewBox="0 0 24 24" className="size-5" aria-hidden="true">
-      <circle cx="12" cy="12" r="10" fill="#fff" stroke="#111" strokeWidth="1.5" />
-      <polygon points="12,7.5 15.5,10 14.2,14 9.8,14 8.5,10" fill="#111" />
-      <path
-        d="M12 7.5V2.5M15.5 10l4.5-1.5M14.2 14l3 4M9.8 14l-3 4M8.5 10L4 8.5"
-        stroke="#111"
-        strokeWidth="1.2"
-        fill="none"
-        strokeLinecap="round"
-      />
+    <svg viewBox="0 0 24 24" className="size-6" aria-hidden="true">
+      <circle cx="12" cy="12" r="11" fill="#fff" stroke="#111" strokeWidth="1.2" />
+      <polygon points="12,7.8 16,10.7 14.47,15.4 9.53,15.4 8,10.7" fill="#111" />
+      {[0, 72, 144, 216, 288].map((a) => (
+        <g key={a} transform={`rotate(${a} 12 12)`}>
+          <path d="M12 7.8V1.4" stroke="#111" strokeWidth="1" strokeLinecap="round" />
+          <polygon points="12,17.6 14.47,19.4 13.53,22.4 10.47,22.4 9.53,19.4" fill="#111" />
+        </g>
+      ))}
     </svg>
   );
 }
@@ -217,19 +216,20 @@ function Raspored() {
                         </tr>
 
                         {isOpen && (
-                          <tr>
-                            <td colSpan={3} className="p-0">
-                              <div className="bg-muted px-4 py-4 text-foreground">
-                                {mg.length === 0 ? (
-                                  <p className="text-center text-sm text-muted-foreground">
-                                    Strijelci još nisu uneseni.
-                                  </p>
-                                ) : (
-                                  <ul className="relative mx-auto max-w-xl space-y-2 text-sm">
-                                    <div
-                                      aria-hidden="true"
-                                      className="pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-foreground/30"
-                                    />
+                          <tr className="text-foreground">
+                            <td className="bg-muted" />
+                            <td className="bg-muted px-4 py-4">
+                              {mg.length === 0 ? (
+                                <p className="text-center text-sm text-muted-foreground">
+                                  Strijelci još nisu uneseni.
+                                </p>
+                              ) : (
+                                <div className="relative">
+                                  <div
+                                    aria-hidden="true"
+                                    className="pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-foreground/30"
+                                  />
+                                  <ul className="space-y-2">
                                     {mg.map((g) => {
                                       const isHome = sameClub(g.team, m.home);
                                       const minute = (
@@ -240,22 +240,25 @@ function Raspored() {
                                           key={g.id}
                                           className="relative grid grid-cols-[1fr_auto_1fr] items-center gap-3"
                                         >
-                                          <div className="text-right">
+                                          <div className="min-w-0 text-right">
                                             {isHome ? <GoalText g={g} /> : minute}
                                           </div>
-                                          <span className="relative z-10 rounded-full bg-muted p-0.5">
-                                            <Ball />
+                                          <span className="relative z-10 flex min-w-14 justify-center">
+                                            <span className="rounded-full bg-muted p-0.5">
+                                              <Ball />
+                                            </span>
                                           </span>
-                                          <div className="text-left">
+                                          <div className="min-w-0 text-left">
                                             {isHome ? minute : <GoalText g={g} />}
                                           </div>
                                         </li>
                                       );
                                     })}
                                   </ul>
-                                )}
-                              </div>
+                                </div>
+                              )}
                             </td>
+                            <td className="bg-muted" />
                           </tr>
                         )}
                       </Fragment>
