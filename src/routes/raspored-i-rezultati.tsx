@@ -196,15 +196,17 @@ function Raspored() {
                           </td>
                           <td className="px-4 py-3 text-right">
                             <span className="inline-flex items-center justify-end gap-2">
-                              {m.attendance > 0 ? m.attendance.toLocaleString("de-DE") : "—"}
-                              {canOpen && (
-                                <ChevronDown
-                                  className={`size-4 transition-transform ${
-                                    isOpen ? "rotate-180 text-primary-foreground" : "text-muted-foreground"
-                                  }`}
-                                />
-                              )}
-                            </span>
+  {m.attendance > 0 ? m.attendance.toLocaleString("de-DE") : "—"}
+  <span className="inline-flex size-4 shrink-0 items-center justify-center">
+    {canOpen && (
+      <ChevronDown
+        className={`size-4 transition-transform ${
+          isOpen ? "rotate-180 text-primary-foreground" : "text-muted-foreground"
+        }`}
+      />
+    )}
+  </span>
+</span>
                           </td>
                         </tr>
 
