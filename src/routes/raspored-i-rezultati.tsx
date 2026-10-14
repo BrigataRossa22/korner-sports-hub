@@ -31,6 +31,22 @@ function tagOf(g: MatchGoal): string {
   return g.kind === "penalty" ? " (pen.)" : g.kind === "own" ? " (autogol)" : "";
 }
 
+function Ball() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-5" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" fill="#fff" stroke="#111" strokeWidth="1.5" />
+      <polygon points="12,7.5 15.5,10 14.2,14 9.8,14 8.5,10" fill="#111" />
+      <path
+        d="M12 7.5V2.5M15.5 10l4.5-1.5M14.2 14l3 4M9.8 14l-3 4M8.5 10L4 8.5"
+        stroke="#111"
+        strokeWidth="1.2"
+        fill="none"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 function GoalText({ g }: { g: MatchGoal }) {
   return (
     <span>
@@ -209,23 +225,29 @@ function Raspored() {
                                     Strijelci još nisu uneseni.
                                   </p>
                                 ) : (
-                                  <ul className="mx-auto max-w-xl space-y-2 text-sm">
+                                  <ul className="relative mx-auto max-w-xl space-y-2 text-sm">
+                                    <div
+                                      aria-hidden="true"
+                                      className="pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-foreground/30"
+                                    />
                                     {mg.map((g) => {
                                       const isHome = sameClub(g.team, m.home);
+                                      const minute = (
+                                        <span className="font-semibold tabular-nums">{minuteOf(g)}</span>
+                                      );
                                       return (
                                         <li
                                           key={g.id}
-                                          className="grid grid-cols-[1fr_auto_1fr] items-center gap-3"
+                                          className="relative grid grid-cols-[1fr_auto_1fr] items-center gap-3"
                                         >
                                           <div className="text-right">
-                                            {isHome && <GoalText g={g} />}
+                                            {isHome ? <GoalText g={g} /> : minute}
                                           </div>
-                                          <div className="flex min-w-16 items-center justify-center gap-1 font-semibold">
-                                            <span aria-hidden="true">⚽</span>
-                                            <span>{minuteOf(g)}</span>
-                                          </div>
+                                          <span className="relative z-10 rounded-full bg-muted p-0.5">
+                                            <Ball />
+                                          </span>
                                           <div className="text-left">
-                                            {!isHome && <GoalText g={g} />}
+                                            {isHome ? minute : <GoalText g={g} />}
                                           </div>
                                         </li>
                                       );
