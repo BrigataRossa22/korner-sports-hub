@@ -31,6 +31,18 @@ function tagOf(g: MatchGoal): string {
   return g.kind === "penalty" ? " (pen.)" : g.kind === "own" ? " (autogol)" : "";
 }
 
+function GoalText({ g }: { g: MatchGoal }) {
+  return (
+    <span>
+      <span className="font-semibold">{g.player}</span>
+      {g.assist && g.kind !== "own" && (
+        <span className="text-muted-foreground"> ({g.assist})</span>
+      )}
+      <span className="text-muted-foreground">{tagOf(g)}</span>
+    </span>
+  );
+}
+
 function Raspored() {
   const { data, isLoading } = useQuery({
     queryKey: ["league-matches"],
@@ -191,24 +203,33 @@ function Raspored() {
                         {isOpen && (
                           <tr>
                             <td colSpan={3} className="p-0">
-                              <div className="bg-muted px-4 py-4 text-center text-foreground">
+                              <div className="bg-muted px-4 py-4 text-foreground">
                                 {mg.length === 0 ? (
-                                  <p className="text-sm text-muted-foreground">
+                                  <p className="text-center text-sm text-muted-foreground">
                                     Strijelci još nisu uneseni.
                                   </p>
                                 ) : (
-                                  <ul className="space-y-1 text-sm">
-                                    {mg.map((g) => (
-                                      <li key={g.id}>
-                                        <span className="font-semibold">{minuteOf(g)}</span>{" "}
-                                        <span className="font-semibold">{g.player}</span>
-                                        {g.assist && g.kind !== "own" && (
-                                          <span className="text-muted-foreground"> ({g.assist})</span>
-                                        )}
-                                        <span className="text-muted-foreground">{tagOf(g)}</span>
-                                        <span className="text-muted-foreground"> · {g.team}</span>
-                                      </li>
-                                    ))}
+                                  <ul className="mx-auto max-w-xl space-y-2 text-sm">
+                                    {mg.map((g) => {
+                                      const isHome = sameClub(g.team, m.home);
+                                      return (
+                                        <li
+                                          key={g.id}
+                                          className="grid grid-cols-[1fr_auto_1fr] items-center gap-3"
+                                        >
+                                          <div className="text-right">
+                                            {isHome && <GoalText g={g} />}
+                                          </div>
+                                          <div className="flex min-w-16 items-center justify-center gap-1 font-semibold">
+                                            <span aria-hidden="true">⚽</span>
+                                            <span>{minuteOf(g)}</span>
+                                          </div>
+                                          <div className="text-left">
+                                            {!isHome && <GoalText g={g} />}
+                                          </div>
+                                        </li>
+                                      );
+                                    })}
                                   </ul>
                                 )}
                               </div>
