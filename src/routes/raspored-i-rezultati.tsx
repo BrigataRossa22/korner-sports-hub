@@ -18,7 +18,7 @@ export const Route = createFileRoute("/raspored-i-rezultati")({
 });
 
 const BALL_URL =
-  "https://wxyxcfalnqttwchxebpn.supabase.co/storage/v1/object/public/slike/image0.webp";
+    "https://wxyxcfalnqttwchxebpn.supabase.co/storage/v1/object/public/slike/lopta.webp";
 
 function fmtDate(iso: string): string {
   const d = new Date(iso);
