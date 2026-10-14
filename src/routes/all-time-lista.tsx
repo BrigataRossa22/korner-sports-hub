@@ -1,11 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { LoadError } from "@/components/RouteFallbacks";
 import { TableSkeleton } from "@/components/TableSkeleton";
-import { getAllTimeTeams } from "@/lib/alltimeteams.functions";
-import { useCrest } from "@/lib/use-crest";
-
-const SUPA = "https://wxyxcfalnqttwchxebpn.supabase.co/storage/v1/object/public/slike/";
+import { getEternalTable } from "@/lib/eternal.functions";
+import { useClubCrest } from "@/lib/use-club-crest";
 
 export const Route = createFileRoute("/all-time-lista")({
   head: () => ({
@@ -18,18 +16,16 @@ export const Route = createFileRoute("/all-time-lista")({
     ],
   }),
   errorComponent: LoadError,
-  component: AllTime,
+  component: Vjecna,
 });
 
-function AllTime() {
+function Vjecna() {
   const { data, isLoading } = useQuery({
-    queryKey: ["all-time-teams"],
-    queryFn: () => getAllTimeTeams(),
+    queryKey: ["eternal-table"],
+    queryFn: () => getEternalTable(),
   });
-  const crestFor = useCrest();
+  const crestFor = useClubCrest();
   const rows = data ?? [];
-
-  const own = (c: string) => (!c ? "" : c.startsWith("http") ? c : `${SUPA}${c}`);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
@@ -45,7 +41,7 @@ function AllTime() {
         <p className="border-y border-border py-8 text-muted-foreground">Lista još nije unesena.</p>
       ) : (
         <div className="overflow-x-auto rounded-lg border border-border bg-card">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm tabular-nums">
             <thead>
               <tr className="text-left text-xs uppercase text-muted-foreground">
                 <th className="px-3 py-3">#</th>
@@ -61,26 +57,30 @@ function AllTime() {
             </thead>
             <tbody>
               {rows.map((r, i) => {
-                const crest = own(r.crest) || crestFor(r.team);
+                const crest = crestFor(r.team);
                 return (
-                  <tr key={r.id} className="border-t border-border">
+                  <tr key={r.team} className="border-t border-border">
                     <td className="px-3 py-2">{i + 1}</td>
                     <td className="px-3 py-2">
-                      <span className="flex items-center gap-2 font-medium">
+                      <Link
+                        to="/klub/$name"
+                        params={{ name: r.team }}
+                        className="flex items-center gap-2 font-medium hover:underline"
+                      >
                         {crest ? (
                           <img src={crest} alt="" className="size-6 object-contain" />
                         ) : (
                           <span className="size-6" />
                         )}
                         {r.team}
-                      </span>
+                      </Link>
                     </td>
                     <td className="px-3 py-2 text-right">{r.played}</td>
                     <td className="px-3 py-2 text-right">{r.wins}</td>
                     <td className="px-3 py-2 text-right">{r.draws}</td>
                     <td className="px-3 py-2 text-right">{r.losses}</td>
-                    <td className="px-3 py-2 text-right">{r.goals_for}</td>
-                    <td className="px-3 py-2 text-right">{r.goals_against}</td>
+                    <td className="px-3 py-2 text-right">{r.gf}</td>
+                    <td className="px-3 py-2 text-right">{r.ga}</td>
                     <td className="px-3 py-2 text-right font-bold">{r.points}</td>
                   </tr>
                 );
