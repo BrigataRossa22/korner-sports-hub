@@ -18,7 +18,7 @@ export const Route = createFileRoute("/raspored-i-rezultati")({
 });
 
 const BALL_URL =
-    "https://wxyxcfalnqttwchxebpn.supabase.co/storage/v1/object/public/slike/lopta.webp";
+  "https://wxyxcfalnqttwchxebpn.supabase.co/storage/v1/object/public/slike/lopta.webp";
 
 function fmtDate(iso: string): string {
   const d = new Date(iso);
@@ -35,7 +35,7 @@ function tagOf(g: MatchGoal): string {
 }
 
 function Ball() {
-  return <img src={BALL_URL} alt="" className="size-6 object-contain" />;
+  return <img src={BALL_URL} alt="" className="size-5 object-contain" />;
 }
 
 function GoalText({ g }: { g: MatchGoal }) {
@@ -221,7 +221,7 @@ function Raspored() {
                                     aria-hidden="true"
                                     className="pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-foreground/30"
                                   />
-                                  <ul className="space-y-2">
+                                  <ul className="space-y-2 text-xs">
                                     {mg.map((g) => {
                                       const isHome = sameClub(g.team, m.home);
                                       const minute = (
