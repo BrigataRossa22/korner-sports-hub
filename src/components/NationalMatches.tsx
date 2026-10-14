@@ -1,6 +1,9 @@
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { TableSkeleton } from "@/components/TableSkeleton";
 import { getNationalMatches } from "@/lib/nationalmatches.functions";
+
+const KEY = "reprezentacija-godina";
 
 function fmtDate(iso: string): string {
   const d = new Date(iso);
@@ -10,8 +13,14 @@ function fmtDate(iso: string): string {
   return `${day}.${month}.${d.getFullYear()}.`;
 }
 
+function flagSrc(flag: string): string {
+  if (!flag) return "";
+  return flag.startsWith("http") ? flag : `https://flagcdn.com/w40/${flag.toLowerCase()}.png`;
+}
+
 function Team({ name, flag, align }: { name: string; flag: string; align: "left" | "right" }) {
-  const img = flag ? <img src={flag} alt="" className="h-4 w-6 shrink-0 object-cover" /> : null;
+  const src = flagSrc(flag);
+  const img = src ? <img src={src} alt="" className="h-4 w-6 shrink-0 object-cover" /> : null;
   return (
     <span
       className={`flex flex-1 items-center gap-2 font-medium ${
@@ -40,48 +49,113 @@ export function NationalMatches() {
   });
   const rows = data ?? [];
 
+  const years = [...new Set(rows.map((m) => m.match_date.slice(0, 4)))].sort((a, b) =>
+    b.localeCompare(a),
+  );
+
+  const [picked, setPicked] = useState("");
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem(KEY);
+      if (saved) setPicked(saved);
+    } catch {
+      /* ignoriši */
+    }
+  }, []);
+  const choose = (y: string) => {
+    setPicked(y);
+    try {
+      sessionStorage.setItem(KEY, y);
+    } catch {
+      /* ignoriši */
+    }
+  };
+
+  const year = years.includes(picked) ? picked : years[0] || "";
+  const list = rows.filter((m) => m.match_date.startsWith(year));
+
+  let w = 0,
+    d = 0,
+    l = 0;
+  for (const m of list) {
+    if (m.score_home === null || m.score_away === null) continue;
+    const bihHome = /bosna|bih/i.test(m.home);
+    const a = bihHome ? m.score_home : m.score_away;
+    const b = bihHome ? m.score_away : m.score_home;
+    if (a > b) w++;
+    else if (a === b) d++;
+    else l++;
+  }
+
   return (
     <section className="mt-10 rounded-lg border border-border bg-card">
-      <h2 className="border-b border-border px-4 py-3 font-display text-lg font-bold uppercase">
-        Utakmice reprezentacije BiH 2026.
-      </h2>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
+        <h2 className="font-display text-lg font-bold uppercase">
+          Utakmice reprezentacije BiH {year}.
+        </h2>
+        {years.length > 0 && (
+          <div className="flex items-center gap-2">
+            <label htmlFor="godina" className="text-xs font-semibold uppercase text-muted-foreground">
+              Godina
+            </label>
+            <select
+              id="godina"
+              value={year}
+              onChange={(e) => choose(e.target.value)}
+              className="rounded-md border border-border bg-card px-3 py-1.5 text-sm font-semibold"
+            >
+              {years.map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
+
       {isLoading ? (
         <TableSkeleton rows={5} cols={3} />
-      ) : rows.length === 0 ? (
+      ) : list.length === 0 ? (
         <p className="px-4 py-6 text-sm text-muted-foreground">Još nema podataka.</p>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[560px] text-sm tabular-nums">
-            <thead>
-              <tr className="text-xs uppercase text-muted-foreground">
-                <th className="px-4 py-2 text-left">Datum</th>
-                <th className="px-4 py-2 text-center">Utakmica</th>
-                <th className="px-4 py-2 text-right">Gledalaca</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((m) => (
-                <tr key={m.id} className="border-t border-border">
-                  <td className="whitespace-nowrap px-4 py-3">{fmtDate(m.match_date)}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <Team name={m.home} flag={m.home_flag} align="right" />
-                      <span className="min-w-14 text-center font-bold">
-                        {m.score_home !== null && m.score_away !== null
-                          ? `${m.score_home}:${m.score_away}`
-                          : "–"}
-                      </span>
-                      <Team name={m.away} flag={m.away_flag} align="left" />
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    {m.attendance > 0 ? m.attendance.toLocaleString("de-DE") : "—"}
-                  </td>
+        <>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[560px] text-sm tabular-nums">
+              <thead>
+                <tr className="text-xs uppercase text-muted-foreground">
+                  <th className="px-4 py-2 text-left">Datum</th>
+                  <th className="px-4 py-2 text-center">Utakmica</th>
+                  <th className="px-4 py-2 text-right">Gledalaca</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {list.map((m) => (
+                  <tr key={m.id} className="border-t border-border">
+                    <td className="whitespace-nowrap px-4 py-3">{fmtDate(m.match_date)}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <Team name={m.home} flag={m.home_flag} align="right" />
+                        <span className="min-w-14 text-center font-bold">
+                          {m.score_home !== null && m.score_away !== null
+                            ? `${m.score_home}:${m.score_away}`
+                            : "–"}
+                        </span>
+                        <Team name={m.away} flag={m.away_flag} align="left" />
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {m.attendance > 0 ? m.attendance.toLocaleString("de-DE") : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="border-t border-border px-4 py-3 text-xs text-muted-foreground">
+            {list.length} utakmica · {w} pobjeda · {d} neriješeno · {l} poraza
+          </p>
+        </>
       )}
     </section>
   );
