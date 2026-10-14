@@ -4,6 +4,7 @@ import { sameClub } from "@/lib/club-match";
 export type ClubSeasonRow = {
   season: string;
   team: string;
+  position: number | null;
   played: number;
   wins: number;
   draws: number;
@@ -43,7 +44,7 @@ export const getClubHistory = createServerFn({ method: "GET" })
 
     const [archive, homeGames, standings, attendance] = await Promise.all([
       getAll(
-        "season_standings?select=season,team,played,wins,draws,losses,goals_for,goals_against,points&order=season.desc,team.asc",
+        "season_standings?select=season,team,position,played,wins,draws,losses,goals_for,goals_against,points&order=season.desc,position.asc",
       ),
       getAll("season_matches?select=season,home,attendance&attendance=gt.0&order=season.asc,id.asc"),
       getAll("standings?select=*&order=sort_order.asc"),
@@ -52,12 +53,14 @@ export const getClubHistory = createServerFn({ method: "GET" })
 
     const rows: ClubSeasonRow[] = [];
 
-    const cur = standings.find((s) => sameClub(s.team, data.name));
+    const curIndex = standings.findIndex((s) => sameClub(s.team, data.name));
+    const cur = curIndex >= 0 ? standings[curIndex] : null;
     if (cur) {
       const att = attendance.find((a) => sameClub(a.team, data.name));
       rows.push({
         season: CURRENT_SEASON,
         team: cur.team,
+        position: curIndex + 1,
         played: cur.played,
         wins: cur.wins,
         draws: cur.draws,
@@ -80,6 +83,7 @@ export const getClubHistory = createServerFn({ method: "GET" })
       rows.push({
         season: r.season,
         team: r.team,
+        position: r.position,
         played: r.played,
         wins: r.wins,
         draws: r.draws,
