@@ -17,6 +17,9 @@ export const Route = createFileRoute("/raspored-i-rezultati")({
   component: Raspored,
 });
 
+const BALL_URL =
+  "https://wxyxcfalnqttwchxebpn.supabase.co/storage/v1/object/public/slike/image0.webp";
+
 function fmtDate(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
@@ -32,18 +35,7 @@ function tagOf(g: MatchGoal): string {
 }
 
 function Ball() {
-  return (
-    <svg viewBox="0 0 24 24" className="size-6" aria-hidden="true">
-      <circle cx="12" cy="12" r="11" fill="#fff" stroke="#111" strokeWidth="1.2" />
-      <polygon points="12,7.8 16,10.7 14.47,15.4 9.53,15.4 8,10.7" fill="#111" />
-      {[0, 72, 144, 216, 288].map((a) => (
-        <g key={a} transform={`rotate(${a} 12 12)`}>
-          <path d="M12 7.8V1.4" stroke="#111" strokeWidth="1" strokeLinecap="round" />
-          <polygon points="12,17.6 14.47,19.4 13.53,22.4 10.47,22.4 9.53,19.4" fill="#111" />
-        </g>
-      ))}
-    </svg>
-  );
+  return <img src={BALL_URL} alt="" className="size-6 object-contain" />;
 }
 
 function GoalText({ g }: { g: MatchGoal }) {
