@@ -4,6 +4,7 @@ import { LoadError } from "@/components/RouteFallbacks";
 import { TableSkeleton } from "@/components/TableSkeleton";
 import { getClubDetail } from "@/lib/clubdetail.functions";
 import { getClubHistory } from "@/lib/clubhistory.functions";
+import { getClubInfo } from "@/lib/clubinfo.functions";
 import { getEuroMatches } from "@/lib/euromatches.functions";
 import { normClub } from "@/lib/club-match";
 import { useCrest } from "@/lib/use-crest";
@@ -40,6 +41,10 @@ function Klub() {
   const { data: history, isLoading: historyLoading } = useQuery({
     queryKey: ["club-history", name],
     queryFn: () => getClubHistory({ data: { name } }),
+  });
+  const { data: info } = useQuery({
+    queryKey: ["club-info", name],
+    queryFn: () => getClubInfo({ data: { name } }),
   });
   const { data: euro } = useQuery({
     queryKey: ["euro-matches"],
@@ -86,6 +91,27 @@ function Klub() {
           <h1 className="mt-1 font-display text-3xl uppercase sm:text-4xl">{name}</h1>
         </div>
       </div>
+
+      {info && (info.founded || info.stadium) && (
+        <section className="mb-8 flex flex-wrap gap-x-12 gap-y-4 rounded-lg border border-border bg-card px-5 py-4">
+          {info.founded && (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Datum osnivanja
+              </p>
+              <p className="mt-1 text-base font-semibold">{info.founded}</p>
+            </div>
+          )}
+          {info.stadium && (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Stadion
+              </p>
+              <p className="mt-1 text-base font-semibold">{info.stadium}</p>
+            </div>
+          )}
+        </section>
+      )}
 
       <section className="rounded-lg border border-border bg-card">
         <h2 className="border-b border-border px-4 py-3 font-display text-lg font-bold uppercase">
