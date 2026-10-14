@@ -18,7 +18,7 @@ export const getNationalMatches = createServerFn({ method: "GET" }).handler(
     const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
     if (!url || !key) return [];
     const res = await fetch(
-      `${url}/rest/v1/national_matches?select=*&order=match_date.asc&limit=100`,
+      `${url}/rest/v1/national_matches?select=*&order=match_date.asc&limit=3000`,
       { headers: { apikey: key } },
     );
     if (!res.ok) return [];
