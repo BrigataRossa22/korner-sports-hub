@@ -3,7 +3,6 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, Menu, X } from "lucide-react";
 import { contentOptions } from "@/lib/content";
-import { getAllTimeTeams } from "@/lib/alltimeteams.functions";
 import { useHydrated } from "@/lib/use-hydrated";
 
 const linkClass =
@@ -23,6 +22,7 @@ const statSub = [
 ] as const;
 
 const navPlain = [
+  { to: "/klubovi", label: "Klubovi" },
   { to: "/reprezentacija", label: "Reprezentacija" },
   { to: "/nize-lige", label: "Niže lige" },
   { to: "/kup-bih", label: "Kup BiH" },
@@ -78,45 +78,6 @@ function Dropdown({
   );
 }
 
-function ClubsMenu() {
-  const hydrated = useHydrated();
-  const { data } = useQuery({
-    queryKey: ["all-time-teams"],
-    queryFn: () => getAllTimeTeams(),
-    enabled: hydrated,
-  });
-  const names = [...new Set((data ?? []).map((t) => t.team.trim()).filter(Boolean))].sort((a, b) =>
-    a.localeCompare(b, "bs"),
-  );
-
-  return (
-    <div className="group relative">
-      <Link to="/klubovi" activeProps={activeProps} className={`${linkClass} inline-flex items-center gap-1`}>
-        Klubovi
-        <ChevronDown className="size-3.5" />
-      </Link>
-      <div className="invisible absolute left-0 top-full z-50 pt-3 opacity-0 transition group-hover:visible group-hover:opacity-100">
-        <div className="max-h-[70vh] min-w-56 overflow-y-auto rounded-md border border-white/10 bg-ink py-2 shadow-lg">
-          {names.length === 0 ? (
-            <span className="block px-4 py-2 text-sm text-ink-foreground/60">Učitavanje...</span>
-          ) : (
-            names.map((n) => (
-              <Link
-                key={n}
-                to="/klub/$name"
-                params={{ name: n }}
-                className="block px-4 py-2 font-display text-sm uppercase tracking-wide text-ink-foreground/80 hover:bg-white/10 hover:text-primary-foreground"
-              >
-                {n}
-              </Link>
-            ))
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
   const ticker = useTicker();
@@ -137,7 +98,6 @@ export function SiteHeader() {
         <nav className="ml-6 hidden items-center gap-5 md:flex">
           <Dropdown to="/wwin-liga" label="WWiN liga" items={wwinSub} />
           <Dropdown to="/statistika" label="Statistika" items={statSub} />
-          <ClubsMenu />
           {navPlain.map((item) => (
             <Link key={item.to} to={item.to} activeProps={activeProps} className={linkClass}>
               {item.label}
@@ -191,13 +151,6 @@ export function SiteHeader() {
               {item.label}
             </Link>
           ))}
-          <Link
-            to="/klubovi"
-            onClick={() => setOpen(false)}
-            className="block border-b border-white/10 py-3 font-display text-sm uppercase tracking-wide"
-          >
-            Klubovi
-          </Link>
           {navPlain.map((item) => (
             <Link
               key={item.to}
