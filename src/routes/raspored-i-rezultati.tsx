@@ -136,10 +136,16 @@ function Raspored() {
                     const homeGoals = mg.filter((g) => sameClub(g.team, m.home));
                     const awayGoals = mg.filter((g) => !sameClub(g.team, m.home));
 
+                    const rowStyle = isOpen
+                      ? "bg-primary text-primary-foreground"
+                      : canOpen
+                        ? "hover:bg-muted/40"
+                        : "";
+
                     return (
                       <Fragment key={m.id}>
                         <tr
-                          className={`border-t border-border ${canOpen ? "cursor-pointer hover:bg-muted/40" : ""}`}
+                          className={`border-t border-border ${canOpen ? "cursor-pointer" : ""} ${rowStyle}`}
                           onClick={canOpen ? () => toggle(m.id) : undefined}
                           onKeyDown={
                             canOpen
@@ -175,7 +181,9 @@ function Raspored() {
                               {m.attendance > 0 ? m.attendance.toLocaleString("de-DE") : "—"}
                               {canOpen && (
                                 <ChevronDown
-                                  className={`size-4 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`}
+                                  className={`size-4 transition-transform ${
+                                    isOpen ? "rotate-180 text-primary-foreground" : "text-muted-foreground"
+                                  }`}
                                 />
                               )}
                             </span>
@@ -185,7 +193,7 @@ function Raspored() {
                         {isOpen && (
                           <tr>
                             <td colSpan={3} className="p-0">
-                              <div className="bg-primary px-4 py-4 text-primary-foreground">
+                              <div className="bg-card px-4 py-4 text-foreground">
                                 <div className="grid grid-cols-2 gap-6">
                                   <div>
                                     <div className="mb-2 flex items-center gap-2 font-display text-sm font-bold uppercase">
@@ -198,9 +206,9 @@ function Raspored() {
                                           <span className="font-semibold">{minuteOf(g)}</span>{" "}
                                           <span className="font-semibold">{g.player}</span>
                                           {g.assist && g.kind !== "own" && (
-                                            <span className="opacity-80"> ({g.assist})</span>
+                                            <span className="text-muted-foreground"> ({g.assist})</span>
                                           )}
-                                          <span className="opacity-80">{tagOf(g)}</span>
+                                          <span className="text-muted-foreground">{tagOf(g)}</span>
                                         </li>
                                       ))}
                                     </ul>
@@ -215,9 +223,9 @@ function Raspored() {
                                         <li key={g.id}>
                                           <span className="font-semibold">{g.player}</span>
                                           {g.assist && g.kind !== "own" && (
-                                            <span className="opacity-80"> ({g.assist})</span>
+                                            <span className="text-muted-foreground"> ({g.assist})</span>
                                           )}
-                                          <span className="opacity-80">{tagOf(g)}</span>{" "}
+                                          <span className="text-muted-foreground">{tagOf(g)}</span>{" "}
                                           <span className="font-semibold">{minuteOf(g)}</span>
                                         </li>
                                       ))}
@@ -225,7 +233,7 @@ function Raspored() {
                                   </div>
                                 </div>
                                 {mg.length === 0 && (
-                                  <p className="mt-2 text-center text-sm opacity-80">
+                                  <p className="mt-2 text-center text-sm text-muted-foreground">
                                     Strijelci još nisu uneseni.
                                   </p>
                                 )}
