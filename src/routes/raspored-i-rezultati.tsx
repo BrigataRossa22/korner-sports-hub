@@ -150,8 +150,9 @@ function Raspored() {
                   {groups.get(r)!.map((m) => {
                     const mg = goalsOf(m);
                     const hasResult = m.score_home !== null && m.score_away !== null;
-                    const canOpen = hasResult || mg.length > 0;
-                    const isOpen = open.has(m.id);
+                    const goalless = hasResult && m.score_home === 0 && m.score_away === 0;
+                    const canOpen = mg.length > 0 || (hasResult && !goalless);
+                    const isOpen = canOpen && open.has(m.id);
 
                     const rowStyle = isOpen
                       ? "bg-primary text-primary-foreground"
