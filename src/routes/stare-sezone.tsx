@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { ArchiveTable, useSeasons } from "@/components/ArchiveTable";
 import { SeasonRounds } from "@/components/SeasonRounds";
+import { TopScorers } from "@/components/TopScorers";
 import { LoadError } from "@/components/RouteFallbacks";
 
 export const Route = createFileRoute("/stare-sezone")({
@@ -70,6 +71,7 @@ function ArhivaSezona() {
         <>
           <ArchiveTable season={season} />
           <SeasonRounds season={season} />
+          <TopScorers season={season} />
         </>
       ) : (
         <p className="border-y border-border py-8 text-muted-foreground">Nema podataka.</p>
