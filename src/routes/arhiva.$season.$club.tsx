@@ -167,8 +167,7 @@ function ArhivaKlub() {
                         )}
                       </td>
                       <td className="px-3 py-3 text-right">
-                        {m.attendance > 0 ? m.attendance.toLocaleString("de-DE") : "—"}
-                      </td>
+{m.attendance > 0 ? m.attendance.toLocaleString("de-DE") : m.attendance < 0 ? "x" : "—"}                      </td>
                     </tr>
                   );
                 })}
