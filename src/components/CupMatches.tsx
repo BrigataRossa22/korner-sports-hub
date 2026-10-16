@@ -1,10 +1,16 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { ChevronDown } from "lucide-react";
 import { TableSkeleton } from "@/components/TableSkeleton";
+import { sameClub } from "@/lib/club-match";
+import { getCupGoals, type CupGoal } from "@/lib/cupgoals.functions";
 import { getCupMatches, type CupMatch } from "@/lib/cupmatches.functions";
 import { useClubCrest } from "@/lib/use-club-crest";
 
 const KEY = "kup-sezona";
+
+const BALL_URL =
+  "https://wxyxcfalnqttwchxebpn.supabase.co/storage/v1/object/public/slike/lopta.webp";
 
 const ROUNDS: { key: string; title: string }[] = [
   { key: "Q1", title: "Q1" },
@@ -23,6 +29,23 @@ function fmtDate(iso: string): string {
   const day = String(d.getDate()).padStart(2, "0");
   const month = String(d.getMonth() + 1).padStart(2, "0");
   return `${day}.${month}.${d.getFullYear()}.`;
+}
+
+function minuteOf(g: CupGoal): string {
+  return `${g.minute}${g.extra > 0 ? `+${g.extra}` : ""}'`;
+}
+
+function tagOf(g: CupGoal): string {
+  return g.kind === "p" ? " (pen.)" : g.kind === "o" ? " (autogol)" : "";
+}
+
+function GoalText({ g }: { g: CupGoal }) {
+  return (
+    <span>
+      <span className="font-semibold">{g.player}</span>
+      <span className="text-muted-foreground">{tagOf(g)}</span>
+    </span>
+  );
 }
 
 function Team({ name, crest, align }: { name: string; crest: string; align: "left" | "right" }) {
@@ -52,8 +75,37 @@ function Team({ name, crest, align }: { name: string; crest: string; align: "lef
   );
 }
 
-function RoundTable({ title, rows }: { title: string; rows: CupMatch[] }) {
+function RoundTable({
+  title,
+  rows,
+  goals,
+}: {
+  title: string;
+  rows: CupMatch[];
+  goals: CupGoal[];
+}) {
   const crestFor = useClubCrest();
+  const [open, setOpen] = useState<Set<string>>(new Set());
+
+  const toggle = (id: string) =>
+    setOpen((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  const goalsOf = (m: CupMatch) =>
+    goals
+      .filter(
+        (g) =>
+          g.season === m.season &&
+          g.round === m.round &&
+          sameClub(g.home, m.home) &&
+          sameClub(g.away, m.away),
+      )
+      .sort((a, b) => a.minute - b.minute || a.extra - b.extra);
+
   return (
     <section className="mt-8 rounded-lg border border-border bg-card">
       <h2 className="border-b border-border px-4 py-3 font-display text-lg font-bold uppercase">
@@ -69,29 +121,109 @@ function RoundTable({ title, rows }: { title: string; rows: CupMatch[] }) {
             </tr>
           </thead>
           <tbody>
-            {rows.map((m) => (
-              <tr key={m.id} className="border-t border-border">
-                <td className="whitespace-nowrap px-4 py-3">{fmtDate(m.match_date)}</td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <Team name={m.home} crest={crestFor(m.home) || m.home_crest} align="right" />
-                    <span className="min-w-14 text-center font-bold">
-                      {m.score_home !== null && m.score_away !== null
-                        ? `${m.score_home}:${m.score_away}`
-                        : "–"}
-                    </span>
-                    <Team name={m.away} crest={crestFor(m.away) || m.away_crest} align="left" />
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-right">
-                  {m.attendance > 0
-                    ? m.attendance.toLocaleString("de-DE")
-                    : m.attendance < 0
-                      ? "x"
-                      : "—"}
-                </td>
-              </tr>
-            ))}
+            {rows.map((m) => {
+              const mg = goalsOf(m);
+              const canOpen = mg.length > 0;
+              const isOpen = canOpen && open.has(m.id);
+              const rowStyle = isOpen
+                ? "bg-primary text-primary-foreground"
+                : canOpen
+                  ? "hover:bg-muted/40"
+                  : "";
+
+              return (
+                <Fragment key={m.id}>
+                  <tr
+                    className={`border-t border-border ${canOpen ? "cursor-pointer" : ""} ${rowStyle}`}
+                    onClick={canOpen ? () => toggle(m.id) : undefined}
+                    onKeyDown={
+                      canOpen
+                        ? (e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              toggle(m.id);
+                            }
+                          }
+                        : undefined
+                    }
+                    tabIndex={canOpen ? 0 : undefined}
+                    aria-expanded={canOpen ? isOpen : undefined}
+                  >
+                    <td className="whitespace-nowrap px-4 py-3">{fmtDate(m.match_date)}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <Team name={m.home} crest={crestFor(m.home) || m.home_crest} align="right" />
+                        <span className="min-w-14 text-center font-bold">
+                          {m.score_home !== null && m.score_away !== null
+                            ? `${m.score_home}:${m.score_away}`
+                            : "–"}
+                        </span>
+                        <Team name={m.away} crest={crestFor(m.away) || m.away_crest} align="left" />
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <span className="inline-flex items-center justify-end gap-2">
+                        {m.attendance > 0
+                          ? m.attendance.toLocaleString("de-DE")
+                          : m.attendance < 0
+                            ? "x"
+                            : "—"}
+                        <span className="inline-flex size-4 shrink-0 items-center justify-center">
+                          {canOpen && (
+                            <ChevronDown
+                              className={`size-4 transition-transform ${
+                                isOpen ? "rotate-180 text-primary-foreground" : "text-muted-foreground"
+                              }`}
+                            />
+                          )}
+                        </span>
+                      </span>
+                    </td>
+                  </tr>
+
+                  {isOpen && (
+                    <tr className="text-foreground">
+                      <td className="bg-muted" />
+                      <td className="bg-muted px-4 py-4">
+                        <div className="relative">
+                          <div
+                            aria-hidden="true"
+                            className="pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-foreground/30"
+                          />
+                          <ul className="space-y-2 text-xs">
+                            {mg.map((g) => {
+                              const isHome = g.side === "H";
+                              const minute = (
+                                <span className="font-semibold tabular-nums">{minuteOf(g)}</span>
+                              );
+                              return (
+                                <li
+                                  key={g.id}
+                                  className="relative grid grid-cols-[1fr_auto_1fr] items-center gap-3"
+                                >
+                                  <div className="min-w-0 text-right">
+                                    {isHome ? <GoalText g={g} /> : minute}
+                                  </div>
+                                  <span className="relative z-10 flex min-w-14 justify-center">
+                                    <span className="rounded-full bg-muted p-0.5">
+                                      <img src={BALL_URL} alt="" className="size-5 object-contain" />
+                                    </span>
+                                  </span>
+                                  <div className="min-w-0 text-left">
+                                    {isHome ? minute : <GoalText g={g} />}
+                                  </div>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
+                      </td>
+                      <td className="bg-muted" />
+                    </tr>
+                  )}
+                </Fragment>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -104,7 +236,12 @@ export function CupMatches() {
     queryKey: ["cup-matches"],
     queryFn: () => getCupMatches(),
   });
+  const { data: goalsData } = useQuery({
+    queryKey: ["cup-goals"],
+    queryFn: () => getCupGoals(),
+  });
   const rows = data ?? [];
+  const goals = goalsData ?? [];
 
   const seasons = [...new Set(rows.map((m) => m.season))].sort((a, b) => b.localeCompare(a));
 
@@ -168,7 +305,7 @@ export function CupMatches() {
 
       {order.map(({ key, title }) => {
         const list = inSeason.filter((m) => m.round === key);
-        return list.length ? <RoundTable key={key} title={title} rows={list} /> : null;
+        return list.length ? <RoundTable key={key} title={title} rows={list} goals={goals} /> : null;
       })}
     </div>
   );
