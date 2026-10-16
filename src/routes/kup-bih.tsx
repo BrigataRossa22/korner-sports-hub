@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { CategoryPage } from "@/components/CategoryPage";
-import { CupMatches } from "@/components/CupMatches";
 import { LoadError } from "@/components/RouteFallbacks";
 import { getPublicContent } from "@/lib/content.functions";
 
@@ -17,20 +16,11 @@ export const Route = createFileRoute("/kup-bih")({
     ],
   }),
   errorComponent: LoadError,
-  component: KupBih,
+  component: () => (
+    <CategoryPage
+      category="kup-bih"
+      intro="Sve o Kupu BiH: parovi, rezultati i najave."
+      content={Route.useLoaderData()}
+    />
+  ),
 });
-
-function KupBih() {
-  return (
-    <>
-      <CategoryPage
-        category="kup-bih"
-        intro="Sve o Kupu BiH: parovi, rezultati i najave."
-        content={Route.useLoaderData()}
-      />
-      <div className="mx-auto max-w-6xl px-4 pb-12">
-        <CupMatches scope="current" />
-      </div>
-    </>
-  );
-}
