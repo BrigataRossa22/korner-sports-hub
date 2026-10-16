@@ -13,6 +13,7 @@ export type EuroMatch = {
   away: string;
   agg: string;
   sort_order: number;
+  attendance: number;
 };
 
 export const getEuroMatches = createServerFn({ method: "GET" }).handler(
