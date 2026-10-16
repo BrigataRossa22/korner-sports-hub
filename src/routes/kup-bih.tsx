@@ -29,7 +29,7 @@ function KupBih() {
         content={Route.useLoaderData()}
       />
       <div className="mx-auto max-w-6xl px-4 pb-12">
-        <CupMatches />
+        <CupMatches scope="current" />
       </div>
     </>
   );
