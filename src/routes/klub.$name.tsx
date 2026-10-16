@@ -1,22 +1,19 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { ClubMatchesSection } from "@/components/ClubMatchesSection";
 import { LoadError } from "@/components/RouteFallbacks";
 import { TableSkeleton } from "@/components/TableSkeleton";
 import { getClubDetail } from "@/lib/clubdetail.functions";
 import { getClubHistory } from "@/lib/clubhistory.functions";
 import { getClubInfo } from "@/lib/clubinfo.functions";
 import { getCupMatches, type CupMatch } from "@/lib/cupmatches.functions";
-import { getEuroMatches, type EuroMatch } from "@/lib/euromatches.functions";
-import { getSeasonMatches } from "@/lib/seasonmatches.functions";
-import { normClub, sameClub } from "@/lib/club-match";
+import { getEuroMatches } from "@/lib/euromatches.functions";
+import { sameClub } from "@/lib/club-match";
 import { useCrest } from "@/lib/use-crest";
 import { useClubCrest } from "@/lib/use-club-crest";
 
 const SUPA = "https://wxyxcfalnqttwchxebpn.supabase.co/storage/v1/object/public/slike/";
-
-// Mora biti ista oznaka kao u clubhistory.functions.ts
-const CURRENT_SEASON = "2026-27";
 
 export const Route = createFileRoute("/klub/$name")({
   head: ({ params }) => ({
@@ -50,13 +47,6 @@ const CUP_TITLE: Record<string, string> = {
   Finale: "Finale",
 };
 
-const EURO_TITLE: Record<EuroMatch["competition"], string> = {
-  LP: "Liga prvaka",
-  LE: "Liga Evrope",
-  KL: "Konferencijska liga",
-  KPK: "Kup pobjednika kupova",
-};
-
 type CompRow = {
   season: string;
   stage: string;
@@ -82,13 +72,6 @@ type TotalRow = {
 
 const ns = (s: string) => s.replace(/[–—]/g, "-").trim();
 
-function fmtDate(iso: string | null): string {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}.`;
-}
-
 function parseScore(score: string): [number, number] | null {
   const m = /^\s*(\d+)\s*[:\-–]\s*(\d+)/.exec(score ?? "");
   return m ? [Number(m[1]), Number(m[2])] : null;
@@ -98,18 +81,13 @@ function mean(values: number[]): number | null {
   return values.length ? Math.round(values.reduce((s, x) => s + x, 0) / values.length) : null;
 }
 
-function attendanceText(n: number): string {
-  return n > 0 ? n.toLocaleString("de-DE") : n < 0 ? "x" : "—";
-}
-
 function Klub() {
   const { name } = Route.useParams();
   const crestFor = useCrest();
   const clubCrest = useClubCrest();
   const [comp, setComp] = useState<Comp>("liga");
-  const [matchSeason, setMatchSeason] = useState("");
 
-  const { data, isLoading } = useQuery({
+  const { data } = useQuery({
     queryKey: ["club-detail", name],
     queryFn: () => getClubDetail({ data: { name } }),
   });
@@ -130,67 +108,13 @@ function Klub() {
     queryFn: () => getCupMatches(),
   });
 
-  const pastSelected = matchSeason !== "" && matchSeason !== CURRENT_SEASON;
-  const { data: seasonLeague, isLoading: seasonLeagueLoading } = useQuery({
-    queryKey: ["season-matches", matchSeason],
-    queryFn: () => getSeasonMatches({ data: { season: matchSeason } }),
-    enabled: pastSelected,
-  });
-
-  const flags = new Map<string, string>();
-  for (const e of euro ?? []) {
-    if (e.opponent_flag) flags.set(normClub(e.opponent), e.opponent_flag);
-  }
-  const flagFor = (club: string): string => {
-    const f = flags.get(normClub(club));
-    if (!f) return "";
-    return f.startsWith("http") ? f : `https://flagcdn.com/w40/${f.toLowerCase()}.png`;
-  };
-
   const crest = clubCrest(name) || crestFor(name);
 
-  const Badge = ({ club }: { club: string }) => {
-    const c = crestFor(club);
-    if (c) return <img src={c} alt="" className="size-6 shrink-0 object-contain" />;
-    const f = flagFor(club);
-    if (f) return <img src={f} alt="" className="h-4 w-6 shrink-0 object-cover" />;
-    const b = clubCrest(club);
-    if (b) return <img src={b} alt="" className="size-6 shrink-0 object-contain" />;
-    return null;
-  };
-
-  const MatchCell = ({
-    home,
-    away,
-    sh,
-    sa,
-  }: {
-    home: string;
-    away: string;
-    sh: number | null;
-    sa: number | null;
-  }) => (
-    <div className="flex items-center gap-3">
-      <span className="flex flex-1 items-center justify-end gap-2 text-right font-medium">
-        {home}
-        <Badge club={home} />
-      </span>
-      <span className="min-w-14 text-center font-bold">
-        {sh !== null && sa !== null ? `${sh}:${sa}` : "–"}
-      </span>
-      <span className="flex flex-1 items-center gap-2 font-medium">
-        <Badge club={away} />
-        {away}
-      </span>
-    </div>
-  );
-
   // ---- Kup BiH po sezonama ----
-  const clubCup = (cup ?? []).filter((m) => sameClub(m.home, name) || sameClub(m.away, name));
-
   const kupRows: CompRow[] = (() => {
     const bySeason = new Map<string, CupMatch[]>();
-    for (const m of clubCup) {
+    for (const m of cup ?? []) {
+      if (!(sameClub(m.home, name) || sameClub(m.away, name))) continue;
       const s = ns(m.season);
       bySeason.set(s, [...(bySeason.get(s) ?? []), m]);
     }
@@ -246,11 +170,10 @@ function Klub() {
   })();
 
   // ---- Evropa po sezonama ----
-  const clubEuro = (euro ?? []).filter((e) => sameClub(e.club, name));
-
   const euroRows: CompRow[] = (() => {
-    const bySeason = new Map<string, EuroMatch[]>();
-    for (const e of clubEuro) {
+    const bySeason = new Map<string, NonNullable<typeof euro>>();
+    for (const e of euro ?? []) {
+      if (!sameClub(e.club, name)) continue;
       const s = ns(e.season);
       bySeason.set(s, [...(bySeason.get(s) ?? []), e]);
     }
@@ -331,25 +254,6 @@ function Klub() {
     return [...map.values()].sort((a, b) => b.season.localeCompare(a.season));
   })();
 
-  // ---- Izbor sezone za utakmice ----
-  const seasonOptions = (() => {
-    const set = new Set<string>([CURRENT_SEASON]);
-    for (const r of history ?? []) set.add(ns(r.season));
-    for (const m of clubCup) set.add(ns(m.season));
-    for (const e of clubEuro) set.add(ns(e.season));
-    return [...set].sort((a, b) => b.localeCompare(a));
-  })();
-
-  const pastLeague = (seasonLeague ?? [])
-    .filter((m) => sameClub(m.home, name) || sameClub(m.away, name))
-    .sort((a, b) => (a.round ?? 0) - (b.round ?? 0));
-  const pastCup = clubCup
-    .filter((m) => ns(m.season) === matchSeason)
-    .sort((a, b) => a.match_date.localeCompare(b.match_date));
-  const pastEuro = clubEuro
-    .filter((e) => ns(e.season) === matchSeason)
-    .sort((a, b) => a.sort_order - b.sort_order);
-
   const otherRows = comp === "kup" ? kupRows : euroRows;
   const showStage = comp === "kup";
 
@@ -401,215 +305,7 @@ function Klub() {
         </section>
       )}
 
-      <section className="rounded-lg border border-border bg-card">
-        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-          <h2 className="font-display text-lg font-bold uppercase">Utakmice</h2>
-          <div className="flex items-center gap-2">
-            <label
-              htmlFor="utakmice-sezona"
-              className="text-xs font-semibold uppercase text-muted-foreground"
-            >
-              Sezona
-            </label>
-            <select
-              id="utakmice-sezona"
-              value={matchSeason}
-              onChange={(e) => setMatchSeason(e.target.value)}
-              className="rounded-md border border-border bg-card px-3 py-1.5 text-sm font-semibold"
-            >
-              <option value="">Izaberi sezonu</option>
-              {seasonOptions.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {matchSeason === CURRENT_SEASON &&
-          (isLoading ? (
-            <TableSkeleton rows={6} cols={4} />
-          ) : !data || data.matches.length === 0 ? (
-            <p className="border-t border-border px-4 py-6 text-sm text-muted-foreground">
-              Još nema utakmica.
-            </p>
-          ) : (
-            <div className="overflow-x-auto border-t border-border">
-              <table className="w-full min-w-[620px] text-sm tabular-nums">
-                <thead>
-                  <tr className="text-xs uppercase text-muted-foreground">
-                    <th className="px-4 py-2 text-left">Datum</th>
-                    <th className="px-4 py-2 text-left">Takmičenje</th>
-                    <th className="px-4 py-2 text-center">Utakmica</th>
-                    <th className="px-4 py-2 text-right">Gledalaca</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.matches.map((m) => (
-                    <tr key={m.id} className="border-t border-border">
-                      <td className="whitespace-nowrap px-4 py-3">{fmtDate(m.match_date)}</td>
-                      <td className="px-4 py-3">{m.competition}</td>
-                      <td className="px-4 py-3">
-                        <MatchCell
-                          home={m.home}
-                          away={m.away}
-                          sh={m.score_home}
-                          sa={m.score_away}
-                        />
-                      </td>
-                      <td className="px-4 py-3 text-right">{attendanceText(m.attendance)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ))}
-
-        {pastSelected && (
-          <div className="border-t border-border">
-            {seasonLeagueLoading ? (
-              <TableSkeleton rows={5} cols={4} />
-            ) : pastLeague.length === 0 && pastCup.length === 0 && pastEuro.length === 0 ? (
-              <p className="px-4 py-6 text-sm text-muted-foreground">
-                Za ovu sezonu još nema unesenih utakmica.
-              </p>
-            ) : (
-              <>
-                {pastLeague.length > 0 && (
-                  <div>
-                    <h3 className="bg-surface px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      Liga
-                    </h3>
-                    <div className="overflow-x-auto">
-                      <table className="w-full min-w-[560px] text-sm tabular-nums">
-                        <thead>
-                          <tr className="text-xs uppercase text-muted-foreground">
-                            <th className="px-4 py-2 text-left">Kolo</th>
-                            <th className="px-4 py-2 text-left">Datum</th>
-                            <th className="px-4 py-2 text-center">Utakmica</th>
-                            <th className="px-4 py-2 text-right">Gledalaca</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {pastLeague.map((m) => (
-                            <tr key={m.id} className="border-t border-border">
-                              <td className="px-4 py-3">{m.round ?? "—"}</td>
-                              <td className="whitespace-nowrap px-4 py-3">
-                                {fmtDate(m.match_date)}
-                              </td>
-                              <td className="px-4 py-3">
-                                <MatchCell
-                                  home={m.home}
-                                  away={m.away}
-                                  sh={m.score_home}
-                                  sa={m.score_away}
-                                />
-                              </td>
-                              <td className="px-4 py-3 text-right">
-                                {attendanceText(m.attendance)}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-
-                {pastCup.length > 0 && (
-                  <div>
-                    <h3 className="bg-surface px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      Kup BiH
-                    </h3>
-                    <div className="overflow-x-auto">
-                      <table className="w-full min-w-[560px] text-sm tabular-nums">
-                        <thead>
-                          <tr className="text-xs uppercase text-muted-foreground">
-                            <th className="px-4 py-2 text-left">Runda</th>
-                            <th className="px-4 py-2 text-left">Datum</th>
-                            <th className="px-4 py-2 text-center">Utakmica</th>
-                            <th className="px-4 py-2 text-right">Gledalaca</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {pastCup.map((m) => (
-                            <tr key={m.id} className="border-t border-border">
-                              <td className="px-4 py-3">{CUP_TITLE[m.round] ?? m.round}</td>
-                              <td className="whitespace-nowrap px-4 py-3">
-                                {fmtDate(m.match_date)}
-                              </td>
-                              <td className="px-4 py-3">
-                                <MatchCell
-                                  home={m.home}
-                                  away={m.away}
-                                  sh={m.score_home}
-                                  sa={m.score_away}
-                                />
-                              </td>
-                              <td className="px-4 py-3 text-right">
-                                {attendanceText(m.attendance)}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-
-                {pastEuro.length > 0 && (
-                  <div>
-                    <h3 className="bg-surface px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      Evropa
-                    </h3>
-                    <div className="overflow-x-auto">
-                      <table className="w-full min-w-[620px] text-sm tabular-nums">
-                        <thead>
-                          <tr className="text-xs uppercase text-muted-foreground">
-                            <th className="px-4 py-2 text-left">Takmičenje</th>
-                            <th className="px-4 py-2 text-left">Runda</th>
-                            <th className="px-4 py-2 text-left">Protivnik</th>
-                            <th className="px-4 py-2 text-center">Domaćin</th>
-                            <th className="px-4 py-2 text-center">Gost</th>
-                            <th className="px-4 py-2 text-center">Ukupno</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {pastEuro.map((e) => {
-                            const f = e.opponent_flag
-                              ? e.opponent_flag.startsWith("http")
-                                ? e.opponent_flag
-                                : `https://flagcdn.com/w40/${e.opponent_flag.toLowerCase()}.png`
-                              : "";
-                            return (
-                              <tr key={e.id} className="border-t border-border">
-                                <td className="px-4 py-3">{EURO_TITLE[e.competition]}</td>
-                                <td className="px-4 py-3">{e.round}</td>
-                                <td className="px-4 py-3">
-                                  <span className="flex items-center gap-2 font-medium">
-                                    {f && (
-                                      <img src={f} alt="" className="h-4 w-6 shrink-0 object-cover" />
-                                    )}
-                                    {e.opponent}
-                                  </span>
-                                </td>
-                                <td className="px-4 py-3 text-center">{e.home || "—"}</td>
-                                <td className="px-4 py-3 text-center">{e.away || "—"}</td>
-                                <td className="px-4 py-3 text-center font-bold">{e.agg || "—"}</td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        )}
-      </section>
+      <ClubMatchesSection name={name} />
 
       {data && data.trophies.length > 0 && (
         <section className="mt-10 rounded-lg border border-border bg-card">
@@ -743,3 +439,124 @@ function Klub() {
                 <thead>
                   <tr className="border-b border-border bg-surface text-xs uppercase text-muted-foreground">
                     <th className="px-3 py-3 text-left">Sezona</th>
+                    <th className="px-3 py-3 text-right">Utakmica</th>
+                    <th className="px-3 py-3 text-right">Pobjeda</th>
+                    <th className="px-3 py-3 text-right">Neriješeno</th>
+                    <th className="px-3 py-3 text-right">Poraza</th>
+                    <th className="px-3 py-3 text-right">Golovi</th>
+                    <th className="px-3 py-3 text-right">Primljeni</th>
+                    <th className="px-3 py-3 text-right">Prosjek gledalaca</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {totalRows.map((r) => {
+                    const avg = mean(r.avgs);
+                    return (
+                      <tr key={r.season} className="border-t border-border">
+                        <td className="px-3 py-3 font-semibold">{r.season}</td>
+                        <td className="px-3 py-3 text-right">{r.played}</td>
+                        <td className="px-3 py-3 text-right">{r.wins}</td>
+                        <td className="px-3 py-3 text-right">{r.draws}</td>
+                        <td className="px-3 py-3 text-right">{r.losses}</td>
+                        <td className="px-3 py-3 text-right">{r.gf}</td>
+                        <td className="px-3 py-3 text-right">{r.ga}</td>
+                        <td className="px-3 py-3 text-right">
+                          {avg !== null ? avg.toLocaleString("de-DE") : "—"}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t-4 border-foreground/30 bg-surface font-bold">
+                    <td className="px-3 py-3 uppercase">Ukupno</td>
+                    <td className="px-3 py-3 text-right">{sumTotal((r) => r.played)}</td>
+                    <td className="px-3 py-3 text-right">{sumTotal((r) => r.wins)}</td>
+                    <td className="px-3 py-3 text-right">{sumTotal((r) => r.draws)}</td>
+                    <td className="px-3 py-3 text-right">{sumTotal((r) => r.losses)}</td>
+                    <td className="px-3 py-3 text-right">{sumTotal((r) => r.gf)}</td>
+                    <td className="px-3 py-3 text-right">{sumTotal((r) => r.ga)}</td>
+                    <td className="px-3 py-3 text-right">
+                      {totalAvgAll !== null ? totalAvgAll.toLocaleString("de-DE") : "—"}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          )
+        ) : otherRows.length === 0 ? (
+          <p className="px-4 py-6 text-sm text-muted-foreground">
+            Za ovo takmičenje još nema podataka za ovaj klub.
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[720px] text-sm tabular-nums">
+              <thead>
+                <tr className="border-b border-border bg-surface text-xs uppercase text-muted-foreground">
+                  <th className="px-3 py-3 text-left">Sezona</th>
+                  {showStage && <th className="px-3 py-3 text-left">Najdalje</th>}
+                  <th className="px-3 py-3 text-right">Utakmica</th>
+                  <th className="px-3 py-3 text-right">Pobjeda</th>
+                  <th className="px-3 py-3 text-right">Neriješeno</th>
+                  <th className="px-3 py-3 text-right">Poraza</th>
+                  <th className="px-3 py-3 text-right">Golovi</th>
+                  <th className="px-3 py-3 text-right">Primljeni</th>
+                  <th className="px-3 py-3 text-right">Prosjek gledalaca</th>
+                </tr>
+              </thead>
+              <tbody>
+                {otherRows.map((r) => (
+                  <tr key={r.season} className="border-t border-border">
+                    <td className="px-3 py-3 font-semibold">{r.season}</td>
+                    {showStage && (
+                      <td className="px-3 py-3 font-semibold text-primary">{r.stage}</td>
+                    )}
+                    <td className="px-3 py-3 text-right">{r.played}</td>
+                    <td className="px-3 py-3 text-right">{r.wins}</td>
+                    <td className="px-3 py-3 text-right">{r.draws}</td>
+                    <td className="px-3 py-3 text-right">{r.losses}</td>
+                    <td className="px-3 py-3 text-right">{r.gf}</td>
+                    <td className="px-3 py-3 text-right">{r.ga}</td>
+                    <td className="px-3 py-3 text-right">
+                      {r.avg !== null ? r.avg.toLocaleString("de-DE") : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="border-t-4 border-foreground/30 bg-surface font-bold">
+                  <td className="px-3 py-3 uppercase">Ukupno</td>
+                  {showStage && <td className="px-3 py-3">—</td>}
+                  <td className="px-3 py-3 text-right">{sumOther((r) => r.played)}</td>
+                  <td className="px-3 py-3 text-right">{sumOther((r) => r.wins)}</td>
+                  <td className="px-3 py-3 text-right">{sumOther((r) => r.draws)}</td>
+                  <td className="px-3 py-3 text-right">{sumOther((r) => r.losses)}</td>
+                  <td className="px-3 py-3 text-right">{sumOther((r) => r.gf)}</td>
+                  <td className="px-3 py-3 text-right">{sumOther((r) => r.ga)}</td>
+                  <td className="px-3 py-3 text-right">
+                    {otherTotalAvg !== null ? otherTotalAvg.toLocaleString("de-DE") : "—"}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        )}
+      </section>
+
+      {data && data.achievements.length > 0 && (
+        <section className="mt-10 rounded-lg border border-border bg-card">
+          <h2 className="border-b border-border px-4 py-3 font-display text-lg font-bold uppercase">
+            Uspjesi
+          </h2>
+          <ul className="space-y-2 p-4 text-sm">
+            {data.achievements.map((a) => (
+              <li key={a.id} className="border-b border-border pb-2 last:border-0">
+                {a.text}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+    </div>
+  );
+}
