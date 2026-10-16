@@ -9,24 +9,40 @@ const linkClass =
   "border-b-2 border-transparent pb-0.5 font-display text-sm font-medium uppercase tracking-wide text-ink-foreground/75 transition-colors hover:text-primary-foreground";
 const activeProps = { className: "text-primary-foreground border-primary" };
 
-const wwinSub = [
-  { to: "/tabela", label: "Tabela" },
-  { to: "/raspored-i-rezultati", label: "Raspored i rezultati" },
-] as const;
+type Item = { to: string; label: string };
 
-const statSub = [
-  { to: "/pobjednici", label: "Pobjednici" },
-  { to: "/u-evropi", label: "Evropska takmičenja" },
-  { to: "/all-time-lista", label: "Vječna lista" },
+const wwinSub: ReadonlyArray<Item> = [
+  { to: "/tabela", label: "Tabela 26/27" },
+  { to: "/raspored-i-rezultati", label: "Raspored i rezultati 26/27" },
+];
+
+const kupSub: ReadonlyArray<Item> = [
+  { to: "/kup-bih", label: "Sezona 26/27" },
+  { to: "/kup-arhiva", label: "Arhiva sezona" },
+  { to: "/kup-osvajaci", label: "Osvajači" },
+];
+
+const statSub: ReadonlyArray<Item> = [
   { to: "/stare-sezone", label: "Arhiva sezona" },
-] as const;
+  { to: "/pobjednici", label: "Pobjednici" },
+  { to: "/medjusobni-susreti", label: "Međusobni susreti" },
+  { to: "/brojke", label: "Brojke" },
+  { to: "/all-time-lista", label: "Vječna tabela" },
+  { to: "/u-evropi", label: "U Evropi" },
+];
 
 const navPlain = [
   { to: "/klubovi", label: "Klubovi" },
   { to: "/reprezentacija", label: "Reprezentacija" },
   { to: "/nize-lige", label: "Niže lige" },
-  { to: "/kup-bih", label: "Kup BiH" },
 ] as const;
+
+// Na telefonu: WWiN liga i Kup BiH imaju i "Vijesti" kao prvu stavku
+const mobileGroups: { id: string; label: string; items: ReadonlyArray<Item> }[] = [
+  { id: "wwin", label: "WWiN liga", items: [{ to: "/wwin-liga", label: "Vijesti" }, ...wwinSub] },
+  { id: "kup", label: "Kup BiH", items: [{ to: "/kup-bih", label: "Vijesti" }, ...kupSub] },
+  { id: "stat", label: "Statistika", items: statSub },
+];
 
 function useTicker(): string {
   const hydrated = useHydrated();
@@ -50,9 +66,9 @@ function Dropdown({
   label,
   items,
 }: {
-  to: "/wwin-liga" | "/statistika";
+  to: "/wwin-liga" | "/kup-bih" | "/statistika";
   label: string;
-  items: ReadonlyArray<{ to: string; label: string }>;
+  items: ReadonlyArray<Item>;
 }) {
   return (
     <div className="group relative">
@@ -61,7 +77,7 @@ function Dropdown({
         <ChevronDown className="size-3.5" />
       </Link>
       <div className="invisible absolute left-0 top-full z-50 pt-3 opacity-0 transition group-hover:visible group-hover:opacity-100">
-        <div className="min-w-52 rounded-md border border-white/10 bg-ink py-2 shadow-lg">
+        <div className="min-w-56 rounded-md border border-white/10 bg-ink py-2 shadow-lg">
           {items.map((item) => (
             <Link
               key={item.to}
@@ -80,7 +96,13 @@ function Dropdown({
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
   const ticker = useTicker();
+
+  const closeAll = () => {
+    setOpen(false);
+    setOpenGroup(null);
+  };
 
   return (
     <header className="sticky top-0 z-50 bg-ink text-ink-foreground">
@@ -97,6 +119,7 @@ export function SiteHeader() {
 
         <nav className="ml-6 hidden items-center gap-5 md:flex">
           <Dropdown to="/wwin-liga" label="WWiN liga" items={wwinSub} />
+          <Dropdown to="/kup-bih" label="Kup BiH" items={kupSub} />
           <Dropdown to="/statistika" label="Statistika" items={statSub} />
           {navPlain.map((item) => (
             <Link key={item.to} to={item.to} activeProps={activeProps} className={linkClass}>
@@ -108,7 +131,10 @@ export function SiteHeader() {
         <button
           type="button"
           aria-label="Meni"
-          onClick={() => setOpen((v) => !v)}
+          onClick={() => {
+            setOpen((v) => !v);
+            setOpenGroup(null);
+          }}
           className="ml-auto md:hidden"
         >
           {open ? <X className="size-6" /> : <Menu className="size-6" />}
@@ -116,46 +142,44 @@ export function SiteHeader() {
       </div>
 
       {open && (
-        <nav className="border-t border-white/10 px-4 pb-4 md:hidden">
-          <Link
-            to="/wwin-liga"
-            onClick={() => setOpen(false)}
-            className="block border-b border-white/10 py-3 font-display text-sm uppercase tracking-wide"
-          >
-            WWiN liga
-          </Link>
-          {wwinSub.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              onClick={() => setOpen(false)}
-              className="block border-b border-white/10 py-3 pl-5 font-display text-sm uppercase tracking-wide text-ink-foreground/75"
-            >
-              {item.label}
-            </Link>
-          ))}
-          <Link
-            to="/statistika"
-            onClick={() => setOpen(false)}
-            className="block border-b border-white/10 py-3 font-display text-sm uppercase tracking-wide"
-          >
-            Statistika
-          </Link>
-          {statSub.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              onClick={() => setOpen(false)}
-              className="block border-b border-white/10 py-3 pl-5 font-display text-sm uppercase tracking-wide text-ink-foreground/75"
-            >
-              {item.label}
-            </Link>
-          ))}
+        <nav className="max-h-[80vh] overflow-y-auto border-t border-white/10 px-4 pb-4 md:hidden">
+          {mobileGroups.map((g) => {
+            const isOpen = openGroup === g.id;
+            return (
+              <div key={g.id} className="border-b border-white/10">
+                <button
+                  type="button"
+                  aria-expanded={isOpen}
+                  onClick={() => setOpenGroup(isOpen ? null : g.id)}
+                  className="flex w-full items-center justify-between py-3 font-display text-sm uppercase tracking-wide"
+                >
+                  {g.label}
+                  <ChevronDown
+                    className={`size-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                  />
+                </button>
+                {isOpen && (
+                  <div className="pb-2">
+                    {g.items.map((item) => (
+                      <Link
+                        key={item.to}
+                        to={item.to}
+                        onClick={closeAll}
+                        className="block py-2.5 pl-5 font-display text-sm uppercase tracking-wide text-ink-foreground/75"
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
           {navPlain.map((item) => (
             <Link
               key={item.to}
               to={item.to}
-              onClick={() => setOpen(false)}
+              onClick={closeAll}
               className="block border-b border-white/10 py-3 font-display text-sm uppercase tracking-wide"
             >
               {item.label}
