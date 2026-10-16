@@ -11,7 +11,7 @@ export const Route = createFileRoute("/kup-arhiva")({
         <p className="kicker">Kup BiH</p>
         <h1 className="mt-2 font-display text-3xl uppercase sm:text-4xl">Arhiva sezona</h1>
       </div>
-      <CupMatches />
+      <CupMatches scope="archive" />
     </div>
   ),
 });
