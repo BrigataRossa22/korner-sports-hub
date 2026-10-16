@@ -175,7 +175,7 @@ function HeadToHeadPage() {
                     <span className="truncate text-sm font-bold uppercase">{a}</span>
                   </div>
                   <span className="shrink-0 text-xs font-semibold uppercase text-muted-foreground">
-                    {total} {total === 1 ? "utakmica" : "utakmica"}
+                    {total} utakmica
                   </span>
                   <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
                     <span className="truncate text-right text-sm font-bold uppercase">{b}</span>
@@ -239,7 +239,7 @@ function HeadToHeadPage() {
                     <thead>
                       <tr className="border-b border-border bg-surface text-xs uppercase text-muted-foreground">
                         <th className="px-2 py-3 text-left">Datum</th>
-                        <th className="px-2 py-3 text-left">Takmičenje</th>
+                        <th className="px-2 py-3 text-left">Sezona</th>
                         <th className="px-2 py-3 text-right">Domaćin</th>
                         <th className="w-16 px-2 py-3 text-center">Rez.</th>
                         <th className="px-2 py-3 text-left">Gost</th>
@@ -254,7 +254,12 @@ function HeadToHeadPage() {
                           <tr key={i} className="border-b border-border/70 last:border-0 even:bg-surface/50">
                             <td className="whitespace-nowrap px-2 py-3">{fmtDate(m.date)}</td>
                             <td className="whitespace-nowrap px-2 py-3 text-muted-foreground">
-                              {m.comp === "kup" ? "Kup BiH" : "Liga"} {m.season}
+                              {m.season}
+                              {m.comp === "kup" ? (
+                                <span className="ml-2 rounded bg-surface px-1.5 py-0.5 text-[10px] font-semibold uppercase text-foreground">
+                                  Kup
+                                </span>
+                              ) : null}
                             </td>
                             <td className="px-2 py-3 text-right font-semibold">
                               <span className="inline-flex items-center justify-end gap-2">
