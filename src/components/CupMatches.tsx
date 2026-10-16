@@ -12,7 +12,7 @@ const KEY = "kup-sezona";
 const BALL_URL =
   "https://wxyxcfalnqttwchxebpn.supabase.co/storage/v1/object/public/slike/lopta.webp";
 
-const ROUNDS: { key: string; title: string }[] = [
+export const ROUNDS: { key: string; title: string }[] = [
   { key: "Q1", title: "Q1" },
   { key: "Q2", title: "Q2" },
   { key: "1/32", title: "1/32 finala" },
