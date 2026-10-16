@@ -1,4 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getEternalTable } from "@/lib/eternal.functions";
+import { normClub } from "@/lib/club-match";
 
 export type H2HMatch = {
   date: string | null;
@@ -41,13 +43,28 @@ type Raw = {
   score_away: number | null;
 };
 
+function namesFrom(res: unknown): string[] {
+  const rows: unknown[] = Array.isArray(res)
+    ? res
+    : res && typeof res === "object" && Array.isArray((res as { rows?: unknown[] }).rows)
+      ? (res as { rows: unknown[] }).rows
+      : [];
+  const names: string[] = [];
+  for (const r of rows) {
+    if (!r || typeof r !== "object") continue;
+    const o = r as Record<string, unknown>;
+    const n = o["team"] ?? o["name"] ?? o["club"];
+    if (typeof n === "string" && n.trim()) names.push(n.trim());
+  }
+  return names;
+}
+
 export const getH2HData = createServerFn({ method: "GET" }).handler(async (): Promise<H2HData> => {
   const url = process.env["SUPABASE_URL"];
   const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
   if (!url || !key) return { clubs: [], matches: [] };
 
-  const [clubRows, seasonRows, currentRows, cupRows] = await Promise.all([
-    fetchAll<{ name: string }>(url, key, "all_time_teams?select=name", "name.asc"),
+  const [seasonRows, currentRows, cupRows, standingRows] = await Promise.all([
     fetchAll<Raw>(
       url,
       key,
@@ -66,7 +83,28 @@ export const getH2HData = createServerFn({ method: "GET" }).handler(async (): Pr
       "cup_matches?select=season,round,match_date,home,away,score_home,score_away",
       "match_date.asc",
     ),
+    fetchAll<{ season: string; team: string }>(url, key, "season_standings?select=season,team", "season.desc"),
   ]);
+
+  // 1) Spisak klubova iz Vječne liste (isti izvor kao stranica Vječna tabela)
+  let clubs: string[] = [];
+  try {
+    clubs = namesFrom(await getEternalTable());
+  } catch {
+    clubs = [];
+  }
+
+  // 2) Rezerva: svi klubovi iz arhive sezona, spojeni po normaliziranom imenu
+  if (clubs.length === 0) {
+    const byNorm = new Map<string, string>();
+    for (const r of standingRows) {
+      const k = normClub(r.team);
+      if (!byNorm.has(k)) byNorm.set(k, r.team); // red je od najnovije sezone, pa ostaje najnovije ime
+    }
+    clubs = [...byNorm.values()];
+  }
+
+  clubs = [...new Set(clubs)].sort((x, y) => x.localeCompare(y, "bs"));
 
   const seen = new Set<string>();
   const matches: H2HMatch[] = [];
@@ -92,5 +130,5 @@ export const getH2HData = createServerFn({ method: "GET" }).handler(async (): Pr
   for (const r of currentRows) add(r, CURRENT_SEASON, "liga");
   for (const r of cupRows) add(r, r.season ?? "", "kup");
 
-  return { clubs: clubRows.map((c) => c.name), matches };
+  return { clubs, matches };
 });
