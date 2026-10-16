@@ -98,7 +98,6 @@ function legInfo(rows: CupMatch[]): Map<string, Leg> {
       second.score_home !== null &&
       second.score_away !== null
     ) {
-      // ukupno, gledano od domaćina drugog meča
       const h = second.score_home + first.score_away;
       const a = second.score_away + first.score_home;
       aggregate = `${h}:${a}`;
@@ -109,7 +108,7 @@ function legInfo(rows: CupMatch[]): Map<string, Leg> {
   return out;
 }
 
-function RoundTable({
+export function RoundTable({
   title,
   rows,
   goals,
