@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { ClubSeasons } from "@/components/ClubSeasons";
 import { LoadError } from "@/components/RouteFallbacks";
 import { TableSkeleton } from "@/components/TableSkeleton";
 import { getClubDetail } from "@/lib/clubdetail.functions";
@@ -155,7 +156,11 @@ function Klub() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      {m.attendance > 0 ? m.attendance.toLocaleString("de-DE") : "—"}
+                      {m.attendance > 0
+                        ? m.attendance.toLocaleString("de-DE")
+                        : m.attendance < 0
+                          ? "x"
+                          : "—"}
                     </td>
                   </tr>
                 ))}
@@ -269,6 +274,8 @@ function Klub() {
           </div>
         )}
       </section>
+
+      <ClubSeasons name={name} />
 
       {data && data.achievements.length > 0 && (
         <section className="mt-10 rounded-lg border border-border bg-card">
