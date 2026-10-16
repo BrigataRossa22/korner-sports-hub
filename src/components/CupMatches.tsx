@@ -7,6 +7,9 @@ import { getCupGoals, type CupGoal } from "@/lib/cupgoals.functions";
 import { getCupMatches, type CupMatch } from "@/lib/cupmatches.functions";
 import { useClubCrest } from "@/lib/use-club-crest";
 
+// Aktuelna sezona kupa. Kad počne nova sezona, promijeni ovu oznaku.
+export const CURRENT_CUP_SEASON = "2026-27";
+
 const KEY = "kup-sezona";
 
 const BALL_URL =
@@ -280,7 +283,9 @@ export function RoundTable({
   );
 }
 
-export function CupMatches() {
+type Scope = "current" | "archive" | "all";
+
+export function CupMatches({ scope = "all" }: { scope?: Scope }) {
   const { data, isLoading } = useQuery({
     queryKey: ["cup-matches"],
     queryFn: () => getCupMatches(),
@@ -292,7 +297,9 @@ export function CupMatches() {
   const rows = data ?? [];
   const goals = goalsData ?? [];
 
-  const seasons = [...new Set(rows.map((m) => m.season))].sort((a, b) => b.localeCompare(a));
+  const allSeasons = [...new Set(rows.map((m) => m.season))].sort((a, b) => b.localeCompare(a));
+  const seasons =
+    scope === "archive" ? allSeasons.filter((s) => s !== CURRENT_CUP_SEASON) : allSeasons;
 
   const [picked, setPicked] = useState("");
   useEffect(() => {
@@ -312,7 +319,12 @@ export function CupMatches() {
     }
   };
 
-  const season = seasons.includes(picked) ? picked : seasons[0] || "";
+  const season =
+    scope === "current"
+      ? CURRENT_CUP_SEASON
+      : seasons.includes(picked)
+        ? picked
+        : (seasons[0] ?? "");
   const inSeason = rows.filter((m) => m.season === season);
 
   const known = new Set(ROUNDS.map((r) => r.key));
@@ -327,7 +339,31 @@ export function CupMatches() {
     );
   }
 
-  if (seasons.length === 0) return null;
+  if (scope === "current") {
+    return (
+      <div className="mt-10">
+        <h2 className="font-display text-2xl font-bold uppercase">Kup BiH {season}</h2>
+        {inSeason.length === 0 ? (
+          <p className="mt-4 rounded-lg border border-border bg-card px-4 py-6 text-sm text-muted-foreground">
+            Utakmice Kupa BiH za sezonu {season} još nisu unesene.
+          </p>
+        ) : (
+          order.map(({ key, title }) => {
+            const list = inSeason.filter((m) => m.round === key);
+            return list.length ? <RoundTable key={key} title={title} rows={list} goals={goals} /> : null;
+          })
+        )}
+      </div>
+    );
+  }
+
+  if (seasons.length === 0) {
+    return (
+      <p className="mt-10 rounded-lg border border-border bg-card px-4 py-6 text-sm text-muted-foreground">
+        Za Kup BiH još nema unesenih sezona.
+      </p>
+    );
+  }
 
   return (
     <div className="mt-10">
