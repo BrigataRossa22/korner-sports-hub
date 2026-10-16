@@ -66,7 +66,7 @@ type TotalRow = {
   losses: number;
   gf: number;
   ga: number;
-  comps: string[];
+  avgs: number[];
 };
 
 const ns = (s: string) => s.replace(/[–—]/g, "-").trim();
@@ -80,6 +80,10 @@ function fmtDate(iso: string): string {
 function parseScore(score: string): [number, number] | null {
   const m = /^\s*(\d+)\s*[:\-–]\s*(\d+)/.exec(score ?? "");
   return m ? [Number(m[1]), Number(m[2])] : null;
+}
+
+function mean(values: number[]): number | null {
+  return values.length ? Math.round(values.reduce((s, x) => s + x, 0) / values.length) : null;
 }
 
 function Klub() {
@@ -185,7 +189,7 @@ function Klub() {
           losses: l,
           gf,
           ga,
-          avg: att.length ? Math.round(att.reduce((s, x) => s + x, 0) / att.length) : null,
+          avg: mean(att),
         };
       });
   })();
@@ -237,8 +241,15 @@ function Klub() {
     const map = new Map<string, TotalRow>();
     const add = (
       season: string,
-      r: { played: number; wins: number; draws: number; losses: number; gf: number; ga: number },
-      label: string,
+      r: {
+        played: number;
+        wins: number;
+        draws: number;
+        losses: number;
+        gf: number;
+        ga: number;
+        avg: number | null;
+      },
     ) => {
       const s = ns(season);
       const t = map.get(s) ?? {
@@ -249,7 +260,7 @@ function Klub() {
         losses: 0,
         gf: 0,
         ga: 0,
-        comps: [],
+        avgs: [],
       };
       t.played += r.played;
       t.wins += r.wins;
@@ -257,12 +268,12 @@ function Klub() {
       t.losses += r.losses;
       t.gf += r.gf;
       t.ga += r.ga;
-      if (!t.comps.includes(label)) t.comps.push(label);
+      if (r.avg !== null) t.avgs.push(r.avg);
       map.set(s, t);
     };
-    for (const r of history ?? []) add(r.season, r, "Liga");
-    for (const r of euroRows) add(r.season, r, "Evropa");
-    for (const r of kupRows) add(r.season, r, "Kup BiH");
+    for (const r of history ?? []) add(r.season, r);
+    for (const r of euroRows) add(r.season, r);
+    for (const r of kupRows) add(r.season, r);
     return [...map.values()].sort((a, b) => b.season.localeCompare(a.season));
   })();
 
@@ -270,18 +281,18 @@ function Klub() {
 
   const sumLiga = (pick: (r: NonNullable<typeof history>[number]) => number) =>
     (history ?? []).reduce((s, r) => s + pick(r), 0);
-  const ligaAvgs = (history ?? []).map((r) => r.avg).filter((a): a is number => a !== null);
-  const ligaTotalAvg = ligaAvgs.length
-    ? Math.round(ligaAvgs.reduce((s, a) => s + a, 0) / ligaAvgs.length)
-    : null;
+  const ligaTotalAvg = mean(
+    (history ?? []).map((r) => r.avg).filter((a): a is number => a !== null),
+  );
 
   const sumOther = (pick: (r: CompRow) => number) => otherRows.reduce((s, r) => s + pick(r), 0);
-  const otherAvgs = otherRows.map((r) => r.avg).filter((a): a is number => a !== null);
-  const otherTotalAvg = otherAvgs.length
-    ? Math.round(otherAvgs.reduce((s, a) => s + a, 0) / otherAvgs.length)
-    : null;
+  const otherTotalAvg = mean(otherRows.map((r) => r.avg).filter((a): a is number => a !== null));
 
   const sumTotal = (pick: (r: TotalRow) => number) => totalRows.reduce((s, r) => s + pick(r), 0);
+  const totalAvgs = totalRows
+    .map((r) => mean(r.avgs))
+    .filter((a): a is number => a !== null);
+  const totalAvgAll = mean(totalAvgs);
 
   const showAvg = comp !== "evropa";
 
@@ -507,41 +518,46 @@ function Klub() {
                 <thead>
                   <tr className="border-b border-border bg-surface text-xs uppercase text-muted-foreground">
                     <th className="px-3 py-3 text-left">Sezona</th>
-                    <th className="px-3 py-3 text-left">Takmičenja</th>
                     <th className="px-3 py-3 text-right">Utakmica</th>
                     <th className="px-3 py-3 text-right">Pobjeda</th>
                     <th className="px-3 py-3 text-right">Neriješeno</th>
                     <th className="px-3 py-3 text-right">Poraza</th>
                     <th className="px-3 py-3 text-right">Golovi</th>
                     <th className="px-3 py-3 text-right">Primljeni</th>
+                    <th className="px-3 py-3 text-right">Prosjek gledalaca</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {totalRows.map((r) => (
-                    <tr key={r.season} className="border-t border-border">
-                      <td className="px-3 py-3 font-semibold">{r.season}</td>
-                      <td className="px-3 py-3 text-xs text-muted-foreground">
-                        {r.comps.join(" · ")}
-                      </td>
-                      <td className="px-3 py-3 text-right">{r.played}</td>
-                      <td className="px-3 py-3 text-right">{r.wins}</td>
-                      <td className="px-3 py-3 text-right">{r.draws}</td>
-                      <td className="px-3 py-3 text-right">{r.losses}</td>
-                      <td className="px-3 py-3 text-right">{r.gf}</td>
-                      <td className="px-3 py-3 text-right">{r.ga}</td>
-                    </tr>
-                  ))}
+                  {totalRows.map((r) => {
+                    const avg = mean(r.avgs);
+                    return (
+                      <tr key={r.season} className="border-t border-border">
+                        <td className="px-3 py-3 font-semibold">{r.season}</td>
+                        <td className="px-3 py-3 text-right">{r.played}</td>
+                        <td className="px-3 py-3 text-right">{r.wins}</td>
+                        <td className="px-3 py-3 text-right">{r.draws}</td>
+                        <td className="px-3 py-3 text-right">{r.losses}</td>
+                        <td className="px-3 py-3 text-right">{r.gf}</td>
+                        <td className="px-3 py-3 text-right">{r.ga}</td>
+                        <td className="px-3 py-3 text-right">
+                          {avg !== null ? avg.toLocaleString("de-DE") : "—"}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
                 <tfoot>
                   <tr className="border-t-4 border-foreground/30 bg-surface font-bold">
                     <td className="px-3 py-3 uppercase">Ukupno</td>
-                    <td className="px-3 py-3">—</td>
                     <td className="px-3 py-3 text-right">{sumTotal((r) => r.played)}</td>
                     <td className="px-3 py-3 text-right">{sumTotal((r) => r.wins)}</td>
                     <td className="px-3 py-3 text-right">{sumTotal((r) => r.draws)}</td>
                     <td className="px-3 py-3 text-right">{sumTotal((r) => r.losses)}</td>
                     <td className="px-3 py-3 text-right">{sumTotal((r) => r.gf)}</td>
                     <td className="px-3 py-3 text-right">{sumTotal((r) => r.ga)}</td>
+                    <td className="px-3 py-3 text-right">
+                      {totalAvgAll !== null ? totalAvgAll.toLocaleString("de-DE") : "—"}
+                    </td>
                   </tr>
                 </tfoot>
               </table>
