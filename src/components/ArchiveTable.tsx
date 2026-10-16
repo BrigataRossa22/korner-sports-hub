@@ -18,7 +18,6 @@ export function ArchiveTable({ season }: { season: string }) {
   const { rows, isLoading } = useSeasons();
   const crestFor = useClubCrest();
   const list = rows.filter((r) => r.season === season).sort((a, b) => a.position - b.position);
-  const hasPenalty = list.some((r) => (r.penalty ?? 0) > 0);
 
   if (isLoading) {
     return (
@@ -44,11 +43,6 @@ export function ArchiveTable({ season }: { season: string }) {
             <th className="w-10 px-1 py-3 text-center">I</th>
             <th className="w-16 px-1 py-3 text-center">Golovi</th>
             <th className="w-12 px-1 py-3 text-center">GR</th>
-            {hasPenalty && (
-              <th className="w-20 px-1 py-3 text-center" title="Oduzeti bodovi">
-                Odbijeno
-              </th>
-            )}
             <th className="w-12 px-2 py-3 text-center">Bod</th>
           </tr>
         </thead>
@@ -71,7 +65,17 @@ export function ArchiveTable({ season }: { season: string }) {
                     ) : (
                       <span className="size-6 shrink-0" />
                     )}
-                    {r.team}
+                    <span>
+                      {r.team}
+                      {pen > 0 && (
+                        <span
+                          className="ml-1.5 text-xs font-medium text-muted-foreground"
+                          title="Oduzeti bodovi"
+                        >
+                          (−{pen})
+                        </span>
+                      )}
+                    </span>
                   </Link>
                 </td>
                 <td className="px-1 py-3 text-center">{r.played}</td>
@@ -80,11 +84,6 @@ export function ArchiveTable({ season }: { season: string }) {
                 <td className="px-1 py-3 text-center">{r.losses}</td>
                 <td className="px-1 py-3 text-center">{r.goals_for}:{r.goals_against}</td>
                 <td className="px-1 py-3 text-center">{gd > 0 ? "+" : ""}{gd}</td>
-                {hasPenalty && (
-                  <td className="px-1 py-3 text-center font-semibold text-destructive">
-                    {pen > 0 ? `−${pen}` : ""}
-                  </td>
-                )}
                 <td className="px-2 py-3 text-center font-bold text-primary">{r.points}</td>
               </tr>
             );
