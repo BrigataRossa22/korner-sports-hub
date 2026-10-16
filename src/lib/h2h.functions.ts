@@ -5,12 +5,12 @@ import { normClub } from "@/lib/club-match";
 export type H2HMatch = {
   date: string | null;
   season: string;
-  round: string;
   comp: "liga" | "kup";
   home: string;
   away: string;
   sh: number;
   sa: number;
+  att: number | null;
 };
 
 export type H2HData = { clubs: string[]; matches: H2HMatch[] };
@@ -35,12 +35,12 @@ async function fetchAll<T>(url: string, key: string, path: string, order: string
 
 type Raw = {
   season?: string;
-  round: string | number | null;
   match_date: string | null;
   home: string;
   away: string;
   score_home: number | null;
   score_away: number | null;
+  attendance?: number | null;
 };
 
 function namesFrom(res: unknown): string[] {
@@ -68,19 +68,19 @@ export const getH2HData = createServerFn({ method: "GET" }).handler(async (): Pr
     fetchAll<Raw>(
       url,
       key,
-      "season_matches?select=season,round,match_date,home,away,score_home,score_away",
+      "season_matches?select=season,match_date,home,away,score_home,score_away,attendance",
       "id.asc",
     ),
     fetchAll<Raw>(
       url,
       key,
-      "club_matches?select=round,match_date,home,away,score_home,score_away&competition=eq.PLBiH",
+      "club_matches?select=match_date,home,away,score_home,score_away,attendance&competition=eq.PLBiH",
       "match_date.asc",
     ),
     fetchAll<Raw>(
       url,
       key,
-      "cup_matches?select=season,round,match_date,home,away,score_home,score_away",
+      "cup_matches?select=season,match_date,home,away,score_home,score_away,attendance",
       "match_date.asc",
     ),
     fetchAll<{ season: string; team: string }>(url, key, "season_standings?select=season,team", "season.desc"),
@@ -99,7 +99,7 @@ export const getH2HData = createServerFn({ method: "GET" }).handler(async (): Pr
     const byNorm = new Map<string, string>();
     for (const r of standingRows) {
       const k = normClub(r.team);
-      if (!byNorm.has(k)) byNorm.set(k, r.team); // red je od najnovije sezone, pa ostaje najnovije ime
+      if (!byNorm.has(k)) byNorm.set(k, r.team);
     }
     clubs = [...byNorm.values()];
   }
@@ -117,12 +117,12 @@ export const getH2HData = createServerFn({ method: "GET" }).handler(async (): Pr
     matches.push({
       date: r.match_date,
       season,
-      round: r.round == null ? "" : String(r.round),
       comp,
       home: r.home,
       away: r.away,
       sh: r.score_home,
       sa: r.score_away,
+      att: r.attendance ?? null,
     });
   };
 
