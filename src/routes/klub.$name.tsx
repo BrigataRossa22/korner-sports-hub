@@ -210,8 +210,10 @@ function Klub() {
           l = 0,
           gf = 0,
           ga = 0;
+        const att: number[] = [];
         const sorted = [...es].sort((a, b) => a.sort_order - b.sort_order);
         for (const e of es) {
+          if ((e.attendance ?? 0) > 0) att.push(e.attendance);
           for (const leg of [e.home, e.away]) {
             const p = parseScore(leg);
             if (!p) continue;
@@ -231,7 +233,7 @@ function Klub() {
           losses: l,
           gf,
           ga,
-          avg: null,
+          avg: mean(att),
         };
       });
   })();
@@ -278,6 +280,7 @@ function Klub() {
   })();
 
   const otherRows = comp === "kup" ? kupRows : euroRows;
+  const showStage = comp === "kup";
 
   const sumLiga = (pick: (r: NonNullable<typeof history>[number]) => number) =>
     (history ?? []).reduce((s, r) => s + pick(r), 0);
@@ -289,12 +292,9 @@ function Klub() {
   const otherTotalAvg = mean(otherRows.map((r) => r.avg).filter((a): a is number => a !== null));
 
   const sumTotal = (pick: (r: TotalRow) => number) => totalRows.reduce((s, r) => s + pick(r), 0);
-  const totalAvgs = totalRows
-    .map((r) => mean(r.avgs))
-    .filter((a): a is number => a !== null);
-  const totalAvgAll = mean(totalAvgs);
-
-  const showAvg = comp !== "evropa";
+  const totalAvgAll = mean(
+    totalRows.map((r) => mean(r.avgs)).filter((a): a is number => a !== null),
+  );
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
@@ -573,50 +573,48 @@ function Klub() {
               <thead>
                 <tr className="border-b border-border bg-surface text-xs uppercase text-muted-foreground">
                   <th className="px-3 py-3 text-left">Sezona</th>
-                  <th className="px-3 py-3 text-left">Najdalje</th>
+                  {showStage && <th className="px-3 py-3 text-left">Najdalje</th>}
                   <th className="px-3 py-3 text-right">Utakmica</th>
                   <th className="px-3 py-3 text-right">Pobjeda</th>
                   <th className="px-3 py-3 text-right">Neriješeno</th>
                   <th className="px-3 py-3 text-right">Poraza</th>
                   <th className="px-3 py-3 text-right">Golovi</th>
                   <th className="px-3 py-3 text-right">Primljeni</th>
-                  {showAvg && <th className="px-3 py-3 text-right">Prosjek gledalaca</th>}
+                  <th className="px-3 py-3 text-right">Prosjek gledalaca</th>
                 </tr>
               </thead>
               <tbody>
                 {otherRows.map((r) => (
                   <tr key={r.season} className="border-t border-border">
                     <td className="px-3 py-3 font-semibold">{r.season}</td>
-                    <td className="px-3 py-3 font-semibold text-primary">{r.stage}</td>
+                    {showStage && (
+                      <td className="px-3 py-3 font-semibold text-primary">{r.stage}</td>
+                    )}
                     <td className="px-3 py-3 text-right">{r.played}</td>
                     <td className="px-3 py-3 text-right">{r.wins}</td>
                     <td className="px-3 py-3 text-right">{r.draws}</td>
                     <td className="px-3 py-3 text-right">{r.losses}</td>
                     <td className="px-3 py-3 text-right">{r.gf}</td>
                     <td className="px-3 py-3 text-right">{r.ga}</td>
-                    {showAvg && (
-                      <td className="px-3 py-3 text-right">
-                        {r.avg !== null ? r.avg.toLocaleString("de-DE") : "—"}
-                      </td>
-                    )}
+                    <td className="px-3 py-3 text-right">
+                      {r.avg !== null ? r.avg.toLocaleString("de-DE") : "—"}
+                    </td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
                 <tr className="border-t-4 border-foreground/30 bg-surface font-bold">
                   <td className="px-3 py-3 uppercase">Ukupno</td>
-                  <td className="px-3 py-3">—</td>
+                  {showStage && <td className="px-3 py-3">—</td>}
                   <td className="px-3 py-3 text-right">{sumOther((r) => r.played)}</td>
                   <td className="px-3 py-3 text-right">{sumOther((r) => r.wins)}</td>
                   <td className="px-3 py-3 text-right">{sumOther((r) => r.draws)}</td>
                   <td className="px-3 py-3 text-right">{sumOther((r) => r.losses)}</td>
                   <td className="px-3 py-3 text-right">{sumOther((r) => r.gf)}</td>
                   <td className="px-3 py-3 text-right">{sumOther((r) => r.ga)}</td>
-                  {showAvg && (
-                    <td className="px-3 py-3 text-right">
-                      {otherTotalAvg !== null ? otherTotalAvg.toLocaleString("de-DE") : "—"}
-                    </td>
-                  )}
+                  <td className="px-3 py-3 text-right">
+                    {otherTotalAvg !== null ? otherTotalAvg.toLocaleString("de-DE") : "—"}
+                  </td>
                 </tr>
               </tfoot>
             </table>
