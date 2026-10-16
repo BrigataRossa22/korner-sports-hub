@@ -12,6 +12,7 @@ export type SeasonRow = {
   goals_for: number;
   goals_against: number;
   points: number;
+  penalty: number;
 };
 
 export const getSeasonStandings = createServerFn({ method: "GET" }).handler(
