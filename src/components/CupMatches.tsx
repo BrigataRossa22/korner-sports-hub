@@ -2,7 +2,7 @@ import { Fragment, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
 import { TableSkeleton } from "@/components/TableSkeleton";
-import { sameClub } from "@/lib/club-match";
+import { normClub, sameClub } from "@/lib/club-match";
 import { getCupGoals, type CupGoal } from "@/lib/cupgoals.functions";
 import { getCupMatches, type CupMatch } from "@/lib/cupmatches.functions";
 import { useClubCrest } from "@/lib/use-club-crest";
@@ -75,6 +75,40 @@ function Team({ name, crest, align }: { name: string; crest: string; align: "lef
   );
 }
 
+type Leg = { leg: 1 | 2; aggregate: string | null };
+
+/** Za parove koji se igraju dva puta u istoj rundi: koji je meč i ukupan rezultat. */
+function legInfo(rows: CupMatch[]): Map<string, Leg> {
+  const byPair = new Map<string, CupMatch[]>();
+  for (const m of rows) {
+    const key = [normClub(m.home), normClub(m.away)].sort().join("|");
+    byPair.set(key, [...(byPair.get(key) ?? []), m]);
+  }
+
+  const out = new Map<string, Leg>();
+  for (const legs of byPair.values()) {
+    if (legs.length !== 2) continue;
+    const [first, second] = [...legs].sort((a, b) => a.match_date.localeCompare(b.match_date));
+    if (!first || !second) continue;
+
+    let aggregate: string | null = null;
+    if (
+      first.score_home !== null &&
+      first.score_away !== null &&
+      second.score_home !== null &&
+      second.score_away !== null
+    ) {
+      // ukupno, gledano od domaćina drugog meča
+      const h = second.score_home + first.score_away;
+      const a = second.score_away + first.score_home;
+      aggregate = `${h}:${a}`;
+    }
+    out.set(first.id, { leg: 1, aggregate: null });
+    out.set(second.id, { leg: 2, aggregate });
+  }
+  return out;
+}
+
 function RoundTable({
   title,
   rows,
@@ -86,6 +120,7 @@ function RoundTable({
 }) {
   const crestFor = useClubCrest();
   const [open, setOpen] = useState<Set<string>>(new Set());
+  const legs = legInfo(rows);
 
   const toggle = (id: string) =>
     setOpen((prev) => {
@@ -125,6 +160,7 @@ function RoundTable({
               const mg = goalsOf(m);
               const canOpen = mg.length > 0;
               const isOpen = canOpen && open.has(m.id);
+              const leg = legs.get(m.id);
               const rowStyle = isOpen
                 ? "bg-primary text-primary-foreground"
                 : canOpen
@@ -149,14 +185,28 @@ function RoundTable({
                     tabIndex={canOpen ? 0 : undefined}
                     aria-expanded={canOpen ? isOpen : undefined}
                   >
-                    <td className="whitespace-nowrap px-4 py-3">{fmtDate(m.match_date)}</td>
+                    <td className="whitespace-nowrap px-4 py-3">
+                      {fmtDate(m.match_date)}
+                      {leg && (
+                        <span className="block text-[10px] font-semibold uppercase opacity-70">
+                          {leg.leg}. meč
+                        </span>
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <Team name={m.home} crest={crestFor(m.home) || m.home_crest} align="right" />
-                        <span className="min-w-14 text-center font-bold">
-                          {m.score_home !== null && m.score_away !== null
-                            ? `${m.score_home}:${m.score_away}`
-                            : "–"}
+                        <span className="flex min-w-14 flex-col items-center whitespace-nowrap">
+                          <span className="font-bold">
+                            {m.score_home !== null && m.score_away !== null
+                              ? `${m.score_home}:${m.score_away}`
+                              : "–"}
+                          </span>
+                          {leg?.aggregate && (
+                            <span className="text-[10px] font-semibold uppercase opacity-70">
+                              ukupno {leg.aggregate}
+                            </span>
+                          )}
                         </span>
                         <Team name={m.away} crest={crestFor(m.away) || m.away_crest} align="left" />
                       </div>
