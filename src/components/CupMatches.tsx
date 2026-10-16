@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getCupMatches, type CupMatch } from "@/lib/cupmatches.functions";
-import { useCrest } from "@/lib/use-crest";
+import { useClubCrest } from "@/lib/use-club-crest";
 
 const ROUNDS: { key: string; title: string }[] = [
   { key: "Q2", title: "Q2" },
@@ -20,7 +20,11 @@ function fmtDate(iso: string): string {
 }
 
 function Team({ name, crest, align }: { name: string; crest: string; align: "left" | "right" }) {
-  const img = crest ? <img src={crest} alt="" className="size-6 shrink-0 object-contain" /> : null;
+  const img = crest ? (
+    <img src={crest} alt="" className="size-6 shrink-0 object-contain" />
+  ) : (
+    <span className="size-6 shrink-0" />
+  );
   return (
     <span
       className={`flex flex-1 items-center gap-2 font-medium ${
@@ -43,7 +47,7 @@ function Team({ name, crest, align }: { name: string; crest: string; align: "lef
 }
 
 function RoundTable({ title, rows }: { title: string; rows: CupMatch[] }) {
-  const crestFor = useCrest();
+  const crestFor = useClubCrest();
   return (
     <section className="mt-10 rounded-lg border border-border bg-card">
       <h2 className="border-b border-border px-4 py-3 font-display text-lg font-bold uppercase">
