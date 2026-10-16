@@ -17,7 +17,7 @@ const wwinSub: ReadonlyArray<Item> = [
 ];
 
 const kupSub: ReadonlyArray<Item> = [
-  { to: "/kup-bih", label: "Sezona 26/27" },
+  { to: "/kup-sezona", label: "Sezona 26/27" },
   { to: "/kup-arhiva", label: "Arhiva sezona" },
   { to: "/kup-osvajaci", label: "Osvajači" },
 ];
