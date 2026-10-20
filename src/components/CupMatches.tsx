@@ -401,3 +401,4 @@ export function CupMatches({ scope = "all" }: { scope?: Scope }) {
     </div>
   );
 }
+
