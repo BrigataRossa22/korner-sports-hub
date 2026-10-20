@@ -35,3 +35,4 @@ export const getCupGoals = createServerFn({ method: "GET" }).handler(
     return out.sort((a, b) => a.minute - b.minute || a.extra - b.extra);
   },
 );
+
