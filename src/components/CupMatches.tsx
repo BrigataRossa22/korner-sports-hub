@@ -16,7 +16,6 @@ const BALL_URL =
   "https://wxyxcfalnqttwchxebpn.supabase.co/storage/v1/object/public/slike/lopta.webp";
 
 export const ROUNDS: { key: string; title: string }[] = [
-  { key: "Pretkolo", title: "Pretkolo" },
   { key: "Q1", title: "Q1" },
   { key: "Q2", title: "Q2" },
   { key: "1/32", title: "1/32 finala" },
@@ -164,6 +163,7 @@ export function RoundTable({
               const canOpen = mg.length > 0;
               const isOpen = canOpen && open.has(m.id);
               const leg = legs.get(m.id);
+              const hasPen = m.pen_home != null && m.pen_away != null;
               const rowStyle = isOpen
                 ? "bg-primary text-primary-foreground"
                 : canOpen
@@ -205,11 +205,13 @@ export function RoundTable({
                               ? `${m.score_home}:${m.score_away}`
                               : "–"}
                           </span>
-                          {m.pen_home != null && m.pen_away != null && (
+                          {hasPen && (
                             <span className="text-[10px] font-semibold uppercase opacity-70">
                               pen. {m.pen_home}:{m.pen_away}
                             </span>
-                          )}                            <span className="text-[10px] font-semibold uppercase opacity-70">
+                          )}
+                          {leg?.aggregate && (
+                            <span className="text-[10px] font-semibold uppercase opacity-70">
                               ukupno {leg.aggregate}
                             </span>
                           )}
