@@ -16,6 +16,7 @@ const BALL_URL =
   "https://wxyxcfalnqttwchxebpn.supabase.co/storage/v1/object/public/slike/lopta.webp";
 
 export const ROUNDS: { key: string; title: string }[] = [
+  { key: "Pretkolo", title: "Pretkolo" },
   { key: "Q1", title: "Q1" },
   { key: "Q2", title: "Q2" },
   { key: "1/32", title: "1/32 finala" },
