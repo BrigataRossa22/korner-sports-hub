@@ -127,16 +127,18 @@ function Klub() {
           gf = 0,
           ga = 0,
           best = -1;
-        let finalGf = 0,
+                let finalGf = 0,
           finalGa = 0,
           hasFinal = false;
+        // Finale koje se igra jednom je na neutralnom terenu: ne ulazi u prosjek gledalaca
+        const finalCount = ms.filter((x) => x.round === "Finale").length;
         const att: number[] = [];
         for (const m of ms) {
           const isHome = sameClub(m.home, name);
           const idx = CUP_ORDER.indexOf(m.round);
           if (idx > best) best = idx;
-          if (isHome && m.attendance > 0) att.push(m.attendance);
-          if (m.score_home === null || m.score_away === null) continue;
+          const neutralFinal = m.round === "Finale" && finalCount === 1;
+          if (isHome && !neutralFinal && m.attendance > 0) att.push(m.attendance);          if (m.score_home === null || m.score_away === null) continue;
           const a = isHome ? m.score_home : m.score_away;
           const b = isHome ? m.score_away : m.score_home;
           gf += a;
