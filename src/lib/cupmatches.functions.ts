@@ -12,6 +12,8 @@ export type CupMatch = {
   score_home: number | null;
   score_away: number | null;
   attendance: number;
+  pen_home: number | null;
+  pen_away: number | null;
 };
 
 export const getCupMatches = createServerFn({ method: "GET" }).handler(
