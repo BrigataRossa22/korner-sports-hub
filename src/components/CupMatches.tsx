@@ -205,8 +205,11 @@ export function RoundTable({
                               ? `${m.score_home}:${m.score_away}`
                               : "–"}
                           </span>
-                          {leg?.aggregate && (
+                          {m.pen_home != null && m.pen_away != null && (
                             <span className="text-[10px] font-semibold uppercase opacity-70">
+                              pen. {m.pen_home}:{m.pen_away}
+                            </span>
+                          )}                            <span className="text-[10px] font-semibold uppercase opacity-70">
                               ukupno {leg.aggregate}
                             </span>
                           )}
