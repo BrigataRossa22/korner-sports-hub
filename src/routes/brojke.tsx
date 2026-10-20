@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { TableSkeleton } from "@/components/TableSkeleton";
 import { getBrojke, type TopRow } from "@/lib/brojke.functions";
 
@@ -7,6 +8,8 @@ export const Route = createFileRoute("/brojke")({
   head: () => ({ meta: [{ title: "Brojke — Korner BiH" }] }),
   component: BrojkePage,
 });
+
+type Mode = "liga" | "kup";
 
 // Mjesto u tabeli: isti broj = isto mjesto
 function withRank(rows: TopRow[]) {
@@ -21,13 +24,24 @@ function withRank(rows: TopRow[]) {
   });
 }
 
-function TopTable({ title, unit, rows }: { title: string; unit: string; rows: TopRow[] }) {
+function TopTable({
+  title,
+  unit,
+  rows,
+  tabs,
+}: {
+  title: string;
+  unit: string;
+  rows: TopRow[];
+  tabs?: React.ReactNode;
+}) {
   const ranked = withRank(rows);
   return (
     <section className="overflow-hidden rounded-xl border border-border bg-card">
-      <h2 className="border-b border-border bg-surface px-4 py-3 font-display text-lg font-bold uppercase">
-        {title}
-      </h2>
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-surface px-4 py-3">
+        <h2 className="font-display text-lg font-bold uppercase">{title}</h2>
+        {tabs}
+      </div>
       {ranked.length === 0 ? (
         <p className="px-4 py-8 text-center text-muted-foreground">Još nema podataka.</p>
       ) : (
@@ -58,19 +72,46 @@ function TopTable({ title, unit, rows }: { title: string; unit: string; rows: To
 
 function BrojkePage() {
   const { data, isLoading } = useQuery({
-    queryKey: ["brojke-v1"],
+    queryKey: ["brojke-v2"],
     queryFn: () => getBrojke(),
     staleTime: 60 * 60 * 1000,
   });
+  const [mode, setMode] = useState<Mode>("liga");
+
+  const tabs = (
+    <div className="flex gap-1">
+      {(["liga", "kup"] as Mode[]).map((m) => (
+        <button
+          key={m}
+          type="button"
+          onClick={() => setMode(m)}
+          className={`rounded-full px-3 py-1 text-xs font-semibold uppercase ${
+            mode === m ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground"
+          }`}
+        >
+          {m === "liga" ? "Liga" : "Kup BiH"}
+        </button>
+      ))}
+    </div>
+  );
+
+  const cupFrom = data?.cupSeasons[0];
+  const cupTo = data?.cupSeasons[data.cupSeasons.length - 1];
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
       <p className="text-xs font-semibold uppercase tracking-wider text-primary">Statistika</p>
       <h1 className="font-display text-3xl font-bold uppercase">Brojke</h1>
       <p className="mb-6 mt-1 text-sm text-muted-foreground">
-        Svi ligaški golovi i asistencije od 2002-03 do 2026-27
+        {mode === "liga"
+          ? "Svi ligaški golovi i asistencije od 2002-03 do 2026-27"
+          : "Svi golovi u Kupu BiH"}
         {data
-          ? ` · u obračunu ${data.seasons.length} ${data.seasons.length === 1 ? "sezona" : "sezona"}, ${data.goalsTotal} golova`
+          ? mode === "liga"
+            ? ` · u obračunu ${data.seasons.length} ${data.seasons.length === 1 ? "sezona" : "sezona"}, ${data.goalsTotal} golova`
+            : cupFrom && cupTo
+              ? ` · sezone ${cupFrom === cupTo ? cupFrom : `${cupFrom} do ${cupTo}`}, ${data.cupGoalsTotal} golova`
+              : ""
           : ""}
       </p>
 
@@ -80,8 +121,13 @@ function BrojkePage() {
         </div>
       ) : (
         <div className="grid gap-6 lg:grid-cols-2">
-          <TopTable title="Top 25 strijelaca" unit="Golova" rows={data.scorers} />
-          <TopTable title="Top 25 asistenata" unit="Asistencija" rows={data.assists} />
+          <TopTable
+            title={mode === "liga" ? "Top 25 strijelaca · Liga" : "Top 25 strijelaca · Kup BiH"}
+            unit="Golova"
+            rows={mode === "liga" ? data.scorers : data.cupScorers}
+            tabs={tabs}
+          />
+          <TopTable title="Top 25 asistenata · Liga" unit="Asistencija" rows={data.assists} />
         </div>
       )}
     </main>
