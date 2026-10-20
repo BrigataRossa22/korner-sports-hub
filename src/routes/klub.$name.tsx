@@ -57,6 +57,8 @@ type CompRow = {
   gf: number;
   ga: number;
   avg: number | null;
+  attSum: number;
+  attCount: number;
 };
 
 type TotalRow = {
@@ -67,7 +69,8 @@ type TotalRow = {
   losses: number;
   gf: number;
   ga: number;
-  avgs: number[];
+  attSum: number;
+  attCount: number;
 };
 
 const ns = (s: string) => s.replace(/[–—]/g, "-").trim();
@@ -77,8 +80,9 @@ function parseScore(score: string): [number, number] | null {
   return m ? [Number(m[1]), Number(m[2])] : null;
 }
 
-function mean(values: number[]): number | null {
-  return values.length ? Math.round(values.reduce((s, x) => s + x, 0) / values.length) : null;
+// Prosjek = zbir gledalaca / broj utakmica
+function wavg(sum: number, count: number): number | null {
+  return count > 0 ? Math.round(sum / count) : null;
 }
 
 function Klub() {
@@ -92,7 +96,7 @@ function Klub() {
     queryFn: () => getClubDetail({ data: { name } }),
   });
   const { data: history, isLoading: historyLoading } = useQuery({
-    queryKey: ["club-history", name],
+    queryKey: ["club-history-v2", name],
     queryFn: () => getClubHistory({ data: { name } }),
   });
   const { data: info } = useQuery({
@@ -135,13 +139,17 @@ function Klub() {
         // Penali u finalu (odlučuju pobjednika kad je ukupan rezultat izjednačen)
         let finalPf = 0,
           finalPa = 0;
-        const att: number[] = [];
+        let attSum = 0,
+          attCount = 0;
         for (const m of ms) {
           const isHome = sameClub(m.home, name);
           const idx = CUP_ORDER.indexOf(m.round);
           if (idx > best) best = idx;
           const neutralFinal = m.round === "Finale" && finalCount === 1;
-          if (isHome && !neutralFinal && m.attendance > 0) att.push(m.attendance);
+          if (isHome && !neutralFinal && m.attendance > 0) {
+            attSum += m.attendance;
+            attCount++;
+          }
           if (m.score_home === null || m.score_away === null) continue;
           const a = isHome ? m.score_home : m.score_away;
           const b = isHome ? m.score_away : m.score_home;
@@ -177,7 +185,9 @@ function Klub() {
           losses: l,
           gf,
           ga,
-          avg: mean(att),
+          avg: wavg(attSum, attCount),
+          attSum,
+          attCount,
         };
       });
   })();
@@ -198,10 +208,14 @@ function Klub() {
           l = 0,
           gf = 0,
           ga = 0;
-        const att: number[] = [];
+        let attSum = 0,
+          attCount = 0;
         const sorted = [...es].sort((a, b) => a.sort_order - b.sort_order);
         for (const e of es) {
-          if ((e.attendance ?? 0) > 0) att.push(e.attendance);
+          if ((e.attendance ?? 0) > 0) {
+            attSum += e.attendance;
+            attCount++;
+          }
           for (const leg of [e.home, e.away]) {
             const p = parseScore(leg);
             if (!p) continue;
@@ -221,12 +235,14 @@ function Klub() {
           losses: l,
           gf,
           ga,
-          avg: mean(att),
+          avg: wavg(attSum, attCount),
+          attSum,
+          attCount,
         };
       });
   })();
 
-  // ---- Ukupno: liga + kup + Evropa po sezonama ----
+  // ---- Ukupno: liga + kup + Evropa po sezonama (prosjek iz svih utakmica zajedno) ----
   const totalRows: TotalRow[] = (() => {
     const map = new Map<string, TotalRow>();
     const add = (
@@ -238,7 +254,8 @@ function Klub() {
         losses: number;
         gf: number;
         ga: number;
-        avg: number | null;
+        attSum: number;
+        attCount: number;
       },
     ) => {
       const s = ns(season);
@@ -250,7 +267,8 @@ function Klub() {
         losses: 0,
         gf: 0,
         ga: 0,
-        avgs: [],
+        attSum: 0,
+        attCount: 0,
       };
       t.played += r.played;
       t.wins += r.wins;
@@ -258,7 +276,8 @@ function Klub() {
       t.losses += r.losses;
       t.gf += r.gf;
       t.ga += r.ga;
-      if (r.avg !== null) t.avgs.push(r.avg);
+      t.attSum += r.attSum;
+      t.attCount += r.attCount;
       map.set(s, t);
     };
     for (const r of history ?? []) add(r.season, r);
@@ -272,16 +291,21 @@ function Klub() {
 
   const sumLiga = (pick: (r: NonNullable<typeof history>[number]) => number) =>
     (history ?? []).reduce((s, r) => s + pick(r), 0);
-  const ligaTotalAvg = mean(
-    (history ?? []).map((r) => r.avg).filter((a): a is number => a !== null),
+  const ligaTotalAvg = wavg(
+    sumLiga((r) => r.attSum),
+    sumLiga((r) => r.attCount),
   );
 
   const sumOther = (pick: (r: CompRow) => number) => otherRows.reduce((s, r) => s + pick(r), 0);
-  const otherTotalAvg = mean(otherRows.map((r) => r.avg).filter((a): a is number => a !== null));
+  const otherTotalAvg = wavg(
+    sumOther((r) => r.attSum),
+    sumOther((r) => r.attCount),
+  );
 
   const sumTotal = (pick: (r: TotalRow) => number) => totalRows.reduce((s, r) => s + pick(r), 0);
-  const totalAvgAll = mean(
-    totalRows.map((r) => mean(r.avgs)).filter((a): a is number => a !== null),
+  const totalAvgAll = wavg(
+    sumTotal((r) => r.attSum),
+    sumTotal((r) => r.attCount),
   );
 
   return (
@@ -463,7 +487,7 @@ function Klub() {
                 </thead>
                 <tbody>
                   {totalRows.map((r) => {
-                    const avg = mean(r.avgs);
+                    const avg = wavg(r.attSum, r.attCount);
                     return (
                       <tr key={r.season} className="border-t border-border">
                         <td className="px-3 py-3 font-semibold">{r.season}</td>
