@@ -13,6 +13,9 @@ export type ClubSeasonRow = {
   ga: number;
   points: number;
   avg: number | null;
+  // zbir gledalaca i broj utakmica kod kuće (za ukupan prosjek svih takmičenja)
+  attSum: number;
+  attCount: number;
   current: boolean;
 };
 
@@ -30,7 +33,7 @@ export const getClubHistory = createServerFn({ method: "GET" })
     const getAll = async (path: string): Promise<any[]> => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const out: any[] = [];
-      for (let page = 0; page < 10; page++) {
+      for (let page = 0; page < 30; page++) {
         const res = await fetch(`${url}/rest/v1/${path}&limit=1000&offset=${page * 1000}`, {
           headers: { apikey: key },
         });
@@ -42,13 +45,14 @@ export const getClubHistory = createServerFn({ method: "GET" })
       return out;
     };
 
-    const [archive, homeGames, standings, attendance] = await Promise.all([
+    const [archive, homeGames, standings, attendance, currentGames] = await Promise.all([
       getAll(
         "season_standings?select=season,team,position,played,wins,draws,losses,goals_for,goals_against,points&order=season.desc,position.asc",
       ),
       getAll("season_matches?select=season,home,attendance&attendance=gt.0&order=season.asc,id.asc"),
       getAll("standings?select=*&order=sort_order.asc"),
       getAll("attendance?select=team,average&order=team.asc"),
+      getAll("club_matches?select=match_date,home,away,competition,attendance&attendance=gt.0&order=match_date.asc"),
     ]);
 
     const rows: ClubSeasonRow[] = [];
@@ -57,6 +61,29 @@ export const getClubHistory = createServerFn({ method: "GET" })
     const cur = curIndex >= 0 ? standings[curIndex] : null;
     if (cur) {
       const att = attendance.find((a) => sameClub(a.team, data.name));
+      const avg = att && att.average > 0 ? att.average : null;
+
+      // Zbir i broj ligaških utakmica kod kuće u tekućoj sezoni
+      const seen = new Set<string>();
+      let curSum = 0;
+      let curCount = 0;
+      for (const m of currentGames) {
+        if (!sameClub(m.home, data.name)) continue;
+        if (!String(m.competition ?? "").toLowerCase().startsWith("plbih")) continue;
+        const k = `${m.match_date}|${m.home}|${m.away}`;
+        if (seen.has(k)) continue;
+        seen.add(k);
+        if (m.attendance > 0) {
+          curSum += m.attendance;
+          curCount++;
+        }
+      }
+      // Rezerva: ako nema utakmica, koristi gotov prosjek sa težinom jedne utakmice
+      if (curCount === 0 && avg !== null) {
+        curSum = avg;
+        curCount = 1;
+      }
+
       rows.push({
         season: CURRENT_SEASON,
         team: cur.team,
@@ -68,7 +95,9 @@ export const getClubHistory = createServerFn({ method: "GET" })
         gf: cur.goals_for,
         ga: cur.goals_against,
         points: cur.points,
-        avg: att && att.average > 0 ? att.average : null,
+        avg,
+        attSum: curSum,
+        attCount: curCount,
         current: true,
       });
     }
@@ -77,9 +106,8 @@ export const getClubHistory = createServerFn({ method: "GET" })
       if (!sameClub(r.team, data.name)) continue;
       if (r.season === CURRENT_SEASON && cur) continue;
       const games = homeGames.filter((g) => g.season === r.season && sameClub(g.home, r.team));
-      const avg = games.length
-        ? Math.round(games.reduce((s, g) => s + g.attendance, 0) / games.length)
-        : null;
+      const attSum = games.reduce((s, g) => s + g.attendance, 0);
+      const avg = games.length ? Math.round(attSum / games.length) : null;
       rows.push({
         season: r.season,
         team: r.team,
@@ -92,6 +120,8 @@ export const getClubHistory = createServerFn({ method: "GET" })
         ga: r.goals_against,
         points: r.points,
         avg,
+        attSum,
+        attCount: games.length,
         current: false,
       });
     }
