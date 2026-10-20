@@ -127,18 +127,22 @@ function Klub() {
           gf = 0,
           ga = 0,
           best = -1;
-                let finalGf = 0,
+        let finalGf = 0,
           finalGa = 0,
           hasFinal = false;
         // Finale koje se igra jednom je na neutralnom terenu: ne ulazi u prosjek gledalaca
         const finalCount = ms.filter((x) => x.round === "Finale").length;
+        // Penali u finalu (odlučuju pobjednika kad je ukupan rezultat izjednačen)
+        let finalPf = 0,
+          finalPa = 0;
         const att: number[] = [];
         for (const m of ms) {
           const isHome = sameClub(m.home, name);
           const idx = CUP_ORDER.indexOf(m.round);
           if (idx > best) best = idx;
           const neutralFinal = m.round === "Finale" && finalCount === 1;
-          if (isHome && !neutralFinal && m.attendance > 0) att.push(m.attendance);          if (m.score_home === null || m.score_away === null) continue;
+          if (isHome && !neutralFinal && m.attendance > 0) att.push(m.attendance);
+          if (m.score_home === null || m.score_away === null) continue;
           const a = isHome ? m.score_home : m.score_away;
           const b = isHome ? m.score_away : m.score_home;
           gf += a;
@@ -150,12 +154,19 @@ function Klub() {
             hasFinal = true;
             finalGf += a;
             finalGa += b;
+            if (m.pen_home != null && m.pen_away != null) {
+              finalPf += isHome ? m.pen_home : m.pen_away;
+              finalPa += isHome ? m.pen_away : m.pen_home;
+            }
           }
         }
         const lastRound = best >= 0 ? CUP_ORDER[best]! : (ms[0]?.round ?? "—");
         let stage = CUP_TITLE[lastRound] ?? lastRound;
         if (lastRound === "Finale" && hasFinal) {
-          stage = finalGf > finalGa ? "Pobjednik" : "Finalista";
+          stage =
+            finalGf > finalGa || (finalGf === finalGa && finalPf > finalPa)
+              ? "Pobjednik"
+              : "Finalista";
         }
         return {
           season,
