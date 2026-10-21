@@ -33,8 +33,7 @@ const statSub: ReadonlyArray<Item> = [
 ];
 
 const repSub: ReadonlyArray<Item> = [
-  { to: "/reprezentacija", label: "Vijesti i utakmice" },
-  { to: "/reprezentacija-arhiva", label: "Arhiva utakmica" },
+  { to: "/reprezentacija", label: "Vijesti" },  { to: "/reprezentacija-arhiva", label: "Arhiva utakmica" },
 ];
 
 const navPlain = [
