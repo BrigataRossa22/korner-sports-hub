@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { CategoryPage } from "@/components/CategoryPage";
-import { NationalMatches } from "@/components/NationalMatches";
 import { LoadError } from "@/components/RouteFallbacks";
 import { getPublicContent } from "@/lib/content.functions";
 
@@ -22,15 +21,10 @@ export const Route = createFileRoute("/reprezentacija")({
 
 function Reprezentacija() {
   return (
-    <>
-      <CategoryPage
-        category="reprezentacija"
-        intro="Reprezentacija Bosne i Hercegovine: utakmice, sastavi i najave."
-        content={Route.useLoaderData()}
-      />
-      <div className="mx-auto max-w-6xl px-4 pb-12">
-        <NationalMatches />
-      </div>
-    </>
+    <CategoryPage
+      category="reprezentacija"
+      intro="Reprezentacija Bosne i Hercegovine: vijesti, sastavi i najave."
+      content={Route.useLoaderData()}
+    />
   );
 }
