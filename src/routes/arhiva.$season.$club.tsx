@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { LoadError } from "@/components/RouteFallbacks";
 import { TableSkeleton } from "@/components/TableSkeleton";
+import { sameClub } from "@/lib/club-match";
 import { getSeasonMatches } from "@/lib/seasonmatches.functions";
 import { useClubCrest } from "@/lib/use-club-crest";
 
@@ -12,20 +13,6 @@ export const Route = createFileRoute("/arhiva/$season/$club")({
   errorComponent: LoadError,
   component: ArhivaKlub,
 });
-
-const PREFIXES = new Set(["fk", "nk", "hsk", "hnk", "sk", "gnk", "fc", "nogometni", "klub"]);
-
-function norm(s: string): string {
-  return s
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/đ/g, "d")
-    .replace(/[^a-z0-9 ]+/g, " ")
-    .split(/\s+/)
-    .filter((w) => w && !PREFIXES.has(w))
-    .join(" ");
-}
 
 function fmtDate(iso: string | null): string {
   if (!iso) return "—";
@@ -42,8 +29,9 @@ function ArhivaKlub() {
     queryFn: () => getSeasonMatches({ data: { season } }),
   });
 
-  const key = norm(club);
-  const mine = (data ?? []).filter((m) => norm(m.home) === key || norm(m.away) === key);
+  // Isti klub pod različitim imenima ("Slavija" i "Slavija Sarajevo") se prepoznaje kao isti
+  const isMine = (name: string) => sameClub(name, club);
+  const mine = (data ?? []).filter((m) => isMine(m.home) || isMine(m.away));
 
   let w = 0,
     d = 0,
@@ -52,17 +40,17 @@ function ArhivaKlub() {
     ga = 0;
   const resultOf = (m: (typeof mine)[number]): "W" | "D" | "L" | null => {
     if (m.score_home === null || m.score_away === null) return null;
-    const isHome = norm(m.home) === key;
-    const a = isHome ? m.score_home : m.score_away;
-    const b = isHome ? m.score_away : m.score_home;
+    const home = isMine(m.home);
+    const a = home ? m.score_home : m.score_away;
+    const b = home ? m.score_away : m.score_home;
     return a > b ? "W" : a === b ? "D" : "L";
   };
   for (const m of mine) {
     const r = resultOf(m);
     if (!r) continue;
-    const isHome = norm(m.home) === key;
-    gf += isHome ? m.score_home! : m.score_away!;
-    ga += isHome ? m.score_away! : m.score_home!;
+    const home = isMine(m.home);
+    gf += home ? m.score_home! : m.score_away!;
+    ga += home ? m.score_away! : m.score_home!;
     if (r === "W") w++;
     else if (r === "D") d++;
     else l++;
@@ -81,7 +69,7 @@ function ArhivaKlub() {
     ) : (
       <span className="size-6 shrink-0" />
     );
-    const bold = norm(name) === key ? "font-bold" : "font-medium";
+    const bold = isMine(name) ? "font-bold" : "font-medium";
     return (
       <span className={`flex flex-1 items-center gap-2 ${bold} ${align === "right" ? "justify-end text-right" : ""}`}>
         {align === "right" ? (
@@ -167,7 +155,12 @@ function ArhivaKlub() {
                         )}
                       </td>
                       <td className="px-3 py-3 text-right">
-{m.attendance > 0 ? m.attendance.toLocaleString("de-DE") : m.attendance < 0 ? "x" : "—"}                      </td>
+                        {m.attendance > 0
+                          ? m.attendance.toLocaleString("de-DE")
+                          : m.attendance < 0
+                            ? "x"
+                            : "—"}
+                      </td>
                     </tr>
                   );
                 })}
