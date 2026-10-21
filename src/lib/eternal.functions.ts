@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { sameClub } from "@/lib/club-match";
+import { displayClub, sameClub } from "@/lib/club-match";
 
 export type EternalRow = {
   team: string;
@@ -71,12 +71,13 @@ export const getEternalTable = createServerFn({ method: "GET" }).handler(
       });
     }
 
-    // Isti klub pod različitim imenima (npr. "Željezničar" i "FK Željezničar") se spaja
+    // Isti klub pod različitim imenima (npr. "Željezničar" i "FK Željezničar",
+    // "Zovko Žepče" i "Žepče Limorad") se spaja
     const groups: EternalRow[] = [];
     for (const it of items) {
       const g = groups.find((x) => sameClub(x.team, it.team));
       if (!g) {
-        groups.push({ ...it });
+        groups.push({ ...it, team: displayClub(it.team) });
       } else {
         g.played += it.played;
         g.wins += it.wins;
