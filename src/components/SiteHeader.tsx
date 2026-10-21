@@ -27,6 +27,7 @@ const statSub: ReadonlyArray<Item> = [
   { to: "/pobjednici", label: "Pobjednici" },
   { to: "/medjusobni-susreti", label: "Međusobni susreti" },
   { to: "/brojke", label: "Brojke" },
+  { to: "/gledanost", label: "Gledanost" },  
   { to: "/all-time-lista", label: "Vječna tabela" },
   { to: "/u-evropi", label: "U Evropi" },
 ];
