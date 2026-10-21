@@ -14,6 +14,9 @@ export type EuroMatch = {
   agg: string;
   sort_order: number;
   attendance: number;
+  home_date: string | null;
+  away_date: string | null;
+  away_attendance: number | null;
 };
 
 export const getEuroMatches = createServerFn({ method: "GET" }).handler(
@@ -21,11 +24,20 @@ export const getEuroMatches = createServerFn({ method: "GET" }).handler(
     const url = process.env["SUPABASE_URL"];
     const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
     if (!url || !key) return [];
-    const res = await fetch(
-      `${url}/rest/v1/euro_matches?select=*&order=season.asc,sort_order.asc&limit=2000`,
-      { headers: { apikey: key } },
-    );
-    if (!res.ok) return [];
-    return (await res.json()) as EuroMatch[];
+
+    // Supabase vraća najviše 1000 redova po zahtjevu, pa čitamo po stranicama.
+    const out: EuroMatch[] = [];
+    const size = 1000;
+    for (let from = 0; from < 20000; from += size) {
+      const res = await fetch(
+        `${url}/rest/v1/euro_matches?select=*&order=season.asc,sort_order.asc,id.asc&limit=${size}&offset=${from}`,
+        { headers: { apikey: key } },
+      );
+      if (!res.ok) break;
+      const rows = (await res.json()) as EuroMatch[];
+      out.push(...rows);
+      if (rows.length < size) break;
+    }
+    return out;
   },
 );
