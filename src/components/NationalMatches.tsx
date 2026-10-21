@@ -1,9 +1,7 @@
-import { useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { TableSkeleton } from "@/components/TableSkeleton";
 import { getNationalMatches } from "@/lib/nationalmatches.functions";
-
-const KEY = "reprezentacija-godina";
 
 function fmtDate(iso: string): string {
   const d = new Date(iso);
@@ -49,29 +47,11 @@ export function NationalMatches() {
   });
   const rows = data ?? [];
 
+  // Prikazuje se samo najnovija godina; ostalo je u arhivi
   const years = [...new Set(rows.map((m) => m.match_date.slice(0, 4)))].sort((a, b) =>
     b.localeCompare(a),
   );
-
-  const [picked, setPicked] = useState("");
-  useEffect(() => {
-    try {
-      const saved = sessionStorage.getItem(KEY);
-      if (saved) setPicked(saved);
-    } catch {
-      /* ignoriši */
-    }
-  }, []);
-  const choose = (y: string) => {
-    setPicked(y);
-    try {
-      sessionStorage.setItem(KEY, y);
-    } catch {
-      /* ignoriši */
-    }
-  };
-
-  const year = years.includes(picked) ? picked : years[0] || "";
+  const year = years[0] || "";
   const list = rows.filter((m) => m.match_date.startsWith(year));
 
   let w = 0,
@@ -93,25 +73,12 @@ export function NationalMatches() {
         <h2 className="font-display text-lg font-bold uppercase">
           Utakmice reprezentacije BiH {year}.
         </h2>
-        {years.length > 0 && (
-          <div className="flex items-center gap-2">
-            <label htmlFor="godina" className="text-xs font-semibold uppercase text-muted-foreground">
-              Godina
-            </label>
-            <select
-              id="godina"
-              value={year}
-              onChange={(e) => choose(e.target.value)}
-              className="rounded-md border border-border bg-card px-3 py-1.5 text-sm font-semibold"
-            >
-              {years.map((y) => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+        <Link
+          to="/reprezentacija-arhiva"
+          className="text-xs font-semibold uppercase tracking-wide text-primary hover:underline"
+        >
+          Arhiva utakmica →
+        </Link>
       </div>
 
       {isLoading ? (
