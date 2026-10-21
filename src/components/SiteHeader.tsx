@@ -27,14 +27,18 @@ const statSub: ReadonlyArray<Item> = [
   { to: "/pobjednici", label: "Pobjednici" },
   { to: "/medjusobni-susreti", label: "Međusobni susreti" },
   { to: "/brojke", label: "Brojke" },
-  { to: "/gledanost", label: "Gledanost" },  
+  { to: "/gledanost", label: "Gledanost" },
   { to: "/all-time-lista", label: "Vječna tabela" },
   { to: "/u-evropi", label: "U Evropi" },
 ];
 
+const repSub: ReadonlyArray<Item> = [
+  { to: "/reprezentacija", label: "Vijesti i utakmice" },
+  { to: "/reprezentacija-arhiva", label: "Arhiva utakmica" },
+];
+
 const navPlain = [
   { to: "/klubovi", label: "Klubovi" },
-  { to: "/reprezentacija", label: "Reprezentacija" },
   { to: "/nize-lige", label: "Niže lige" },
 ] as const;
 
@@ -43,6 +47,7 @@ const mobileGroups: { id: string; label: string; items: ReadonlyArray<Item> }[] 
   { id: "wwin", label: "WWiN liga", items: [{ to: "/wwin-liga", label: "Vijesti" }, ...wwinSub] },
   { id: "kup", label: "Kup BiH", items: [{ to: "/kup-bih", label: "Vijesti" }, ...kupSub] },
   { id: "stat", label: "Statistika", items: statSub },
+  { id: "rep", label: "Reprezentacija", items: repSub },
 ];
 
 function useTicker(): string {
@@ -67,7 +72,7 @@ function Dropdown({
   label,
   items,
 }: {
-  to: "/wwin-liga" | "/kup-bih" | "/statistika";
+  to: "/wwin-liga" | "/kup-bih" | "/statistika" | "/reprezentacija";
   label: string;
   items: ReadonlyArray<Item>;
 }) {
@@ -122,6 +127,7 @@ export function SiteHeader() {
           <Dropdown to="/wwin-liga" label="WWiN liga" items={wwinSub} />
           <Dropdown to="/kup-bih" label="Kup BiH" items={kupSub} />
           <Dropdown to="/statistika" label="Statistika" items={statSub} />
+          <Dropdown to="/reprezentacija" label="Reprezentacija" items={repSub} />
           {navPlain.map((item) => (
             <Link key={item.to} to={item.to} activeProps={activeProps} className={linkClass}>
               {item.label}
