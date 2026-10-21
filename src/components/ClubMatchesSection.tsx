@@ -40,9 +40,29 @@ function fmtDate(iso: string | null): string {
   return `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}.`;
 }
 
-function attendanceText(n: number): string {
+function attendanceText(n: number | null): string {
+  if (n === null) return "—";
   return n > 0 ? n.toLocaleString("de-DE") : n < 0 ? "x" : "—";
 }
+
+// "2:1" ili "2:1 (4:3 p)" -> [2, 1]; "-" ili prazno -> null
+function pair(s: string | null | undefined): [number, number] | null {
+  const m = /^\s*(\d+)\s*[:\-–]\s*(\d+)/.exec(s ?? "");
+  return m ? [Number(m[1]), Number(m[2])] : null;
+}
+
+type EuroLeg = {
+  key: string;
+  title: string;
+  round: string;
+  agg: string;
+  date: string | null;
+  home: string;
+  away: string;
+  sh: number;
+  sa: number;
+  att: number | null;
+};
 
 export function ClubMatchesSection({ name }: { name: string }) {
   const crestFor = useCrest();
@@ -54,7 +74,7 @@ export function ClubMatchesSection({ name }: { name: string }) {
     queryFn: () => getClubDetail({ data: { name } }),
   });
   const { data: history } = useQuery({
-    queryKey: ["club-history", name],
+    queryKey: ["club-history-v2", name],
     queryFn: () => getClubHistory({ data: { name } }),
   });
   const { data: euro } = useQuery({
@@ -137,6 +157,47 @@ export function ClubMatchesSection({ name }: { name: string }) {
     .filter((e) => ns(e.season) === season)
     .sort((a, b) => a.sort_order - b.sort_order);
 
+  // Svaka evropska utakmica u svom redu (domaći i gostujući meč posebno)
+  const euroLegs: EuroLeg[] = pastEuro.flatMap((e) => {
+    const base = {
+      title: EURO_TITLE[e.competition],
+      round: e.round,
+      agg: e.agg,
+    };
+    const h = pair(e.home);
+    const a = pair(e.away);
+    const legs: EuroLeg[] = [];
+    if (h) {
+      legs.push({
+        ...base,
+        key: `${e.id}-h`,
+        date: e.home_date,
+        home: e.club,
+        away: e.opponent,
+        sh: h[0],
+        sa: h[1],
+        att: e.attendance,
+      });
+    }
+    if (a) {
+      legs.push({
+        ...base,
+        key: `${e.id}-a`,
+        date: e.away_date,
+        home: e.opponent,
+        away: e.club,
+        sh: a[1],
+        sa: a[0],
+        att: e.away_attendance,
+      });
+    }
+    // Ako su oba datuma upisana, prvo ide raniji meč
+    if (legs.length === 2 && legs[0]!.date && legs[1]!.date && legs[0]!.date > legs[1]!.date) {
+      legs.reverse();
+    }
+    return legs;
+  });
+
   return (
     <section className="rounded-lg border border-border bg-card">
       <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
@@ -202,7 +263,7 @@ export function ClubMatchesSection({ name }: { name: string }) {
         <div className="border-t border-border">
           {leagueLoading ? (
             <TableSkeleton rows={5} cols={4} />
-          ) : pastLeague.length === 0 && pastCup.length === 0 && pastEuro.length === 0 ? (
+          ) : pastLeague.length === 0 && pastCup.length === 0 && euroLegs.length === 0 ? (
             <p className="px-4 py-6 text-sm text-muted-foreground">
               Za ovu sezonu još nema unesenih utakmica.
             </p>
@@ -272,6 +333,11 @@ export function ClubMatchesSection({ name }: { name: string }) {
                                 sh={m.score_home}
                                 sa={m.score_away}
                               />
+                              {m.pen_home != null && m.pen_away != null && (
+                                <p className="mt-0.5 text-center text-[10px] font-semibold uppercase text-muted-foreground">
+                                  pen. {m.pen_home}:{m.pen_away}
+                                </p>
+                              )}
                             </td>
                             <td className="px-4 py-3 text-right">{attendanceText(m.attendance)}</td>
                           </tr>
@@ -282,7 +348,7 @@ export function ClubMatchesSection({ name }: { name: string }) {
                 </div>
               )}
 
-              {pastEuro.length > 0 && (
+              {euroLegs.length > 0 && (
                 <div>
                   <h3 className="bg-surface px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Evropa
@@ -292,32 +358,28 @@ export function ClubMatchesSection({ name }: { name: string }) {
                       <thead>
                         <tr className="text-xs uppercase text-muted-foreground">
                           <th className="px-4 py-2 text-left">Takmičenje</th>
-                          <th className="px-4 py-2 text-left">Runda</th>
-                          <th className="px-4 py-2 text-left">Protivnik</th>
-                          <th className="px-4 py-2 text-center">Domaćin</th>
-                          <th className="px-4 py-2 text-center">Gost</th>
-                          <th className="px-4 py-2 text-center">Ukupno</th>
+                          <th className="px-4 py-2 text-left">Datum</th>
+                          <th className="px-4 py-2 text-center">Utakmica</th>
+                          <th className="px-4 py-2 text-right">Gledalaca</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {pastEuro.map((e) => {
-                          const f = flagUrl(e.opponent_flag);
-                          return (
-                            <tr key={e.id} className="border-t border-border">
-                              <td className="px-4 py-3">{EURO_TITLE[e.competition]}</td>
-                              <td className="px-4 py-3">{e.round}</td>
-                              <td className="px-4 py-3">
-                                <span className="flex items-center gap-2 font-medium">
-                                  {f && <img src={f} alt="" className="h-4 w-6 shrink-0 object-cover" />}
-                                  {e.opponent}
-                                </span>
-                              </td>
-                              <td className="px-4 py-3 text-center">{e.home || "—"}</td>
-                              <td className="px-4 py-3 text-center">{e.away || "—"}</td>
-                              <td className="px-4 py-3 text-center font-bold">{e.agg || "—"}</td>
-                            </tr>
-                          );
-                        })}
+                        {euroLegs.map((l) => (
+                          <tr key={l.key} className="border-t border-border">
+                            <td className="px-4 py-3">
+                              <span className="block font-semibold">{l.title}</span>
+                              <span className="block text-xs text-muted-foreground">
+                                {l.round}
+                                {l.agg ? ` · ukupno ${l.agg}` : ""}
+                              </span>
+                            </td>
+                            <td className="whitespace-nowrap px-4 py-3">{fmtDate(l.date)}</td>
+                            <td className="px-4 py-3">
+                              <MatchCell home={l.home} away={l.away} sh={l.sh} sa={l.sa} />
+                            </td>
+                            <td className="px-4 py-3 text-right">{attendanceText(l.att)}</td>
+                          </tr>
+                        ))}
                       </tbody>
                     </table>
                   </div>
