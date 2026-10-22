@@ -76,6 +76,40 @@ type CoachTotal = {
 const ppg = (w: number, d: number, m: number) => (m ? (3 * w + d) / m : 0);
 const pct = (w: number, m: number) => (m ? Math.round((w / m) * 100) : 0);
 
+const slug = (name: string) =>
+  name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[đĐ]/g, "d")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+
+function CoachAvatar({ name }: { name: string }) {
+  const [failed, setFailed] = useState(false);
+  const initials = name
+    .split(" ")
+    .map((p) => p[0])
+    .slice(0, 2)
+    .join("");
+  if (failed) {
+    return (
+      <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+        {initials}
+      </span>
+    );
+  }
+  return (
+    <img
+      src={`/treneri/${slug(name)}.jpg`}
+      alt={name}
+      loading="lazy"
+      onError={() => setFailed(true)}
+      className="size-11 shrink-0 rounded-full border border-border object-cover"
+    />
+  );
+}
+
 function fmtDate(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
@@ -181,7 +215,10 @@ function CoachesView() {
             <p className="text-xs font-semibold uppercase text-muted-foreground">
               Najviše utakmica
             </p>
-            <p className="mt-1 font-display text-lg font-bold uppercase">{most.name}</p>
+            <div className="mt-2 flex items-center gap-3">
+              <CoachAvatar name={most.name} />
+              <p className="font-display text-lg font-bold uppercase">{most.name}</p>
+            </div>
             <p className="mt-2 text-4xl font-bold tabular-nums text-primary">{most.m}</p>
             <p className="mt-1 text-xs text-muted-foreground">
               {most.w} pobjeda · {most.d} neriješenih · {most.l} poraza
@@ -191,7 +228,10 @@ function CoachesView() {
             <p className="text-xs font-semibold uppercase text-muted-foreground">
               Najbolji prosjek bodova (min. 10 utakmica)
             </p>
-            <p className="mt-1 font-display text-lg font-bold uppercase">{best.name}</p>
+            <div className="mt-2 flex items-center gap-3">
+              <CoachAvatar name={best.name} />
+              <p className="font-display text-lg font-bold uppercase">{best.name}</p>
+            </div>
             <p className="mt-2 text-4xl font-bold tabular-nums text-primary">
               {ppg(best.w, best.d, best.m).toFixed(2)}
             </p>
@@ -247,8 +287,13 @@ function CoachesView() {
                     className="border-b border-border/70 last:border-0"
                   >
                     <td className="px-4 py-2">
-                      <span className="font-medium">{c.name}</span>
-                      <span className="block text-xs text-muted-foreground">r. {c.born}</span>
+                      <div className="flex items-center gap-3">
+                        <CoachAvatar name={c.name} />
+                        <div>
+                          <span className="font-medium">{c.name}</span>
+                          <span className="block text-xs text-muted-foreground">r. {c.born}</span>
+                        </div>
+                      </div>
                     </td>
                     <td className="px-3 py-2 text-xs text-muted-foreground">
                       {c.from} –{" "}
@@ -292,12 +337,17 @@ function CoachesView() {
                   <tr key={t.name} className="border-b border-border/70 last:border-0">
                     <td className="px-4 py-2 text-muted-foreground">{i + 1}</td>
                     <td className="px-3 py-2">
-                      <span className="font-medium">{t.name}</span>
-                      {t.mandates > 1 && (
-                        <span className="block text-xs text-muted-foreground">
-                          {t.mandates} mandata
-                        </span>
-                      )}
+                      <div className="flex items-center gap-3">
+                        <CoachAvatar name={t.name} />
+                        <div>
+                          <span className="font-medium">{t.name}</span>
+                          {t.mandates > 1 && (
+                            <span className="block text-xs text-muted-foreground">
+                              {t.mandates} mandata
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </td>
                     <td className="px-3 py-2">
                       <div className="flex items-center gap-2">
