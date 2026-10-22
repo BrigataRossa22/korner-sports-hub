@@ -30,6 +30,52 @@ type Scorer = {
   last: string;
 };
 
+type Coach = {
+  name: string;
+  born: string;
+  from: string;
+  to: string | null;
+  time: string;
+  m: number;
+  w: number;
+  d: number;
+  l: number;
+};
+
+const COACHES: Coach[] = [
+  { name: "Sergej Barbarez", born: "17.09.1971.", from: "19.04.2024.", to: null, time: "2 god. 6 mj.", m: 30, w: 11, d: 9, l: 10 },
+  { name: "Savo Milošević", born: "02.09.1973.", from: "29.09.2023.", to: "16.04.2024.", time: "6 mj.", m: 5, w: 1, d: 0, l: 4 },
+  { name: "Meho Kodro", born: "12.01.1967.", from: "03.08.2023.", to: "21.09.2023.", time: "1 mj.", m: 2, w: 1, d: 0, l: 1 },
+  { name: "Faruk Hadžibegić", born: "07.10.1957.", from: "04.01.2023.", to: "23.06.2023.", time: "5 mj.", m: 4, w: 1, d: 0, l: 3 },
+  { name: "Ivaylo Petev", born: "09.07.1975.", from: "27.01.2021.", to: "31.12.2022.", time: "1 god. 11 mj.", m: 20, w: 6, d: 7, l: 7 },
+  { name: "Dušan Bajević", born: "10.12.1948.", from: "21.12.2019.", to: "01.12.2020.", time: "11 mj.", m: 8, w: 0, d: 2, l: 6 },
+  { name: "Robert Prosinečki", born: "12.01.1969.", from: "04.01.2018.", to: "27.11.2019.", time: "1 god. 10 mj.", m: 22, w: 9, d: 6, l: 7 },
+  { name: "Mehmed Baždarević", born: "28.09.1960.", from: "13.12.2014.", to: "19.10.2017.", time: "2 god. 10 mj.", m: 24, w: 14, d: 4, l: 6 },
+  { name: "Safet Sušić", born: "13.04.1955.", from: "29.12.2009.", to: "17.11.2014.", time: "4 god. 10 mj.", m: 49, w: 23, d: 9, l: 17 },
+  { name: "Miroslav Blažević", born: "10.02.1935.", from: "10.07.2008.", to: "12.12.2009.", time: "1 god. 5 mj.", m: 17, w: 8, d: 2, l: 7 },
+  { name: "Denijal Pirić", born: "27.09.1946.", from: "18.05.2008.", to: "30.06.2008.", time: "1 mj.", m: 1, w: 1, d: 0, l: 0 },
+  { name: "Meho Kodro", born: "12.01.1967.", from: "05.01.2008.", to: "20.05.2008.", time: "4 mj.", m: 2, w: 0, d: 1, l: 1 },
+  { name: "Fuad Muzurović", born: "03.11.1945.", from: "22.12.2006.", to: "17.12.2007.", time: "11 mj.", m: 9, w: 3, d: 0, l: 6 },
+  { name: "Blaž Slišković", born: "30.05.1959.", from: "27.03.2002.", to: "11.10.2006.", time: "4 god. 6 mj.", m: 37, w: 11, d: 11, l: 15 },
+  { name: "Miso Smajlović", born: "28.10.1938.", from: "24.01.2000.", to: "07.10.2001.", time: "1 god. 8 mj.", m: 26, w: 12, d: 7, l: 7 },
+  { name: "Faruk Hadžibegić", born: "07.10.1957.", from: "11.03.1999.", to: "09.10.1999.", time: "6 mj.", m: 7, w: 2, d: 2, l: 3 },
+  { name: "Džemaludin Musović", born: "30.10.1944.", from: "14.05.1998.", to: "27.01.1999.", time: "8 mj.", m: 7, w: 1, d: 2, l: 4 },
+  { name: "Fuad Muzurović", born: "03.11.1945.", from: "30.11.1995.", to: "05.11.1997.", time: "1 god. 11 mj.", m: 18, w: 7, d: 2, l: 9 },
+];
+
+type CoachTotal = {
+  name: string;
+  born: string;
+  mandates: number;
+  m: number;
+  w: number;
+  d: number;
+  l: number;
+};
+
+const ppg = (w: number, d: number, m: number) => (m ? (3 * w + d) / m : 0);
+const pct = (w: number, m: number) => (m ? Math.round((w / m) * 100) : 0);
+
 function fmtDate(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
@@ -77,6 +123,215 @@ const OPTIONS: { id: Tab; title: string; text: string }[] = [
   { id: "strijelci", title: "Najbolji strijelci", text: "Svi strijelci reprezentacije od 1995." },
   { id: "treneri", title: "Treneri", text: "Statistika selektora reprezentacije" },
 ];
+
+function CoachesView() {
+  const [view, setView] = useState<"mandati" | "ukupno">("mandati");
+
+  const totals = useMemo(() => {
+    const map = new Map<string, CoachTotal>();
+    for (const c of COACHES) {
+      const cur = map.get(c.name) ?? {
+        name: c.name,
+        born: c.born,
+        mandates: 0,
+        m: 0,
+        w: 0,
+        d: 0,
+        l: 0,
+      };
+      cur.mandates++;
+      cur.m += c.m;
+      cur.w += c.w;
+      cur.d += c.d;
+      cur.l += c.l;
+      map.set(c.name, cur);
+    }
+    return [...map.values()].sort((a, b) => b.m - a.m || b.w - a.w);
+  }, []);
+
+  const allMatches = COACHES.reduce((s, c) => s + c.m, 0);
+  const best = totals
+    .filter((t) => t.m >= 10)
+    .sort((a, b) => ppg(b.w, b.d, b.m) - ppg(a.w, a.d, a.m))[0];
+  const most = totals[0];
+  const maxM = most?.m ?? 1;
+
+  return (
+    <>
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {[
+          ["Selektora", totals.length],
+          ["Mandata", COACHES.length],
+          ["Utakmica", allMatches],
+          ["Najbolji bod/ut.", best ? ppg(best.w, best.d, best.m).toFixed(2) : "—"],
+        ].map(([label, value]) => (
+          <div
+            key={label as string}
+            className="rounded-xl border border-border bg-card px-4 py-4 text-center"
+          >
+            <p className="text-2xl font-bold tabular-nums text-primary">{value}</p>
+            <p className="mt-1 text-xs font-semibold uppercase text-muted-foreground">{label}</p>
+          </div>
+        ))}
+      </div>
+
+      {most && best && (
+        <div className="mb-6 grid gap-3 sm:grid-cols-2">
+          <div className="rounded-xl border-2 border-amber-400/70 bg-card px-5 py-5">
+            <p className="text-xs font-semibold uppercase text-muted-foreground">
+              Najviše utakmica
+            </p>
+            <p className="mt-1 font-display text-lg font-bold uppercase">{most.name}</p>
+            <p className="mt-2 text-4xl font-bold tabular-nums text-primary">{most.m}</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {most.w} pobjeda · {most.d} neriješenih · {most.l} poraza
+            </p>
+          </div>
+          <div className="rounded-xl border-2 border-slate-300/70 bg-card px-5 py-5">
+            <p className="text-xs font-semibold uppercase text-muted-foreground">
+              Najbolji prosjek bodova (min. 10 utakmica)
+            </p>
+            <p className="mt-1 font-display text-lg font-bold uppercase">{best.name}</p>
+            <p className="mt-2 text-4xl font-bold tabular-nums text-primary">
+              {ppg(best.w, best.d, best.m).toFixed(2)}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {best.m} utakmica · {pct(best.w, best.m)}% pobjeda
+            </p>
+          </div>
+        </div>
+      )}
+
+      <div className="mb-3 flex gap-2">
+        {(
+          [
+            ["mandati", "Po mandatima"],
+            ["ukupno", "Ukupno po treneru"],
+          ] as const
+        ).map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setView(id)}
+            className={`rounded-full border px-4 py-1.5 text-xs font-semibold uppercase ${
+              view === id
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border bg-card text-muted-foreground hover:border-primary/60"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <section className="overflow-hidden rounded-xl border border-border bg-card">
+        <div className="overflow-x-auto">
+          {view === "mandati" ? (
+            <table className="w-full min-w-[640px] border-collapse text-sm tabular-nums">
+              <thead>
+                <tr className="border-b border-border text-xs uppercase text-muted-foreground">
+                  <th className="px-4 py-2 text-left">Selektor</th>
+                  <th className="px-3 py-2 text-left">Mandat</th>
+                  <th className="px-3 py-2 text-right">Ut.</th>
+                  <th className="px-3 py-2 text-right">P</th>
+                  <th className="px-3 py-2 text-right">N</th>
+                  <th className="px-3 py-2 text-right">I</th>
+                  <th className="px-3 py-2 text-right">Bod/ut.</th>
+                  <th className="px-4 py-2 text-right">% pob.</th>
+                </tr>
+              </thead>
+              <tbody>
+                {COACHES.map((c) => (
+                  <tr
+                    key={`${c.name}${c.from}`}
+                    className="border-b border-border/70 last:border-0"
+                  >
+                    <td className="px-4 py-2">
+                      <span className="font-medium">{c.name}</span>
+                      <span className="block text-xs text-muted-foreground">r. {c.born}</span>
+                    </td>
+                    <td className="px-3 py-2 text-xs text-muted-foreground">
+                      {c.from} –{" "}
+                      {c.to ?? (
+                        <span className="rounded-full bg-primary/15 px-2 py-0.5 font-bold text-primary">
+                          trenutno
+                        </span>
+                      )}
+                      <span className="block">{c.time}</span>
+                    </td>
+                    <td className="px-3 py-2 text-right font-bold">{c.m}</td>
+                    <td className="px-3 py-2 text-right">{c.w}</td>
+                    <td className="px-3 py-2 text-right">{c.d}</td>
+                    <td className="px-3 py-2 text-right">{c.l}</td>
+                    <td className="px-3 py-2 text-right font-semibold text-primary">
+                      {ppg(c.w, c.d, c.m).toFixed(2)}
+                    </td>
+                    <td className="px-4 py-2 text-right text-muted-foreground">
+                      {pct(c.w, c.m)}%
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <table className="w-full min-w-[640px] border-collapse text-sm tabular-nums">
+              <thead>
+                <tr className="border-b border-border text-xs uppercase text-muted-foreground">
+                  <th className="w-10 px-4 py-2 text-left">#</th>
+                  <th className="px-3 py-2 text-left">Selektor</th>
+                  <th className="px-3 py-2 text-left">Utakmice</th>
+                  <th className="px-3 py-2 text-right">P</th>
+                  <th className="px-3 py-2 text-right">N</th>
+                  <th className="px-3 py-2 text-right">I</th>
+                  <th className="px-3 py-2 text-right">Bod/ut.</th>
+                  <th className="px-4 py-2 text-right">% pob.</th>
+                </tr>
+              </thead>
+              <tbody>
+                {totals.map((t, i) => (
+                  <tr key={t.name} className="border-b border-border/70 last:border-0">
+                    <td className="px-4 py-2 text-muted-foreground">{i + 1}</td>
+                    <td className="px-3 py-2">
+                      <span className="font-medium">{t.name}</span>
+                      {t.mandates > 1 && (
+                        <span className="block text-xs text-muted-foreground">
+                          {t.mandates} mandata
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 w-20 overflow-hidden rounded-full bg-muted sm:w-32">
+                          <div
+                            className="h-full rounded-full bg-primary"
+                            style={{ width: `${Math.max(4, (t.m / maxM) * 100)}%` }}
+                          />
+                        </div>
+                        <span className="font-bold">{t.m}</span>
+                      </div>
+                    </td>
+                    <td className="px-3 py-2 text-right">{t.w}</td>
+                    <td className="px-3 py-2 text-right">{t.d}</td>
+                    <td className="px-3 py-2 text-right">{t.l}</td>
+                    <td className="px-3 py-2 text-right font-semibold text-primary">
+                      {ppg(t.w, t.d, t.m).toFixed(2)}
+                    </td>
+                    <td className="px-4 py-2 text-right text-muted-foreground">
+                      {pct(t.w, t.m)}%
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </section>
+      <p className="mt-3 text-xs text-muted-foreground">
+        P = pobjede, N = neriješeno, I = porazi. Bod/ut. = prosječan broj bodova po utakmici.
+      </p>
+    </>
+  );
+}
 
 function StatistikaReprezentacije() {
   const { data: goalData, isLoading } = useQuery({
@@ -174,11 +429,7 @@ function StatistikaReprezentacije() {
         })}
       </div>
 
-      {tab === "treneri" && (
-        <p className="border-y border-border py-10 text-center text-muted-foreground">
-          Statistika trenera stiže uskoro.
-        </p>
-      )}
+      {tab === "treneri" && <CoachesView />}
 
       {tab === "strijelci" &&
         (isLoading ? (
