@@ -64,10 +64,21 @@ type EuroLeg = {
   att: number | null;
 };
 
-export function ClubMatchesSection({ name }: { name: string }) {
+export function ClubMatchesSection({
+  name,
+  season: seasonProp,
+  onSeasonChange,
+}: {
+  name: string;
+  /** Ako se proslijedi, sezonu bira roditelj (npr. klik na sezonu u tabeli iznad) */
+  season?: string;
+  onSeasonChange?: (s: string) => void;
+}) {
   const crestFor = useCrest();
   const clubCrest = useClubCrest();
-  const [season, setSeason] = useState("");
+  const [localSeason, setLocalSeason] = useState("");
+  const season = seasonProp ?? localSeason;
+  const setSeason = onSeasonChange ?? setLocalSeason;
 
   const { data, isLoading } = useQuery({
     queryKey: ["club-detail", name],
@@ -171,7 +182,7 @@ export function ClubMatchesSection({ name }: { name: string }) {
       legs.push({
         ...base,
         key: `${e.id}-h`,
-        date: e.home_date,
+        date: e.home_date ?? null,
         home: e.club,
         away: e.opponent,
         sh: h[0],
@@ -183,12 +194,12 @@ export function ClubMatchesSection({ name }: { name: string }) {
       legs.push({
         ...base,
         key: `${e.id}-a`,
-        date: e.away_date,
+        date: e.away_date ?? null,
         home: e.opponent,
         away: e.club,
         sh: a[1],
         sa: a[0],
-        att: e.away_attendance,
+        att: e.away_attendance ?? null,
       });
     }
     // Ako su oba datuma upisana, prvo ide raniji meč
@@ -199,9 +210,11 @@ export function ClubMatchesSection({ name }: { name: string }) {
   });
 
   return (
-    <section className="rounded-lg border border-border bg-card">
+    <section id="utakmice" className="scroll-mt-24 rounded-lg border border-border bg-card">
       <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-        <h2 className="font-display text-lg font-bold uppercase">Utakmice</h2>
+        <h2 className="font-display text-lg font-bold uppercase">
+          Utakmice{season ? ` · ${season}` : ""}
+        </h2>
         <div className="flex items-center gap-2">
           <label
             htmlFor="utakmice-sezona"
@@ -224,6 +237,12 @@ export function ClubMatchesSection({ name }: { name: string }) {
           </select>
         </div>
       </div>
+
+      {season === "" && (
+        <p className="border-t border-border px-4 py-6 text-sm text-muted-foreground">
+          Izaberi sezonu ili klikni na sezonu u tabeli iznad da vidiš sve utakmice te sezone.
+        </p>
+      )}
 
       {season === CURRENT_SEASON &&
         (isLoading ? (
