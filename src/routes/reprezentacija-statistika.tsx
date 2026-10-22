@@ -76,23 +76,28 @@ type CoachTotal = {
 const ppg = (w: number, d: number, m: number) => (m ? (3 * w + d) / m : 0);
 const pct = (w: number, m: number) => (m ? Math.round((w / m) * 100) : 0);
 
-const slug = (name: string) =>
+const PHOTO_BASE =
+  "https://wxyxcfalnqttwchxebpn.supabase.co/storage/v1/object/public/treneri";
+const PHOTO_EXTS = ["jpeg", "jpg", "png", "webp"];
+
+// "Sergej Barbarez" -> "sergej.barbarez"
+const photoName = (name: string) =>
   name
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[đĐ]/g, "d")
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
+    .replace(/[^a-z0-9]+/g, ".")
+    .replace(/^\.|\.$/g, "");
 
 function CoachAvatar({ name }: { name: string }) {
-  const [failed, setFailed] = useState(false);
+  const [i, setI] = useState(0);
   const initials = name
     .split(" ")
     .map((p) => p[0])
     .slice(0, 2)
     .join("");
-  if (failed) {
+  if (i >= PHOTO_EXTS.length) {
     return (
       <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
         {initials}
@@ -101,11 +106,12 @@ function CoachAvatar({ name }: { name: string }) {
   }
   return (
     <img
-      src={`/treneri/${slug(name)}.jpg`}
+      key={i}
+      src={`${PHOTO_BASE}/${photoName(name)}.${PHOTO_EXTS[i]}`}
       alt={name}
       loading="lazy"
-      onError={() => setFailed(true)}
-      className="size-11 shrink-0 rounded-full border border-border object-cover"
+      onError={() => setI(i + 1)}
+      className="size-11 shrink-0 rounded-full border border-border object-cover object-top"
     />
   );
 }
