@@ -5,6 +5,7 @@ import { getClubDetail } from "@/lib/clubdetail.functions";
 import { getClubHistory } from "@/lib/clubhistory.functions";
 import { getCupMatches } from "@/lib/cupmatches.functions";
 import { getEuroMatches, type EuroMatch } from "@/lib/euromatches.functions";
+import { getSeasonGoals } from "@/lib/seasongoals.functions";
 import { getSeasonMatches } from "@/lib/seasonmatches.functions";
 import { normClub, sameClub } from "@/lib/club-match";
 import { useCrest } from "@/lib/use-crest";
@@ -104,6 +105,13 @@ export function ClubMatchesSection({
     enabled: past,
   });
 
+  // Golovi te sezone (isti upit kao "Najbolji strijelci sezone", pa se dijeli keš)
+  const { data: seasonGoals } = useQuery({
+    queryKey: ["season-goals", season],
+    queryFn: () => getSeasonGoals({ data: { season } }),
+    enabled: past,
+  });
+
   const flags = new Map<string, string>();
   for (const e of euro ?? []) {
     if (e.opponent_flag) flags.set(normClub(e.opponent), e.opponent_flag);
@@ -167,6 +175,23 @@ export function ClubMatchesSection({
   const pastEuro = clubEuro
     .filter((e) => ns(e.season) === season)
     .sort((a, b) => a.sort_order - b.sort_order);
+
+  // Strijelci kluba u ligi te sezone (autogol se ne računa igraču koji ga je dao)
+  const scorers = (() => {
+    const map = new Map<string, { player: string; goals: number }>();
+    for (const g of seasonGoals ?? []) {
+      if (g.kind === "o") continue;
+      const team = g.side === "H" ? g.home : g.away;
+      if (!sameClub(team, name)) continue;
+      const row = map.get(g.player) ?? { player: g.player, goals: 0 };
+      row.goals += 1;
+      map.set(g.player, row);
+    }
+    return [...map.values()].sort(
+      (a, b) => b.goals - a.goals || a.player.localeCompare(b.player, "bs"),
+    );
+  })();
+  const scorersTotal = scorers.reduce((sum, r) => sum + r.goals, 0);
 
   // Svaka evropska utakmica u svom redu (domaći i gostujući meč posebno)
   const euroLegs: EuroLeg[] = pastEuro.flatMap((e) => {
@@ -400,6 +425,41 @@ export function ClubMatchesSection({
                           </tr>
                         ))}
                       </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {scorers.length > 0 && (
+                <div>
+                  <h3 className="bg-surface px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Strijelci u ligi · {season}
+                  </h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm tabular-nums">
+                      <thead>
+                        <tr className="text-xs uppercase text-muted-foreground">
+                          <th className="w-12 px-4 py-2 text-left">#</th>
+                          <th className="px-4 py-2 text-left">Igrač</th>
+                          <th className="px-4 py-2 text-right">Golova</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {scorers.map((r, i) => (
+                          <tr key={r.player} className="border-t border-border">
+                            <td className="px-4 py-3 font-semibold text-primary">{i + 1}</td>
+                            <td className="px-4 py-3 font-semibold">{r.player}</td>
+                            <td className="px-4 py-3 text-right text-base font-bold">{r.goals}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot>
+                        <tr className="border-t border-border bg-surface font-bold">
+                          <td className="px-4 py-3"></td>
+                          <td className="px-4 py-3 uppercase">Ukupno</td>
+                          <td className="px-4 py-3 text-right">{scorersTotal}</td>
+                        </tr>
+                      </tfoot>
                     </table>
                   </div>
                 </div>
