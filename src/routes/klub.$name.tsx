@@ -29,10 +29,10 @@ export const Route = createFileRoute("/klub/$name")({
 type Comp = "liga" | "evropa" | "kup" | "ukupno";
 
 const COMP_LABEL: Record<Comp, string> = {
+  ukupno: "Ukupno",
   liga: "Liga",
   evropa: "Evropa",
   kup: "Kup BiH",
-  ukupno: "Ukupno",
 };
 
 const CUP_ORDER = ["Q1", "Q2", "1/32", "1/16", "1/8", "1/4", "1/2", "Finale"];
@@ -89,7 +89,28 @@ function Klub() {
   const { name } = Route.useParams();
   const crestFor = useCrest();
   const clubCrest = useClubCrest();
-  const [comp, setComp] = useState<Comp>("liga");
+  const [comp, setComp] = useState<Comp>("ukupno");
+  const [matchSeason, setMatchSeason] = useState("");
+
+  // Klik na sezonu u tabeli: izaberi sezonu u dijelu "Utakmice" i klizi do njega
+  const openSeason = (s: string) => {
+    setMatchSeason(ns(s));
+    setTimeout(() => {
+      document.getElementById("utakmice")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
+  };
+
+  const SeasonButton = ({ season, note }: { season: string; note?: string }) => (
+    <button
+      type="button"
+      onClick={() => openSeason(season)}
+      title="Prikaži sve utakmice ove sezone"
+      className="text-left font-semibold text-primary hover:underline"
+    >
+      {season}
+      {note && <span className="ml-1 text-xs font-normal text-muted-foreground">{note}</span>}
+    </button>
+  );
 
   const { data } = useQuery({
     queryKey: ["club-detail", name],
@@ -342,10 +363,8 @@ function Klub() {
         </section>
       )}
 
-      <ClubMatchesSection name={name} />
-
       {data && data.trophies.length > 0 && (
-        <section className="mt-10 rounded-lg border border-border bg-card">
+        <section className="rounded-lg border border-border bg-card">
           <h2 className="border-b border-border px-4 py-3 font-display text-lg font-bold uppercase">
             Trofeji
           </h2>
@@ -372,7 +391,7 @@ function Klub() {
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
           <h2 className="font-display text-lg font-bold uppercase">Sezone</h2>
           <div className="flex flex-wrap gap-2">
-            {(["liga", "evropa", "kup", "ukupno"] as Comp[]).map((c) => (
+            {(["ukupno", "liga", "evropa", "kup"] as Comp[]).map((c) => (
               <button
                 key={c}
                 type="button"
@@ -414,21 +433,8 @@ function Klub() {
                 <tbody>
                   {history.map((r) => (
                     <tr key={r.season} className="border-t border-border">
-                      <td className="px-3 py-3 font-semibold">
-                        {r.current ? (
-                          <span>
-                            {r.season}{" "}
-                            <span className="text-xs font-normal text-muted-foreground">(u toku)</span>
-                          </span>
-                        ) : (
-                          <Link
-                            to="/arhiva/$season/$club"
-                            params={{ season: r.season, club: r.team }}
-                            className="hover:underline"
-                          >
-                            {r.season}
-                          </Link>
-                        )}
+                      <td className="px-3 py-3">
+                        <SeasonButton season={r.season} note={r.current ? "(u toku)" : undefined} />
                       </td>
                       <td className="px-3 py-3 text-center font-semibold text-primary">
                         {r.position ?? "—"}
@@ -490,7 +496,9 @@ function Klub() {
                     const avg = wavg(r.attSum, r.attCount);
                     return (
                       <tr key={r.season} className="border-t border-border">
-                        <td className="px-3 py-3 font-semibold">{r.season}</td>
+                        <td className="px-3 py-3">
+                          <SeasonButton season={r.season} />
+                        </td>
                         <td className="px-3 py-3 text-right">{r.played}</td>
                         <td className="px-3 py-3 text-right">{r.wins}</td>
                         <td className="px-3 py-3 text-right">{r.draws}</td>
@@ -544,7 +552,9 @@ function Klub() {
               <tbody>
                 {otherRows.map((r) => (
                   <tr key={r.season} className="border-t border-border">
-                    <td className="px-3 py-3 font-semibold">{r.season}</td>
+                    <td className="px-3 py-3">
+                      <SeasonButton season={r.season} />
+                    </td>
                     {showStage && (
                       <td className="px-3 py-3 font-semibold text-primary">{r.stage}</td>
                     )}
@@ -578,7 +588,14 @@ function Klub() {
             </table>
           </div>
         )}
+        <p className="border-t border-border px-4 py-2 text-xs text-muted-foreground">
+          Klikni na sezonu da vidiš sve utakmice te sezone ispod.
+        </p>
       </section>
+
+      <div className="mt-10">
+        <ClubMatchesSection name={name} season={matchSeason} onSeasonChange={setMatchSeason} />
+      </div>
 
       {data && data.achievements.length > 0 && (
         <section className="mt-10 rounded-lg border border-border bg-card">
