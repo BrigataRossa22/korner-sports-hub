@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { TableSkeleton } from "@/components/TableSkeleton";
 import { getNationalMatches, type NationalMatch } from "@/lib/nationalmatches.functions";
+import { getNationalGoals, type NationalGoal } from "@/lib/nationalgoals.functions";
 
 export const Route = createFileRoute("/reprezentacija-arhiva")({
   head: () => ({
@@ -59,6 +60,28 @@ function emptyStat(): Stat {
   return { played: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0 };
 }
 
+function minuteKey(m: string): number {
+  const [a, b] = m.split("+");
+  return Number(a) + (b ? Number(b) / 100 : 0);
+}
+
+// "Džeko 17', 53'" + oznake (p) penal, (ag) autogol
+function formatScorers(goals: NationalGoal[]): string {
+  const sorted = goals.slice().sort((x, y) => minuteKey(x.minute) - minuteKey(y.minute));
+  const order: string[] = [];
+  const byPlayer = new Map<string, string[]>();
+  for (const g of sorted) {
+    const mark = g.kind === "p" ? " (p)" : g.kind === "o" ? " (ag)" : "";
+    const min = `${g.minute}'${mark}`;
+    if (!byPlayer.has(g.player)) {
+      byPlayer.set(g.player, []);
+      order.push(g.player);
+    }
+    byPlayer.get(g.player)!.push(min);
+  }
+  return order.map((p) => `${p} ${byPlayer.get(p)!.join(", ")}`).join(" · ");
+}
+
 function addMatch(s: Stat, m: NationalMatch) {
   if (m.score_home === null || m.score_away === null) return;
   const bihHome = isBih(m.home);
@@ -78,6 +101,21 @@ function ArhivaReprezentacije() {
     queryFn: () => getNationalMatches(),
   });
   const rows = data ?? [];
+
+  const { data: goalData } = useQuery({
+    queryKey: ["national-goals"],
+    queryFn: () => getNationalGoals(),
+  });
+  const goalsByDate = useMemo(() => {
+    const map = new Map<string, NationalGoal[]>();
+    for (const g of goalData ?? []) {
+      const k = g.match_date.slice(0, 10);
+      const arr = map.get(k) ?? [];
+      arr.push(g);
+      map.set(k, arr);
+    }
+    return map;
+  }, [goalData]);
 
   const [pick, setPick] = useState("");
 
@@ -224,25 +262,52 @@ function ArhivaReprezentacije() {
                   </tr>
                 </thead>
                 <tbody>
-                  {list.map((m) => (
-                    <tr key={m.id} className="border-t border-border">
-                      <td className="whitespace-nowrap px-4 py-3">{fmtDate(m.match_date)}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <Team name={m.home} flag={m.home_flag} align="right" />
-                          <span className="min-w-14 text-center font-bold">
-                            {m.score_home !== null && m.score_away !== null
-                              ? `${m.score_home}:${m.score_away}`
-                              : "–"}
-                          </span>
-                          <Team name={m.away} flag={m.away_flag} align="left" />
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        {m.attendance > 0 ? m.attendance.toLocaleString("de-DE") : "—"}
-                      </td>
-                    </tr>
-                  ))}
+                  {list.map((m) => {
+                    const goals = goalsByDate.get(m.match_date.slice(0, 10)) ?? [];
+                    const bihHome = isBih(m.home);
+                    const homeGoals = goals.filter((g) => g.team === (bihHome ? "B" : "O"));
+                    const awayGoals = goals.filter((g) => g.team === (bihHome ? "O" : "B"));
+                    const homeTxt = formatScorers(homeGoals);
+                    const awayTxt = formatScorers(awayGoals);
+                    return (
+                      <Fragment key={m.id}>
+                        <tr className="border-t border-border">
+                          <td className="whitespace-nowrap px-4 py-3">{fmtDate(m.match_date)}</td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-3">
+                              <Team name={m.home} flag={m.home_flag} align="right" />
+                              <span className="min-w-14 text-center font-bold">
+                                {m.score_home !== null && m.score_away !== null
+                                  ? `${m.score_home}:${m.score_away}`
+                                  : "–"}
+                              </span>
+                              <Team name={m.away} flag={m.away_flag} align="left" />
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            {m.attendance > 0
+                              ? m.attendance.toLocaleString("de-DE")
+                              : m.attendance < 0
+                                ? "x"
+                                : "—"}
+                          </td>
+                        </tr>
+                        {(homeTxt || awayTxt) && (
+                          <tr>
+                            <td />
+                            <td className="px-4 pb-3 pt-0">
+                              <div className="flex gap-3 text-xs text-muted-foreground">
+                                <span className="flex-1 text-right">{homeTxt}</span>
+                                <span className="min-w-14" />
+                                <span className="flex-1 text-left">{awayTxt}</span>
+                              </div>
+                            </td>
+                            <td />
+                          </tr>
+                        )}
+                      </Fragment>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -256,3 +321,4 @@ function ArhivaReprezentacije() {
     </main>
   );
 }
+
