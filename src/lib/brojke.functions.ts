@@ -22,6 +22,13 @@ type Row = {
   team?: string | null;
 };
 
+type AssistTotal = {
+  season: string | null;
+  player: string | null;
+  team: string | null;
+  assists: number | null;
+};
+
 // Klub koji je postigao gol (kod autogola je to korisnik autogola, pa se ne koristi za strijelca)
 const teamOf = (r: Row): string => {
   if (r.team && r.team.trim()) return r.team.trim();
@@ -55,6 +62,19 @@ async function load(url: string, key: string, table: string, selects: string[]):
     }
   }
   return [];
+}
+
+// Ukupne asistencije po igraču i sezoni (bez podataka po utakmicama)
+async function loadAssistTotals(url: string, key: string): Promise<AssistTotal[]> {
+  try {
+    const res = await fetch(`${url}/rest/v1/season_assists?select=season,player,team,assists&limit=5000`, {
+      headers: { apikey: key },
+    });
+    if (!res.ok) return [];
+    return (await res.json()) as AssistTotal[];
+  } catch {
+    return [];
+  }
 }
 
 const norm = (s: string) =>
@@ -108,7 +128,7 @@ export const getBrojke = createServerFn({ method: "GET" }).handler(async (): Pro
   };
   if (!url || !key) return empty;
 
-  const [archive, current, cup] = await Promise.all([
+  const [archive, current, cup, assistTotals] = await Promise.all([
     load(url, key, "season_goals", [
       "season,player,assist,kind,side,home,away",
       "season,player,kind,side,home,away",
@@ -122,6 +142,7 @@ export const getBrojke = createServerFn({ method: "GET" }).handler(async (): Pro
       "player,kind",
     ]),
     load(url, key, "cup_goals", ["season,player,kind,side,home,away", "season,player,kind"]),
+    loadAssistTotals(url, key),
   ]);
 
   const scorers: Counts = new Map();
@@ -132,19 +153,25 @@ export const getBrojke = createServerFn({ method: "GET" }).handler(async (): Pro
   let goalsTotal = 0;
   let cupGoalsTotal = 0;
 
-  const bump = (map: Counts, raw: string | null | undefined, team: string, season: string) => {
+  const bump = (
+    map: Counts,
+    raw: string | null | undefined,
+    team: string,
+    season: string,
+    inc = 1,
+  ) => {
     const name = (raw ?? "").trim();
     if (!name) return;
     const k = norm(name);
     if (!k) return;
     const e = map.get(k) ?? { n: 0, names: new Map<string, number>(), clubs: new Map<string, ClubInfo>() };
-    e.n += 1;
-    e.names.set(name, (e.names.get(name) ?? 0) + 1);
+    e.n += inc;
+    e.names.set(name, (e.names.get(name) ?? 0) + inc);
     if (team) {
       const ck = norm(team);
       const c = e.clubs.get(ck);
-      if (c) c.n += 1;
-      else e.clubs.set(ck, { name: team, first: season || "9999", n: 1 });
+      if (c) c.n += inc;
+      else e.clubs.set(ck, { name: team, first: season || "9999", n: inc });
     }
     map.set(k, e);
   };
@@ -163,6 +190,13 @@ export const getBrojke = createServerFn({ method: "GET" }).handler(async (): Pro
 
   feed(archive, null);
   feed(current, "2026-27");
+
+  // Ukupne asistencije po sezoni (npr. 2025-26) dodaju se na asistencije iz golova
+  for (const a of assistTotals) {
+    const n = Number(a.assists ?? 0);
+    if (!a.player || !a.player.trim() || !(n > 0)) continue;
+    bump(assists, a.player, (a.team ?? "").trim(), a.season ?? "", n);
+  }
 
   for (const r of cup) {
     if (!r.player || !r.player.trim()) continue;
