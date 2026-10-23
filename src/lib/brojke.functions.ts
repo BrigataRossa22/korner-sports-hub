@@ -66,15 +66,23 @@ async function load(url: string, key: string, table: string, selects: string[]):
 
 // Ukupne asistencije po igraču i sezoni (bez podataka po utakmicama)
 async function loadAssistTotals(url: string, key: string): Promise<AssistTotal[]> {
+  const out: AssistTotal[] = [];
+  const size = 1000;
   try {
-    const res = await fetch(`${url}/rest/v1/season_assists?select=season,player,team,assists&limit=5000`, {
-      headers: { apikey: key },
-    });
-    if (!res.ok) return [];
-    return (await res.json()) as AssistTotal[];
+    for (let from = 0; from < 50000; from += size) {
+      const res = await fetch(
+        `${url}/rest/v1/season_assists?select=season,player,team,assists&order=id.asc&limit=${size}&offset=${from}`,
+        { headers: { apikey: key } },
+      );
+      if (!res.ok) break;
+      const rows = (await res.json()) as AssistTotal[];
+      out.push(...rows);
+      if (rows.length < size) break;
+    }
   } catch {
-    return [];
+    // ako tabela nije dostupna, nastavljamo bez ukupnih asistencija
   }
+  return out;
 }
 
 const norm = (s: string) =>
