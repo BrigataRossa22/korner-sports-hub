@@ -1,9 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import { TableSkeleton } from "@/components/TableSkeleton";
 import { getBrojke, type TopRow } from "@/lib/brojke.functions";
-import { getPlayerGoals } from "@/lib/playergoals.functions";
 import { useClubCrest } from "@/lib/use-club-crest";
 
 export const Route = createFileRoute("/brojke")({
@@ -46,79 +45,21 @@ function ClubCrests({ clubs, crestFor }: { clubs: string[]; crestFor: (club: str
   );
 }
 
-// Svi golovi jednog igrača (otvara se klikom na ime)
-function PlayerGoalsList({ name, expected }: { name: string; expected: number }) {
-  const { data, isLoading } = useQuery({
-    queryKey: ["player-goals-v2", name],
-    queryFn: () => getPlayerGoals({ data: { name } }),
-    staleTime: 60 * 60 * 1000,
-  });
-
-  if (isLoading) return <p className="py-3 text-center text-sm text-muted-foreground">Učitavam golove…</p>;
-  if (!data || data.length === 0)
-    return <p className="py-3 text-center text-sm text-muted-foreground">Nema podataka o golovima.</p>;
-
-  const pens = data.filter((g) => g.penalty).length;
-
-  return (
-    <div>
-      <p className="mb-2 text-xs text-muted-foreground">
-        {data.length !== expected ? `Prikazano ${data.length} od ${expected} golova` : `${data.length} golova`}
-        {pens > 0 ? `, od toga ${pens} iz penala` : ""}
-      </p>
-      <div className="overflow-x-auto rounded-md border border-border bg-card">
-        <table className="w-full border-collapse text-sm tabular-nums">
-          <thead>
-            <tr className="border-b border-border bg-surface text-xs uppercase text-muted-foreground">
-              <th className="px-3 py-2 text-left">Sezona</th>
-              <th className="px-2 py-2 text-center">Kolo</th>
-              <th className="px-2 py-2 text-left">Utakmica</th>
-              <th className="px-3 py-2 text-right">Minut</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((g, i) => {
-              const homeScored = g.team && g.team === g.home;
-              const awayScored = g.team && g.team === g.away;
-              return (
-                <tr key={i} className="border-b border-border/70 last:border-0">
-                  <td className="whitespace-nowrap px-3 py-2">{g.season}</td>
-                  <td className="px-2 py-2 text-center text-muted-foreground">{g.round ?? "—"}</td>
-                  <td className="px-2 py-2">
-                    <span className={homeScored ? "font-semibold" : ""}>{g.home}</span>
-                    <span className="text-muted-foreground"> – </span>
-                    <span className={awayScored ? "font-semibold" : ""}>{g.away}</span>
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-2 text-right">
-                    {g.minute != null ? `${g.minute}${g.extra ? `+${g.extra}` : ""}'` : "—"}
-                    {g.penalty && <span className="ml-1 text-xs text-muted-foreground">(p)</span>}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
 function TopTable({
   title,
   unit,
   rows,
   tabs,
-  expandable,
+  linkPlayers,
 }: {
   title: string;
   unit: string;
   rows: TopRow[];
   tabs?: React.ReactNode;
-  expandable?: boolean;
+  linkPlayers?: boolean;
 }) {
   const ranked = withRank(rows);
   const crestFor = useClubCrest();
-  const [open, setOpen] = useState<string | null>(null);
   return (
     <section className="overflow-hidden rounded-xl border border-border bg-card">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-surface px-4 py-3">
@@ -137,40 +78,31 @@ function TopTable({
             </tr>
           </thead>
           <tbody>
-            {ranked.map((r, i) => {
-              const isOpen = !!expandable && open === r.name;
-              return (
-                <Fragment key={`${r.name}-${i}`}>
-                  <tr
-                    onClick={expandable ? () => setOpen(isOpen ? null : r.name) : undefined}
-                    className={`border-b border-border/70 last:border-0 even:bg-surface/50 ${
-                      expandable ? "cursor-pointer hover:bg-muted/60" : ""
-                    }`}
-                  >
-                    <td className={`px-3 py-2.5 text-center font-semibold ${r.rank <= 3 ? "text-primary" : ""}`}>
-                      {r.rank}
-                    </td>
-                    <td className="px-2 py-2.5">
-                      <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                        <span className={`font-semibold ${r.rank <= 3 ? "text-primary" : ""}`}>{r.name}</span>
-                        <ClubCrests clubs={r.clubs} crestFor={crestFor} />
-                        {expandable && (
-                          <span className="text-xs text-muted-foreground">{isOpen ? "▲" : "▼"}</span>
-                        )}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2.5 text-right text-base font-bold">{r.count}</td>
-                  </tr>
-                  {isOpen && (
-                    <tr className="border-b border-border/70 bg-surface/40">
-                      <td colSpan={3} className="px-3 py-3">
-                        <PlayerGoalsList name={r.name} expected={r.count} />
-                      </td>
-                    </tr>
-                  )}
-                </Fragment>
-              );
-            })}
+            {ranked.map((r, i) => (
+              <tr key={`${r.name}-${i}`} className="border-b border-border/70 last:border-0 even:bg-surface/50">
+                <td className={`px-3 py-2.5 text-center font-semibold ${r.rank <= 3 ? "text-primary" : ""}`}>
+                  {r.rank}
+                </td>
+                <td className="px-2 py-2.5">
+                  <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    {linkPlayers ? (
+                      <Link
+                        to="/igrac/$name"
+                        params={{ name: r.name }}
+                        title="Prikaži sve golove"
+                        className={`font-semibold hover:underline ${r.rank <= 3 ? "text-primary" : ""}`}
+                      >
+                        {r.name}
+                      </Link>
+                    ) : (
+                      <span className={`font-semibold ${r.rank <= 3 ? "text-primary" : ""}`}>{r.name}</span>
+                    )}
+                    <ClubCrests clubs={r.clubs} crestFor={crestFor} />
+                  </span>
+                </td>
+                <td className="px-3 py-2.5 text-right text-base font-bold">{r.count}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
       )}
@@ -234,7 +166,7 @@ function BrojkePage() {
             unit="Golova"
             rows={mode === "liga" ? data.scorers : data.cupScorers}
             tabs={tabs}
-            expandable={mode === "liga"}
+            linkPlayers={mode === "liga"}
           />
           <TopTable title="Top 25 asistenata · Liga" unit="Asistencija" rows={data.assists} />
         </div>
