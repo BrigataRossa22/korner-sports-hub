@@ -46,30 +46,18 @@ const isPen = (k: string | null | undefined) => {
   return x === "p" || x === "pen" || x.startsWith("penal");
 };
 
-// Supabase vraća najviše 1000 redova po zahtjevu: čitamo po 6 stranica odjednom
+// Supabase vraća najviše 1000 redova po zahtjevu, pa čitamo jednu po jednu stranicu
 async function loadAll(url: string, key: string, path: string): Promise<Row[]> {
   const out: Row[] = [];
   const size = 1000;
-  const parallel = 6;
-  for (let start = 0; start < 200000; start += size * parallel) {
-    const batch = await Promise.all(
-      Array.from({ length: parallel }, (_, i) =>
-        fetch(`${url}/rest/v1/${path}&limit=${size}&offset=${start + i * size}`, {
-          headers: { apikey: key },
-        }),
-      ),
-    );
-    let done = false;
-    for (const res of batch) {
-      if (!res.ok) {
-        done = true;
-        continue;
-      }
-      const rows = (await res.json()) as Row[];
-      out.push(...rows);
-      if (rows.length < size) done = true;
-    }
-    if (done) break;
+  for (let from = 0; from < 200000; from += size) {
+    const res = await fetch(`${url}/rest/v1/${path}&limit=${size}&offset=${from}`, {
+      headers: { apikey: key },
+    });
+    if (!res.ok) break;
+    const rows = (await res.json()) as Row[];
+    out.push(...rows);
+    if (rows.length < size) break;
   }
   return out;
 }
@@ -85,16 +73,7 @@ export const getPlayerGoals = createServerFn({ method: "GET" })
 
     const [archive, current] = await Promise.all([
       loadAll(url, key, "season_goals?select=season,round,home,away,side,player,minute,extra,kind&order=id.asc"),
-      (async (): Promise<Row[]> => {
-        try {
-          const res = await fetch(`${url}/rest/v1/match_goals?select=*&limit=5000`, {
-            headers: { apikey: key },
-          });
-          return res.ok ? ((await res.json()) as Row[]) : [];
-        } catch {
-          return [];
-        }
-      })(),
+      loadAll(url, key, "match_goals?select=*&order=round.asc,minute.asc,extra.asc"),
     ]);
 
     const out: PlayerGoal[] = [];
