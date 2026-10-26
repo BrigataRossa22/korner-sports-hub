@@ -2,6 +2,7 @@ import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ClubMatchesSection } from "@/components/ClubMatchesSection";
+import { ClubTopScorers } from "@/components/ClubTopScorers";
 import { LoadError } from "@/components/RouteFallbacks";
 import { TableSkeleton } from "@/components/TableSkeleton";
 import { getClubDetail } from "@/lib/clubdetail.functions";
@@ -592,6 +593,8 @@ function Klub() {
           Klikni na sezonu da vidiš sve utakmice te sezone ispod.
         </p>
       </section>
+
+      <ClubTopScorers name={name} />
 
       <div className="mt-10">
         <ClubMatchesSection name={name} season={matchSeason} onSeasonChange={setMatchSeason} />
