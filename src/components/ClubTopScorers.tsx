@@ -49,8 +49,6 @@ export function ClubTopScorers({ name }: { name: string }) {
           <tr className="border-b border-border bg-surface text-xs uppercase text-muted-foreground">
             <th className="w-12 px-3 py-2 text-center">#</th>
             <th className="px-2 py-2 text-left">Igrač</th>
-            <th className="hidden px-3 py-2 text-left sm:table-cell">Sezone</th>
-            <th className="w-20 px-3 py-2 text-right">Penala</th>
             <th className="w-24 px-3 py-2 text-right">Golova</th>
           </tr>
         </thead>
@@ -61,10 +59,6 @@ export function ClubTopScorers({ name }: { name: string }) {
                 {r.rank}
               </td>
               <td className={`px-2 py-2.5 font-semibold ${r.rank <= 3 ? "text-primary" : ""}`}>{r.name}</td>
-              <td className="hidden px-3 py-2.5 text-muted-foreground sm:table-cell">
-                {r.firstSeason === r.lastSeason ? r.firstSeason : `${r.firstSeason} – ${r.lastSeason}`}
-              </td>
-              <td className="px-3 py-2.5 text-right text-muted-foreground">{r.penalties}</td>
               <td className="px-3 py-2.5 text-right text-base font-bold">{r.goals}</td>
             </tr>
           ))}
