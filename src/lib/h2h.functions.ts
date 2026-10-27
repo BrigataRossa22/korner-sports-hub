@@ -5,7 +5,7 @@ import { normClub } from "@/lib/club-match";
 export type H2HMatch = {
   date: string | null;
   season: string;
-  comp: "liga" | "kup";
+  comp: "liga" | "kup" | "jug";
   home: string;
   away: string;
   sh: number;
@@ -64,7 +64,7 @@ export const getH2HData = createServerFn({ method: "GET" }).handler(async (): Pr
   const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
   if (!url || !key) return { clubs: [], matches: [] };
 
-  const [seasonRows, currentRows, cupRows, standingRows] = await Promise.all([
+  const [seasonRows, currentRows, cupRows, standingRows, extraRows] = await Promise.all([
     fetchAll<Raw>(
       url,
       key,
@@ -84,6 +84,13 @@ export const getH2HData = createServerFn({ method: "GET" }).handler(async (): Pr
       "match_date.asc",
     ),
     fetchAll<{ season: string; team: string }>(url, key, "season_standings?select=season,team", "season.desc"),
+    // Stare utakmice (npr. iz Jugoslavije) koje se prikazuju samo u međusobnim susretima
+    fetchAll<Raw>(
+      url,
+      key,
+      "h2h_extra?select=season,match_date,home,away,score_home,score_away,attendance",
+      "id.asc",
+    ),
   ]);
 
   // 1) Spisak klubova iz Vječne liste (isti izvor kao stranica Vječna tabela)
@@ -109,9 +116,9 @@ export const getH2HData = createServerFn({ method: "GET" }).handler(async (): Pr
   const seen = new Set<string>();
   const matches: H2HMatch[] = [];
 
-  const add = (r: Raw, season: string, comp: "liga" | "kup") => {
+  const add = (r: Raw, season: string, comp: "liga" | "kup" | "jug") => {
     if (r.score_home == null || r.score_away == null) return;
-    const k = `${comp}|${r.match_date}|${r.home}|${r.away}|${r.score_home}-${r.score_away}`;
+    const k = `${comp}|${season}|${r.match_date}|${r.home}|${r.away}|${r.score_home}-${r.score_away}`;
     if (seen.has(k)) return;
     seen.add(k);
     matches.push({
@@ -129,6 +136,7 @@ export const getH2HData = createServerFn({ method: "GET" }).handler(async (): Pr
   for (const r of seasonRows) add(r, r.season ?? "", "liga");
   for (const r of currentRows) add(r, CURRENT_SEASON, "liga");
   for (const r of cupRows) add(r, r.season ?? "", "kup");
+  for (const r of extraRows) add(r, r.season ?? "", "jug");
 
   return { clubs, matches };
 });
