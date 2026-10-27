@@ -23,16 +23,13 @@ function Igrac() {
   });
 
   const goals = data ?? [];
-  const pens = goals.filter((g) => g.penalty).length;
   const seasons = [...new Set(goals.map((g) => g.season))].filter(Boolean);
-  const matches = new Set(goals.map((g) => `${g.season}|${g.round}|${g.home}|${g.away}`)).size;
 
-  // Golovi i penali po sezonama (najnovija sezona prva)
-  const bySeason = new Map<string, { goals: number; pens: number; teams: Set<string> }>();
+  // Golovi po sezonama (najnovija sezona prva)
+  const bySeason = new Map<string, { goals: number; teams: Set<string> }>();
   for (const g of goals) {
-    const e = bySeason.get(g.season) ?? { goals: 0, pens: 0, teams: new Set<string>() };
+    const e = bySeason.get(g.season) ?? { goals: 0, teams: new Set<string>() };
     e.goals += 1;
-    if (g.penalty) e.pens += 1;
     if (g.team) e.teams.add(g.team);
     bySeason.set(g.season, e);
   }
@@ -75,11 +72,9 @@ function Igrac() {
         <p className="border-y border-border py-8 text-muted-foreground">Nema podataka o golovima.</p>
       ) : (
         <>
-          <section className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <section className="mb-8 grid grid-cols-2 gap-3">
             {[
               { label: "Golova", value: goals.length },
-              { label: "Penala", value: pens },
-              { label: "Utakmica sa golom", value: matches },
               { label: "Sezona", value: seasons.length },
             ].map((s) => (
               <div key={s.label} className="rounded-lg border border-border bg-card px-4 py-3 text-center">
@@ -98,7 +93,6 @@ function Igrac() {
                 <tr className="border-b border-border bg-surface text-xs uppercase text-muted-foreground">
                   <th className="px-3 py-2 text-left">Sezona</th>
                   <th className="px-2 py-2 text-left">Klub</th>
-                  <th className="w-20 px-3 py-2 text-right">Penala</th>
                   <th className="w-24 px-3 py-2 text-right">Golova</th>
                 </tr>
               </thead>
@@ -107,7 +101,6 @@ function Igrac() {
                   <tr key={season} className="border-b border-border/70 last:border-0 even:bg-surface/50">
                     <td className="whitespace-nowrap px-3 py-2 font-semibold">{season}</td>
                     <td className="px-2 py-2 text-muted-foreground">{[...e.teams].join(", ")}</td>
-                    <td className="px-3 py-2 text-right text-muted-foreground">{e.pens}</td>
                     <td className="px-3 py-2 text-right text-base font-bold">{e.goals}</td>
                   </tr>
                 ))}
@@ -117,7 +110,6 @@ function Igrac() {
                   <td className="px-3 py-2 uppercase" colSpan={2}>
                     Ukupno
                   </td>
-                  <td className="px-3 py-2 text-right">{pens}</td>
                   <td className="px-3 py-2 text-right">{goals.length}</td>
                 </tr>
               </tfoot>
@@ -162,7 +154,7 @@ function Igrac() {
               </table>
             </div>
             <p className="border-t border-border px-4 py-2 text-xs text-muted-foreground">
-              Najnoviji golovi su prvi. Podebljan je klub koji je dao gol, a (p) označava penal.
+              Najnoviji golovi su prvi. Podebljan je klub koji je dao gol, a (p) označava gol iz penala.
             </p>
           </section>
         </>
