@@ -11,12 +11,24 @@ export const Route = createFileRoute("/medjusobni-susreti")({
   component: HeadToHeadPage,
 });
 
-type Filter = "sve" | "liga" | "kup";
+type Filter = "sve" | "liga" | "kup" | "jug";
+
+const FILTER_LABEL: Record<Filter, string> = {
+  sve: "Sve",
+  liga: "Liga",
+  kup: "Kup BiH",
+  jug: "Jugoslavija",
+};
 
 function fmtDate(d: string | null) {
   if (!d) return "—";
   const [y, m, day] = d.split("-");
   return `${day}.${m}.${y}.`;
+}
+
+// Za sortiranje: utakmice bez datuma idu po prvoj godini sezone
+function sortKey(m: H2HMatch) {
+  return m.date ?? `${m.season.slice(0, 4)}-07-01`;
 }
 
 // -1 = bez gledalaca (x), 0 ili nepoznato = —
@@ -65,7 +77,7 @@ function ClubSelect({
 
 function HeadToHeadPage() {
   const { data, isLoading } = useQuery({
-    queryKey: ["h2h-data-v2"],
+    queryKey: ["h2h-data-v3"],
     queryFn: () => getH2HData(),
     staleTime: 60 * 60 * 1000,
   });
@@ -84,10 +96,18 @@ function HeadToHeadPage() {
           (sameClub(m.home, a) && sameClub(m.away, b)) ||
           (sameClub(m.home, b) && sameClub(m.away, a)),
       )
-      .sort((x, y) => (y.date ?? "").localeCompare(x.date ?? ""));
+      .sort((x, y) => sortKey(y).localeCompare(sortKey(x)));
   }, [data, a, b]);
 
-  const shown = useMemo(() => (filter === "sve" ? all : all.filter((m) => m.comp === filter)), [all, filter]);
+  // Dugme "Jugoslavija" se vidi samo kad za ovaj par klubova postoje takve utakmice
+  const hasJug = all.some((m) => m.comp === "jug");
+  const filters: Filter[] = hasJug ? ["sve", "liga", "kup", "jug"] : ["sve", "liga", "kup"];
+  const activeFilter: Filter = filters.includes(filter) ? filter : "sve";
+
+  const shown = useMemo(
+    () => (activeFilter === "sve" ? all : all.filter((m) => m.comp === activeFilter)),
+    [all, activeFilter],
+  );
 
   const stats = useMemo(() => {
     let winsA = 0;
@@ -153,17 +173,17 @@ function HeadToHeadPage() {
 
           {ready && (
             <>
-              <div className="mt-8 flex gap-2">
-                {(["sve", "liga", "kup"] as Filter[]).map((f) => (
+              <div className="mt-8 flex flex-wrap gap-2">
+                {filters.map((f) => (
                   <button
                     key={f}
                     type="button"
                     onClick={() => setFilter(f)}
                     className={`rounded-full px-4 py-1.5 text-sm font-semibold ${
-                      filter === f ? "bg-primary text-primary-foreground" : "bg-surface text-muted-foreground"
+                      activeFilter === f ? "bg-primary text-primary-foreground" : "bg-surface text-muted-foreground"
                     }`}
                   >
-                    {f === "sve" ? "Sve" : f === "liga" ? "Liga" : "Kup BiH"}
+                    {FILTER_LABEL[f]}
                   </button>
                 ))}
               </div>
@@ -258,6 +278,11 @@ function HeadToHeadPage() {
                               {m.comp === "kup" ? (
                                 <span className="ml-2 rounded bg-surface px-1.5 py-0.5 text-[10px] font-semibold uppercase text-foreground">
                                   Kup
+                                </span>
+                              ) : null}
+                              {m.comp === "jug" ? (
+                                <span className="ml-2 rounded bg-surface px-1.5 py-0.5 text-[10px] font-semibold uppercase text-foreground">
+                                  Jug.
                                 </span>
                               ) : null}
                             </td>
