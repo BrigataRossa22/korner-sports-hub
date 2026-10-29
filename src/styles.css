@@ -8,6 +8,7 @@
  * KORNER design system — bh. sportski portal.
  * Novinska estetika: bijela pozadina, tamni tekst, brand zelena akcent (#1A423A),
  * kondenzovani naslovi (Oswald) i čitljiv tekst (Inter Tight).
+ * Tamni način: klasa "dark" na <html> (dugme u podnožju).
  */
 
 @theme inline {
@@ -64,6 +65,33 @@
   --ring: oklch(0.46 0.075 168);
   --surface: oklch(0.975 0.005 168);
   --ink: oklch(0.32 0.042 172);
+  --ink-foreground: oklch(0.985 0 0);
+}
+
+/* Tamni način */
+.dark {
+  color-scheme: dark;
+  --background: oklch(0.17 0.01 170);
+  --foreground: oklch(0.95 0.005 168);
+  --card: oklch(0.21 0.012 170);
+  --card-foreground: oklch(0.95 0.005 168);
+  --popover: oklch(0.21 0.012 170);
+  --popover-foreground: oklch(0.95 0.005 168);
+  --primary: oklch(0.6 0.09 165);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.26 0.015 170);
+  --secondary-foreground: oklch(0.95 0.005 168);
+  --muted: oklch(0.27 0.012 170);
+  --muted-foreground: oklch(0.7 0.012 170);
+  --accent: oklch(0.3 0.03 168);
+  --accent-foreground: oklch(0.95 0.005 168);
+  --destructive: oklch(0.64 0.2 27);
+  --destructive-foreground: oklch(0.15 0 0);
+  --border: oklch(0.3 0.012 170);
+  --input: oklch(0.3 0.012 170);
+  --ring: oklch(0.6 0.09 165);
+  --surface: oklch(0.24 0.012 170);
+  --ink: oklch(0.24 0.045 172);
   --ink-foreground: oklch(0.985 0 0);
 }
 
