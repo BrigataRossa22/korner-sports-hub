@@ -27,13 +27,13 @@ export const Route = createFileRoute("/klub/$name")({
   component: Klub,
 });
 
-type Comp = "liga" | "evropa" | "kup" | "ukupno";
+type Comp = "liga" | "kup" | "evropa" | "prva";
 
 const COMP_LABEL: Record<Comp, string> = {
-  ukupno: "Ukupno · od 1994",
   liga: "WWIN liga",
   kup: "Kup BiH",
   evropa: "Evropa",
+  prva: "Prva liga BiH",
 };
 
 const CUP_ORDER = ["Q1", "Q2", "1/32", "1/16", "1/8", "1/4", "1/2", "Finale"];
@@ -62,18 +62,6 @@ type CompRow = {
   attCount: number;
 };
 
-type TotalRow = {
-  season: string;
-  played: number;
-  wins: number;
-  draws: number;
-  losses: number;
-  gf: number;
-  ga: number;
-  attSum: number;
-  attCount: number;
-};
-
 const ns = (s: string) => s.replace(/[–—]/g, "-").trim();
 
 function parseScore(score: string): [number, number] | null {
@@ -90,7 +78,7 @@ function Klub() {
   const { name } = Route.useParams();
   const crestFor = useCrest();
   const clubCrest = useClubCrest();
-  const [comp, setComp] = useState<Comp>("ukupno");
+  const [comp, setComp] = useState<Comp>("liga");
   const [matchSeason, setMatchSeason] = useState("");
 
   // Klik na sezonu u tabeli: izaberi sezonu u dijelu "Utakmice" i klizi do njega
@@ -264,50 +252,6 @@ function Klub() {
       });
   })();
 
-  // ---- Ukupno: liga + kup + Evropa po sezonama (prosjek iz svih utakmica zajedno) ----
-  const totalRows: TotalRow[] = (() => {
-    const map = new Map<string, TotalRow>();
-    const add = (
-      season: string,
-      r: {
-        played: number;
-        wins: number;
-        draws: number;
-        losses: number;
-        gf: number;
-        ga: number;
-        attSum: number;
-        attCount: number;
-      },
-    ) => {
-      const s = ns(season);
-      const t = map.get(s) ?? {
-        season: s,
-        played: 0,
-        wins: 0,
-        draws: 0,
-        losses: 0,
-        gf: 0,
-        ga: 0,
-        attSum: 0,
-        attCount: 0,
-      };
-      t.played += r.played;
-      t.wins += r.wins;
-      t.draws += r.draws;
-      t.losses += r.losses;
-      t.gf += r.gf;
-      t.ga += r.ga;
-      t.attSum += r.attSum;
-      t.attCount += r.attCount;
-      map.set(s, t);
-    };
-    for (const r of history ?? []) add(r.season, r);
-    for (const r of euroRows) add(r.season, r);
-    for (const r of kupRows) add(r.season, r);
-    return [...map.values()].sort((a, b) => b.season.localeCompare(a.season));
-  })();
-
   const otherRows = comp === "kup" ? kupRows : euroRows;
   const showStage = comp === "kup";
 
@@ -324,16 +268,10 @@ function Klub() {
     sumOther((r) => r.attCount),
   );
 
-  const sumTotal = (pick: (r: TotalRow) => number) => totalRows.reduce((s, r) => s + pick(r), 0);
-  const totalAvgAll = wavg(
-    sumTotal((r) => r.attSum),
-    sumTotal((r) => r.attCount),
-  );
-
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
-      <Link to="/tabela" className="text-sm text-muted-foreground hover:underline">
-        ← Nazad na tabelu
+      <Link to="/klubovi" className="text-sm text-muted-foreground hover:underline">
+        ← Nazad na klubove
       </Link>
       <div className="rule-top mb-5 mt-3 flex items-center gap-4 pt-3">
         {crest && <img src={crest} alt="" className="size-16 object-contain" />}
@@ -392,7 +330,7 @@ function Klub() {
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
           <h2 className="font-display text-lg font-bold uppercase">Sezone</h2>
           <div className="flex flex-wrap gap-2">
-            {(["ukupno", "liga", "kup", "evropa"] as Comp[]).map((c) => (
+            {(["liga", "kup", "evropa", "prva"] as Comp[]).map((c) => (
               <button
                 key={c}
                 type="button"
@@ -472,64 +410,8 @@ function Klub() {
               </table>
             </div>
           )
-        ) : comp === "ukupno" ? (
-          historyLoading ? (
-            <TableSkeleton rows={6} cols={8} />
-          ) : totalRows.length === 0 ? (
-            <p className="px-4 py-6 text-sm text-muted-foreground">Još nema podataka.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[720px] text-sm tabular-nums">
-                <thead>
-                  <tr className="border-b border-border bg-surface text-xs uppercase text-muted-foreground">
-                    <th className="px-3 py-3 text-left">Sezona</th>
-                    <th className="px-3 py-3 text-right">Utakmica</th>
-                    <th className="px-3 py-3 text-right">Pobjeda</th>
-                    <th className="px-3 py-3 text-right">Neriješeno</th>
-                    <th className="px-3 py-3 text-right">Poraza</th>
-                    <th className="px-3 py-3 text-right">Golovi</th>
-                    <th className="px-3 py-3 text-right">Primljeni</th>
-                    <th className="px-3 py-3 text-right">Prosjek gledalaca</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {totalRows.map((r) => {
-                    const avg = wavg(r.attSum, r.attCount);
-                    return (
-                      <tr key={r.season} className="border-t border-border">
-                        <td className="px-3 py-3">
-                          <SeasonButton season={r.season} />
-                        </td>
-                        <td className="px-3 py-3 text-right">{r.played}</td>
-                        <td className="px-3 py-3 text-right">{r.wins}</td>
-                        <td className="px-3 py-3 text-right">{r.draws}</td>
-                        <td className="px-3 py-3 text-right">{r.losses}</td>
-                        <td className="px-3 py-3 text-right">{r.gf}</td>
-                        <td className="px-3 py-3 text-right">{r.ga}</td>
-                        <td className="px-3 py-3 text-right">
-                          {avg !== null ? avg.toLocaleString("de-DE") : "—"}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-                <tfoot>
-                  <tr className="border-t-4 border-foreground/30 bg-surface font-bold">
-                    <td className="px-3 py-3 uppercase">Ukupno</td>
-                    <td className="px-3 py-3 text-right">{sumTotal((r) => r.played)}</td>
-                    <td className="px-3 py-3 text-right">{sumTotal((r) => r.wins)}</td>
-                    <td className="px-3 py-3 text-right">{sumTotal((r) => r.draws)}</td>
-                    <td className="px-3 py-3 text-right">{sumTotal((r) => r.losses)}</td>
-                    <td className="px-3 py-3 text-right">{sumTotal((r) => r.gf)}</td>
-                    <td className="px-3 py-3 text-right">{sumTotal((r) => r.ga)}</td>
-                    <td className="px-3 py-3 text-right">
-                      {totalAvgAll !== null ? totalAvgAll.toLocaleString("de-DE") : "—"}
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-          )
+        ) : comp === "prva" ? (
+          <p className="px-4 py-6 text-sm text-muted-foreground">Još nema podataka.</p>
         ) : otherRows.length === 0 ? (
           <p className="px-4 py-6 text-sm text-muted-foreground">
             Za ovo takmičenje još nema podataka za ovaj klub.
