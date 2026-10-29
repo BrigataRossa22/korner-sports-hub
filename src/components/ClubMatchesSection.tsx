@@ -304,7 +304,7 @@ export function ClubMatchesSection({
         key: `liga-${m.id}`,
         date: m.match_date,
         comp: "liga",
-        title: "Liga",
+        title: "WWIN liga",
         sub: m.round !== null ? `${m.round}. kolo` : "",
         home: m.home,
         away: m.away,
