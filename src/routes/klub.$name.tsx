@@ -307,19 +307,28 @@ function Klub() {
           <h2 className="border-b border-border px-4 py-3 font-display text-lg font-bold uppercase">
             Trofeji
           </h2>
-          <div className="grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-2 p-3 sm:grid-cols-2 sm:gap-4 sm:p-4 lg:grid-cols-4">
             {data.trophies.map((t) => (
-              <div key={t.id} className="rounded-md border border-border p-4 text-center">
+              <div
+                key={t.id}
+                className="flex items-center gap-3 rounded-md border border-border p-2.5 sm:block sm:p-4 sm:text-center"
+              >
                 {t.image && (
                   <img
                     src={t.image.startsWith("http") ? t.image : `${SUPA}${t.image}`}
                     alt=""
-                    className="mx-auto h-24 object-contain"
+                    className="h-12 w-10 shrink-0 object-contain sm:mx-auto sm:h-24 sm:w-auto"
                   />
                 )}
-                <p className="mt-3 font-display text-2xl font-bold">{t.times}×</p>
-                <p className="text-sm font-semibold">{t.title}</p>
-                {t.years && <p className="mt-1 text-xs text-muted-foreground">{t.years}</p>}
+                <div className="min-w-0">
+                  <p className="font-display text-lg font-bold leading-tight sm:mt-3 sm:text-2xl">
+                    {t.times}×
+                  </p>
+                  <p className="text-sm font-semibold leading-tight">{t.title}</p>
+                  {t.years && (
+                    <p className="mt-0.5 text-xs text-muted-foreground sm:mt-1">{t.years}</p>
+                  )}
+                </div>
               </div>
             ))}
           </div>
