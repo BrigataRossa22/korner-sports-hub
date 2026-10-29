@@ -8,15 +8,17 @@ const resultStyle: Record<string, string> = {
   L: "bg-destructive text-destructive-foreground",
 };
 
-// Na mobitelu: # i grb ostaju zaglavljeni lijevo, ostalo se klizi udesno
+// Na mobitelu: # i klub (grb + ime) ostaju zaglavljeni lijevo, ostalo se klizi udesno
 const stickyHead = "sticky z-20 bg-surface sm:static sm:bg-transparent";
 const stickyCell = "sticky z-10 bg-card sm:static sm:bg-transparent";
+const clubCol =
+  "left-8 w-32 min-w-32 max-w-32 border-r border-border sm:w-auto sm:min-w-36 sm:max-w-none sm:border-r-0";
 
 export function StandingsTable({ standings }: { standings: StandingDTO[] }) {
   const crestFor = useCrest();
   return (
     <div className="overflow-x-auto border-y border-border">
-      <table className="w-full min-w-[540px] border-collapse text-sm tabular-nums sm:min-w-[660px]">
+      <table className="w-full min-w-[580px] border-collapse text-sm tabular-nums sm:min-w-[660px]">
         <thead>
           <tr className="border-b border-border bg-surface text-xs uppercase text-muted-foreground">
             <th
@@ -27,9 +29,9 @@ export function StandingsTable({ standings }: { standings: StandingDTO[] }) {
             </th>
             <th
               scope="col"
-              className={`${stickyHead} left-8 w-10 min-w-10 border-r border-border px-1 py-3 text-left font-semibold sm:min-w-36 sm:border-r-0 sm:px-2`}
+              className={`${stickyHead} ${clubCol} px-1 py-3 text-left font-semibold sm:px-2`}
             >
-              <span className="hidden sm:inline">Klub</span>
+              Klub
             </th>
             {/* Bod odmah poslije kluba, samo na mobitelu */}
             <th scope="col" className="w-11 px-1 py-3 text-center font-semibold sm:hidden" title="Bodovi">
@@ -58,7 +60,7 @@ export function StandingsTable({ standings }: { standings: StandingDTO[] }) {
                 </td>
                 <th
                   scope="row"
-                  className={`${stickyCell} left-8 w-10 min-w-10 border-r border-border px-1 py-2.5 text-left font-semibold text-foreground sm:border-r-0 sm:px-2 sm:py-3`}
+                  className={`${stickyCell} ${clubCol} px-1 py-2.5 text-left font-semibold text-foreground sm:px-2 sm:py-3`}
                 >
                   <Link
                     to="/klub/$name"
@@ -72,7 +74,9 @@ export function StandingsTable({ standings }: { standings: StandingDTO[] }) {
                     ) : (
                       <span className="size-7 shrink-0 sm:size-6" />
                     )}
-                    <span className="hidden sm:inline">{row.team}</span>
+                    <span className="min-w-0 truncate text-[13px] sm:overflow-visible sm:text-sm">
+                      {row.team}
+                    </span>
                   </Link>
                 </th>
                 <td className="px-1 py-2.5 text-center font-bold text-primary sm:hidden">{row.points}</td>
