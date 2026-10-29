@@ -19,11 +19,9 @@ export const Route = createFileRoute("/all-time-lista")({
   component: Vjecna,
 });
 
-// Na mobitelu: # i klub (grb + ime) ostaju zaglavljeni lijevo, ostalo se klizi udesno
+// Na mobitelu: # i grb ostaju zaglavljeni lijevo, a ime kluba klizi ispod grba
 const stickyHead = "sticky z-20 bg-card sm:static sm:bg-transparent";
 const stickyCell = "sticky z-10 bg-card sm:static sm:bg-transparent";
-const clubCol =
-  "left-8 w-32 min-w-32 max-w-32 border-r border-border sm:w-auto sm:min-w-0 sm:max-w-none sm:border-r-0";
 
 function Vjecna() {
   const { data, isLoading } = useQuery({
@@ -47,13 +45,16 @@ function Vjecna() {
         <p className="border-y border-border py-8 text-muted-foreground">Lista još nije unesena.</p>
       ) : (
         <div className="overflow-x-auto rounded-lg border border-border bg-card">
-          <table className="w-full min-w-[560px] text-sm tabular-nums sm:min-w-0">
+          <table className="w-full min-w-[600px] text-sm tabular-nums sm:min-w-0">
             <thead>
               <tr className="border-b border-border text-left text-xs uppercase text-muted-foreground">
                 <th className={`${stickyHead} left-0 w-8 min-w-8 px-1 py-3 text-center sm:px-3 sm:text-left`}>
                   #
                 </th>
-                <th className={`${stickyHead} ${clubCol} px-1 py-3 sm:px-3`}>Ekipa</th>
+                <th
+                  className={`${stickyHead} left-8 w-11 min-w-11 border-r border-border px-1 py-3 sm:w-auto sm:min-w-0 sm:border-r-0 sm:px-0`}
+                />
+                <th className="w-28 min-w-28 px-1 py-3 sm:w-auto sm:px-3">Ekipa</th>
                 {/* Bod odmah poslije kluba, samo na mobitelu */}
                 <th className="w-11 px-1 py-3 text-center sm:hidden">Bod</th>
                 <th className="px-1.5 py-3 text-center sm:px-3 sm:text-right">Ut</th>
@@ -77,22 +78,31 @@ function Vjecna() {
                     >
                       {i + 1}
                     </td>
-                    <td className={`${stickyCell} ${clubCol} px-1 py-2.5 sm:px-3 sm:py-2`}>
+                    <td
+                      className={`${stickyCell} left-8 w-11 min-w-11 border-r border-border px-1 py-2.5 sm:w-auto sm:min-w-0 sm:border-r-0 sm:px-0 sm:py-2`}
+                    >
                       <Link
                         to="/klub/$name"
                         params={{ name: r.team }}
                         title={r.team}
                         aria-label={r.team}
-                        className="flex items-center gap-2 font-medium hover:underline"
+                        className="flex items-center justify-center sm:justify-start"
                       >
                         {crest ? (
                           <img src={crest} alt="" className="size-7 shrink-0 object-contain sm:size-6" />
                         ) : (
                           <span className="size-7 shrink-0 sm:size-6" />
                         )}
-                        <span className="min-w-0 truncate text-[13px] sm:overflow-visible sm:text-sm">
-                          {r.team}
-                        </span>
+                      </Link>
+                    </td>
+                    <td className="w-28 min-w-28 max-w-28 px-1 py-2.5 sm:w-auto sm:max-w-none sm:px-3 sm:py-2">
+                      <Link
+                        to="/klub/$name"
+                        params={{ name: r.team }}
+                        title={r.team}
+                        className="block truncate text-[13px] font-medium hover:underline sm:overflow-visible sm:text-sm"
+                      >
+                        {r.team}
                       </Link>
                     </td>
                     <td className="px-1 py-2.5 text-center font-bold sm:hidden">{r.points}</td>
