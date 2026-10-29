@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { contentOptions } from "@/lib/content";
 import { useHydrated } from "@/lib/use-hydrated";
 
@@ -31,8 +32,8 @@ export function SiteFooter() {
               <Link to="/tabela">Tabela</Link>
             </li>
             <li>
-  <Link to="/kup-bih">Kup BiH</Link>
-</li>
+              <Link to="/kup-bih">Kup BiH</Link>
+            </li>
             <li>
               <Link to="/reprezentacija">Reprezentacija</Link>
             </li>
@@ -83,12 +84,17 @@ export function SiteFooter() {
           </ul>
         </div>
       </div>
-      <div className="border-t border-white/10 py-4 text-center text-xs text-ink-foreground/50">
-        © {new Date().getFullYear()} Korner BiH. Sva prava zadržana.
-        <span className="mx-2">·</span>
-        <Link to="/auth" className="underline underline-offset-4 hover:text-ink-foreground">
-          Prijava za urednike
-        </Link>
+      <div className="border-t border-white/10">
+        <div className="mx-auto flex max-w-6xl justify-center px-4 pt-5">
+          <ThemeToggle />
+        </div>
+        <div className="py-4 text-center text-xs text-ink-foreground/50">
+          © {new Date().getFullYear()} Korner BiH. Sva prava zadržana.
+          <span className="mx-2">·</span>
+          <Link to="/auth" className="underline underline-offset-4 hover:text-ink-foreground">
+            Prijava za urednike
+          </Link>
+        </div>
       </div>
     </footer>
   );
