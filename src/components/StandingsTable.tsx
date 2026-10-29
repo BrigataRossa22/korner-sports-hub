@@ -8,17 +8,15 @@ const resultStyle: Record<string, string> = {
   L: "bg-destructive text-destructive-foreground",
 };
 
-// Na mobitelu: # i klub (grb + ime) ostaju zaglavljeni lijevo, ostalo se klizi udesno
+// Na mobitelu: # i grb ostaju zaglavljeni lijevo, a ime kluba klizi ispod grba
 const stickyHead = "sticky z-20 bg-surface sm:static sm:bg-transparent";
 const stickyCell = "sticky z-10 bg-card sm:static sm:bg-transparent";
-const clubCol =
-  "left-8 w-32 min-w-32 max-w-32 border-r border-border sm:w-auto sm:min-w-36 sm:max-w-none sm:border-r-0";
 
 export function StandingsTable({ standings }: { standings: StandingDTO[] }) {
   const crestFor = useCrest();
   return (
     <div className="overflow-x-auto border-y border-border">
-      <table className="w-full min-w-[580px] border-collapse text-sm tabular-nums sm:min-w-[660px]">
+      <table className="w-full min-w-[600px] border-collapse text-sm tabular-nums sm:min-w-[660px]">
         <thead>
           <tr className="border-b border-border bg-surface text-xs uppercase text-muted-foreground">
             <th
@@ -29,8 +27,9 @@ export function StandingsTable({ standings }: { standings: StandingDTO[] }) {
             </th>
             <th
               scope="col"
-              className={`${stickyHead} ${clubCol} px-1 py-3 text-left font-semibold sm:px-2`}
-            >
+              className={`${stickyHead} left-8 w-11 min-w-11 border-r border-border px-1 py-3 sm:w-10 sm:min-w-0 sm:border-r-0 sm:px-0`}
+            />
+            <th scope="col" className="w-28 min-w-28 px-1 py-3 text-left font-semibold sm:w-auto sm:min-w-36 sm:px-2">
               Klub
             </th>
             {/* Bod odmah poslije kluba, samo na mobitelu */}
@@ -58,25 +57,34 @@ export function StandingsTable({ standings }: { standings: StandingDTO[] }) {
                 >
                   {index + 1}
                 </td>
-                <th
-                  scope="row"
-                  className={`${stickyCell} ${clubCol} px-1 py-2.5 text-left font-semibold text-foreground sm:px-2 sm:py-3`}
+                <td
+                  className={`${stickyCell} left-8 w-11 min-w-11 border-r border-border px-1 py-2.5 sm:w-10 sm:min-w-0 sm:border-r-0 sm:px-0 sm:py-3`}
                 >
                   <Link
                     to="/klub/$name"
                     params={{ name: row.team }}
                     title={row.team}
                     aria-label={row.team}
-                    className="flex items-center gap-2 hover:underline"
+                    className="flex items-center justify-center sm:justify-start"
                   >
                     {crest ? (
                       <img src={crest} alt="" className="size-7 shrink-0 object-contain sm:size-6" />
                     ) : (
                       <span className="size-7 shrink-0 sm:size-6" />
                     )}
-                    <span className="min-w-0 truncate text-[13px] sm:overflow-visible sm:text-sm">
-                      {row.team}
-                    </span>
+                  </Link>
+                </td>
+                <th
+                  scope="row"
+                  className="w-28 min-w-28 max-w-28 px-1 py-2.5 text-left font-semibold text-foreground sm:w-auto sm:min-w-36 sm:max-w-none sm:px-2 sm:py-3"
+                >
+                  <Link
+                    to="/klub/$name"
+                    params={{ name: row.team }}
+                    title={row.team}
+                    className="block truncate text-[13px] hover:underline sm:overflow-visible sm:text-sm"
+                  >
+                    {row.team}
                   </Link>
                 </th>
                 <td className="px-1 py-2.5 text-center font-bold text-primary sm:hidden">{row.points}</td>
