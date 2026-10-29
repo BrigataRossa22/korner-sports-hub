@@ -74,6 +74,16 @@ function wavg(sum: number, count: number): number | null {
   return count > 0 ? Math.round(sum / count) : null;
 }
 
+// Zaglavlje kolone: kratko na mobitelu, puno na računaru
+function Short({ s, l }: { s: string; l: string }) {
+  return (
+    <>
+      <span className="sm:hidden">{s}</span>
+      <span className="hidden sm:inline">{l}</span>
+    </>
+  );
+}
+
 function Klub() {
   const { name } = Route.useParams();
   const crestFor = useCrest();
@@ -268,6 +278,8 @@ function Klub() {
     sumOther((r) => r.attCount),
   );
 
+  const fmtAvg = (n: number | null) => (n !== null ? n.toLocaleString("de-DE") : "—");
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
       <Link to="/klubovi" className="text-sm text-muted-foreground hover:underline">
@@ -362,57 +374,88 @@ function Klub() {
           ) : !history || history.length === 0 ? (
             <p className="px-4 py-6 text-sm text-muted-foreground">Još nema podataka.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[820px] text-sm tabular-nums">
+            <div className="sm:overflow-x-auto">
+              <table className="w-full text-sm tabular-nums sm:min-w-[820px]">
                 <thead>
                   <tr className="border-b border-border bg-surface text-xs uppercase text-muted-foreground">
-                    <th className="px-3 py-3 text-left">Sezona</th>
-                    <th className="px-3 py-3 text-center">Poz.</th>
-                    <th className="px-3 py-3 text-right">Utakmica</th>
-                    <th className="px-3 py-3 text-right">Pobjeda</th>
-                    <th className="px-3 py-3 text-right">Neriješeno</th>
-                    <th className="px-3 py-3 text-right">Poraza</th>
-                    <th className="px-3 py-3 text-right">Golovi</th>
-                    <th className="px-3 py-3 text-right">Primljeni</th>
-                    <th className="px-3 py-3 text-right">Bodova</th>
-                    <th className="px-3 py-3 text-right">Prosjek gledalaca</th>
+                    <th className="px-2 py-3 text-left sm:px-3">Sezona</th>
+                    <th className="px-1.5 py-3 text-center sm:px-3">
+                      <Short s="Poz" l="Poz." />
+                    </th>
+                    <th className="px-1.5 py-3 text-right sm:px-3">
+                      <Short s="Ut" l="Utakmica" />
+                    </th>
+                    <th className="px-1.5 py-3 text-right sm:px-3">
+                      <Short s="P" l="Pobjeda" />
+                    </th>
+                    <th className="px-1.5 py-3 text-right sm:px-3">
+                      <Short s="N" l="Neriješeno" />
+                    </th>
+                    <th className="px-1.5 py-3 text-right sm:px-3">
+                      <Short s="I" l="Poraza" />
+                    </th>
+                    <th className="px-1.5 py-3 text-right sm:hidden">GR</th>
+                    <th className="hidden px-3 py-3 text-right sm:table-cell">Golovi</th>
+                    <th className="hidden px-3 py-3 text-right sm:table-cell">Primljeni</th>
+                    <th className="px-1.5 py-3 text-right sm:px-3">
+                      <Short s="Bod" l="Bodova" />
+                    </th>
+                    <th className="hidden px-3 py-3 text-right sm:table-cell">Prosjek gledalaca</th>
                   </tr>
                 </thead>
                 <tbody>
                   {history.map((r) => (
                     <tr key={r.season} className="border-t border-border">
-                      <td className="px-3 py-3">
+                      <td className="px-2 py-3 sm:px-3">
                         <SeasonButton season={r.season} note={r.current ? "(u toku)" : undefined} />
+                        {r.avg !== null && (
+                          <span className="block text-[10px] font-normal text-muted-foreground sm:hidden">
+                            Ø {fmtAvg(r.avg)}
+                          </span>
+                        )}
                       </td>
-                      <td className="px-3 py-3 text-center font-semibold text-primary">
+                      <td className="px-1.5 py-3 text-center font-semibold text-primary sm:px-3">
                         {r.position ?? "—"}
                       </td>
-                      <td className="px-3 py-3 text-right">{r.played}</td>
-                      <td className="px-3 py-3 text-right">{r.wins}</td>
-                      <td className="px-3 py-3 text-right">{r.draws}</td>
-                      <td className="px-3 py-3 text-right">{r.losses}</td>
-                      <td className="px-3 py-3 text-right">{r.gf}</td>
-                      <td className="px-3 py-3 text-right">{r.ga}</td>
-                      <td className="px-3 py-3 text-right font-bold">{r.points}</td>
-                      <td className="px-3 py-3 text-right">
-                        {r.avg !== null ? r.avg.toLocaleString("de-DE") : "—"}
+                      <td className="px-1.5 py-3 text-right sm:px-3">{r.played}</td>
+                      <td className="px-1.5 py-3 text-right sm:px-3">{r.wins}</td>
+                      <td className="px-1.5 py-3 text-right sm:px-3">{r.draws}</td>
+                      <td className="px-1.5 py-3 text-right sm:px-3">{r.losses}</td>
+                      <td className="whitespace-nowrap px-1.5 py-3 text-right sm:hidden">
+                        {r.gf}:{r.ga}
                       </td>
+                      <td className="hidden px-3 py-3 text-right sm:table-cell">{r.gf}</td>
+                      <td className="hidden px-3 py-3 text-right sm:table-cell">{r.ga}</td>
+                      <td className="px-1.5 py-3 text-right font-bold sm:px-3">{r.points}</td>
+                      <td className="hidden px-3 py-3 text-right sm:table-cell">{fmtAvg(r.avg)}</td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
                   <tr className="border-t-4 border-foreground/30 bg-surface font-bold">
-                    <td className="px-3 py-3 uppercase">Ukupno</td>
-                    <td className="px-3 py-3 text-center">—</td>
-                    <td className="px-3 py-3 text-right">{sumLiga((r) => r.played)}</td>
-                    <td className="px-3 py-3 text-right">{sumLiga((r) => r.wins)}</td>
-                    <td className="px-3 py-3 text-right">{sumLiga((r) => r.draws)}</td>
-                    <td className="px-3 py-3 text-right">{sumLiga((r) => r.losses)}</td>
-                    <td className="px-3 py-3 text-right">{sumLiga((r) => r.gf)}</td>
-                    <td className="px-3 py-3 text-right">{sumLiga((r) => r.ga)}</td>
-                    <td className="px-3 py-3 text-right">{sumLiga((r) => r.points)}</td>
-                    <td className="px-3 py-3 text-right">
-                      {ligaTotalAvg !== null ? ligaTotalAvg.toLocaleString("de-DE") : "—"}
+                    <td className="px-2 py-3 text-xs uppercase sm:px-3 sm:text-sm">
+                      Ukupno
+                      <span className="block text-[10px] font-normal text-muted-foreground sm:hidden">
+                        {ligaTotalAvg !== null ? `Ø ${fmtAvg(ligaTotalAvg)}` : ""}
+                      </span>
+                    </td>
+                    <td className="px-1.5 py-3 text-center sm:px-3">—</td>
+                    <td className="px-1.5 py-3 text-right sm:px-3">{sumLiga((r) => r.played)}</td>
+                    <td className="px-1.5 py-3 text-right sm:px-3">{sumLiga((r) => r.wins)}</td>
+                    <td className="px-1.5 py-3 text-right sm:px-3">{sumLiga((r) => r.draws)}</td>
+                    <td className="px-1.5 py-3 text-right sm:px-3">{sumLiga((r) => r.losses)}</td>
+                    <td className="whitespace-nowrap px-1.5 py-3 text-right sm:hidden">
+                      {sumLiga((r) => r.gf)}:{sumLiga((r) => r.ga)}
+                    </td>
+                    <td className="hidden px-3 py-3 text-right sm:table-cell">
+                      {sumLiga((r) => r.gf)}
+                    </td>
+                    <td className="hidden px-3 py-3 text-right sm:table-cell">
+                      {sumLiga((r) => r.ga)}
+                    </td>
+                    <td className="px-1.5 py-3 text-right sm:px-3">{sumLiga((r) => r.points)}</td>
+                    <td className="hidden px-3 py-3 text-right sm:table-cell">
+                      {fmtAvg(ligaTotalAvg)}
                     </td>
                   </tr>
                 </tfoot>
@@ -426,54 +469,87 @@ function Klub() {
             Za ovo takmičenje još nema podataka za ovaj klub.
           </p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-sm tabular-nums">
+          <div className="sm:overflow-x-auto">
+            <table className="w-full text-sm tabular-nums sm:min-w-[720px]">
               <thead>
                 <tr className="border-b border-border bg-surface text-xs uppercase text-muted-foreground">
-                  <th className="px-3 py-3 text-left">Sezona</th>
-                  {showStage && <th className="px-3 py-3 text-left">Najdalje</th>}
-                  <th className="px-3 py-3 text-right">Utakmica</th>
-                  <th className="px-3 py-3 text-right">Pobjeda</th>
-                  <th className="px-3 py-3 text-right">Neriješeno</th>
-                  <th className="px-3 py-3 text-right">Poraza</th>
-                  <th className="px-3 py-3 text-right">Golovi</th>
-                  <th className="px-3 py-3 text-right">Primljeni</th>
-                  <th className="px-3 py-3 text-right">Prosjek gledalaca</th>
+                  <th className="px-2 py-3 text-left sm:px-3">Sezona</th>
+                  {showStage && (
+                    <th className="px-1.5 py-3 text-left sm:px-3">
+                      <Short s="Dalje" l="Najdalje" />
+                    </th>
+                  )}
+                  <th className="px-1.5 py-3 text-right sm:px-3">
+                    <Short s="Ut" l="Utakmica" />
+                  </th>
+                  <th className="px-1.5 py-3 text-right sm:px-3">
+                    <Short s="P" l="Pobjeda" />
+                  </th>
+                  <th className="px-1.5 py-3 text-right sm:px-3">
+                    <Short s="N" l="Neriješeno" />
+                  </th>
+                  <th className="px-1.5 py-3 text-right sm:px-3">
+                    <Short s="I" l="Poraza" />
+                  </th>
+                  <th className="px-1.5 py-3 text-right sm:hidden">GR</th>
+                  <th className="hidden px-3 py-3 text-right sm:table-cell">Golovi</th>
+                  <th className="hidden px-3 py-3 text-right sm:table-cell">Primljeni</th>
+                  <th className="hidden px-3 py-3 text-right sm:table-cell">Prosjek gledalaca</th>
                 </tr>
               </thead>
               <tbody>
                 {otherRows.map((r) => (
                   <tr key={r.season} className="border-t border-border">
-                    <td className="px-3 py-3">
+                    <td className="px-2 py-3 sm:px-3">
                       <SeasonButton season={r.season} />
+                      {r.avg !== null && (
+                        <span className="block text-[10px] font-normal text-muted-foreground sm:hidden">
+                          Ø {fmtAvg(r.avg)}
+                        </span>
+                      )}
                     </td>
                     {showStage && (
-                      <td className="px-3 py-3 font-semibold text-primary">{r.stage}</td>
+                      <td className="px-1.5 py-3 text-xs font-semibold leading-tight text-primary sm:px-3 sm:text-sm">
+                        {r.stage}
+                      </td>
                     )}
-                    <td className="px-3 py-3 text-right">{r.played}</td>
-                    <td className="px-3 py-3 text-right">{r.wins}</td>
-                    <td className="px-3 py-3 text-right">{r.draws}</td>
-                    <td className="px-3 py-3 text-right">{r.losses}</td>
-                    <td className="px-3 py-3 text-right">{r.gf}</td>
-                    <td className="px-3 py-3 text-right">{r.ga}</td>
-                    <td className="px-3 py-3 text-right">
-                      {r.avg !== null ? r.avg.toLocaleString("de-DE") : "—"}
+                    <td className="px-1.5 py-3 text-right sm:px-3">{r.played}</td>
+                    <td className="px-1.5 py-3 text-right sm:px-3">{r.wins}</td>
+                    <td className="px-1.5 py-3 text-right sm:px-3">{r.draws}</td>
+                    <td className="px-1.5 py-3 text-right sm:px-3">{r.losses}</td>
+                    <td className="whitespace-nowrap px-1.5 py-3 text-right sm:hidden">
+                      {r.gf}:{r.ga}
                     </td>
+                    <td className="hidden px-3 py-3 text-right sm:table-cell">{r.gf}</td>
+                    <td className="hidden px-3 py-3 text-right sm:table-cell">{r.ga}</td>
+                    <td className="hidden px-3 py-3 text-right sm:table-cell">{fmtAvg(r.avg)}</td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
                 <tr className="border-t-4 border-foreground/30 bg-surface font-bold">
-                  <td className="px-3 py-3 uppercase">Ukupno</td>
-                  {showStage && <td className="px-3 py-3">—</td>}
-                  <td className="px-3 py-3 text-right">{sumOther((r) => r.played)}</td>
-                  <td className="px-3 py-3 text-right">{sumOther((r) => r.wins)}</td>
-                  <td className="px-3 py-3 text-right">{sumOther((r) => r.draws)}</td>
-                  <td className="px-3 py-3 text-right">{sumOther((r) => r.losses)}</td>
-                  <td className="px-3 py-3 text-right">{sumOther((r) => r.gf)}</td>
-                  <td className="px-3 py-3 text-right">{sumOther((r) => r.ga)}</td>
-                  <td className="px-3 py-3 text-right">
-                    {otherTotalAvg !== null ? otherTotalAvg.toLocaleString("de-DE") : "—"}
+                  <td className="px-2 py-3 text-xs uppercase sm:px-3 sm:text-sm">
+                    Ukupno
+                    <span className="block text-[10px] font-normal text-muted-foreground sm:hidden">
+                      {otherTotalAvg !== null ? `Ø ${fmtAvg(otherTotalAvg)}` : ""}
+                    </span>
+                  </td>
+                  {showStage && <td className="px-1.5 py-3 sm:px-3">—</td>}
+                  <td className="px-1.5 py-3 text-right sm:px-3">{sumOther((r) => r.played)}</td>
+                  <td className="px-1.5 py-3 text-right sm:px-3">{sumOther((r) => r.wins)}</td>
+                  <td className="px-1.5 py-3 text-right sm:px-3">{sumOther((r) => r.draws)}</td>
+                  <td className="px-1.5 py-3 text-right sm:px-3">{sumOther((r) => r.losses)}</td>
+                  <td className="whitespace-nowrap px-1.5 py-3 text-right sm:hidden">
+                    {sumOther((r) => r.gf)}:{sumOther((r) => r.ga)}
+                  </td>
+                  <td className="hidden px-3 py-3 text-right sm:table-cell">
+                    {sumOther((r) => r.gf)}
+                  </td>
+                  <td className="hidden px-3 py-3 text-right sm:table-cell">
+                    {sumOther((r) => r.ga)}
+                  </td>
+                  <td className="hidden px-3 py-3 text-right sm:table-cell">
+                    {fmtAvg(otherTotalAvg)}
                   </td>
                 </tr>
               </tfoot>
