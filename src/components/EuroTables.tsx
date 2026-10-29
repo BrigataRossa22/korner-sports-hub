@@ -10,6 +10,16 @@ const COMPETITIONS: { key: EuroMatch["competition"]; title: string }[] = [
   { key: "KPK", title: "Kup pobjednika kupova" },
 ];
 
+function initials(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0] ?? "")
+    .join("")
+    .toUpperCase();
+}
+
 function Table({ title, rows: rawRows }: { title: string; rows: EuroMatch[] }) {
   const crestFor = useClubCrest();
 
@@ -55,14 +65,15 @@ function Table({ title, rows: rawRows }: { title: string; rows: EuroMatch[] }) {
         {title}
       </h2>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[640px] border-collapse text-sm tabular-nums sm:min-w-[720px]">
+        <table className="w-full min-w-[680px] border-collapse text-sm tabular-nums sm:min-w-[720px]">
           <thead>
             <tr className="border-b border-border text-xs uppercase text-muted-foreground">
-              {/* Na mobitelu je Sezona zaglavljena lijevo, ostalo se klizi */}
-              <th className="sticky left-0 z-20 w-[4.5rem] min-w-[4.5rem] border-r border-border bg-card px-2 py-2 text-left sm:static sm:w-auto sm:min-w-0 sm:border-r-0 sm:px-3">
+              {/* Na mobitelu su Sezona i grb zaglavljeni lijevo, ime kluba klizi ispod grba */}
+              <th className="sticky left-0 z-20 w-[4.5rem] min-w-[4.5rem] bg-card px-2 py-2 text-left sm:static sm:w-auto sm:min-w-0 sm:px-3">
                 Sezona
               </th>
-              <th className="px-3 py-2 text-left">Klub</th>
+              <th className="sticky left-[4.5rem] z-20 w-11 min-w-11 border-r border-border bg-card px-1 py-2 sm:static sm:w-auto sm:min-w-0 sm:border-r-0 sm:px-0" />
+              <th className="w-32 min-w-32 px-2 py-2 text-left sm:w-auto sm:px-3">Klub</th>
               <th className="px-3 py-2 text-left">Runda</th>
               <th className="px-3 py-2 text-left">Protivnik</th>
               <th className="px-3 py-2 text-center">Domaćin</th>
@@ -89,23 +100,34 @@ function Table({ title, rows: rawRows }: { title: string; rows: EuroMatch[] }) {
                   {x.newSeason && (
                     <td
                       rowSpan={x.seasonCount}
-                      className="sticky left-0 z-10 w-[4.5rem] min-w-[4.5rem] border-r border-border bg-card px-2 py-2 align-middle font-semibold sm:static sm:w-auto sm:min-w-0 sm:bg-transparent sm:px-3"
+                      className="sticky left-0 z-10 w-[4.5rem] min-w-[4.5rem] bg-card px-2 py-2 align-middle font-semibold sm:static sm:w-auto sm:min-w-0 sm:border-r sm:border-border sm:bg-transparent sm:px-3"
                     >
                       {r.season}
                     </td>
                   )}
                   {x.newClub && (
-                    <td
-                      rowSpan={x.clubCount}
-                      className="border-b border-r border-border px-3 py-2 align-middle"
-                    >
-                      <span className="flex items-center gap-2 whitespace-nowrap font-semibold">
-                        {crest && (
-                          <img src={crest} alt="" className="size-6 shrink-0 object-contain" />
-                        )}
-                        {r.club}
-                      </span>
-                    </td>
+                    <>
+                      <td
+                        rowSpan={x.clubCount}
+                        className="sticky left-[4.5rem] z-10 w-11 min-w-11 border-b border-r border-border bg-card px-1 py-2 align-middle sm:static sm:w-auto sm:min-w-0 sm:border-r-0 sm:bg-transparent sm:pl-3 sm:pr-0"
+                      >
+                        <span className="flex items-center justify-center sm:justify-start" title={r.club}>
+                          {crest ? (
+                            <img src={crest} alt="" className="size-7 shrink-0 object-contain sm:size-6" />
+                          ) : (
+                            <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-bold text-muted-foreground sm:size-6">
+                              {initials(r.club)}
+                            </span>
+                          )}
+                        </span>
+                      </td>
+                      <td
+                        rowSpan={x.clubCount}
+                        className="w-32 min-w-32 border-b border-r border-border px-2 py-2 align-middle sm:w-auto sm:px-3 sm:pl-2"
+                      >
+                        <span className="block whitespace-nowrap font-semibold">{r.club}</span>
+                      </td>
+                    </>
                   )}
                   <td className="whitespace-nowrap px-3 py-2">{r.round}</td>
                   <td className="px-3 py-2">
