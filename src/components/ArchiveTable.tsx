@@ -14,6 +14,10 @@ export function useSeasons() {
   return { rows, seasons, isLoading };
 }
 
+// Na mobitelu: # i grb ostaju zaglavljeni lijevo, ostalo se klizi udesno
+const stickyHead = "sticky z-20 bg-surface sm:static sm:bg-transparent";
+const stickyCell = "sticky z-10 bg-card sm:static sm:bg-transparent";
+
 export function ArchiveTable({ season }: { season: string }) {
   const { rows, isLoading } = useSeasons();
   const crestFor = useClubCrest();
@@ -31,21 +35,25 @@ export function ArchiveTable({ season }: { season: string }) {
   }
 
   return (
-    <div className="border-y border-border sm:overflow-x-auto">
-      <table className="w-full border-collapse text-sm tabular-nums sm:min-w-[600px]">
+    <div className="overflow-x-auto border-y border-border">
+      <table className="w-full min-w-[420px] border-collapse text-sm tabular-nums sm:min-w-[600px]">
         <thead>
           <tr className="border-b border-border bg-surface text-xs uppercase text-muted-foreground">
-            <th className="w-8 px-1 py-3 text-center sm:w-10 sm:px-2">#</th>
-            <th className="px-1 py-3 text-left sm:px-2">
+            <th className={`${stickyHead} left-0 w-8 min-w-8 px-1 py-3 text-center sm:w-10 sm:px-2`}>#</th>
+            <th
+              className={`${stickyHead} left-8 w-10 min-w-10 border-r border-border px-1 py-3 text-left sm:border-r-0 sm:px-2`}
+            >
               <span className="hidden sm:inline">Klub</span>
             </th>
+            {/* Bod odmah poslije kluba, samo na mobitelu */}
+            <th className="w-11 px-1 py-3 text-center sm:hidden">Bod</th>
             <th className="w-9 px-0.5 py-3 text-center sm:w-10 sm:px-1">Ut</th>
             <th className="w-9 px-0.5 py-3 text-center sm:w-10 sm:px-1">P</th>
             <th className="w-9 px-0.5 py-3 text-center sm:w-10 sm:px-1">N</th>
             <th className="w-9 px-0.5 py-3 text-center sm:w-10 sm:px-1">I</th>
-            <th className="hidden w-16 px-1 py-3 text-center sm:table-cell">Golovi</th>
+            <th className="w-16 px-1 py-3 text-center">Golovi</th>
             <th className="w-10 px-0.5 py-3 text-center sm:w-12 sm:px-1">GR</th>
-            <th className="w-10 px-1 py-3 text-center sm:w-12 sm:px-2">Bod</th>
+            <th className="hidden w-12 px-2 py-3 text-center sm:table-cell">Bod</th>
           </tr>
         </thead>
         <tbody>
@@ -54,9 +62,15 @@ export function ArchiveTable({ season }: { season: string }) {
             const gd = r.goals_for - r.goals_against;
             const pen = r.penalty ?? 0;
             return (
-              <tr key={r.id} className="border-b border-border/70 last:border-0 even:bg-surface/50">
-                <td className="px-1 py-2.5 text-center font-semibold text-primary sm:px-2 sm:py-3">{r.position}</td>
-                <td className="px-1 py-2.5 text-left font-semibold sm:px-2 sm:py-3">
+              <tr key={r.id} className="border-b border-border/70 last:border-0 sm:even:bg-surface/50">
+                <td
+                  className={`${stickyCell} left-0 w-8 min-w-8 px-1 py-2.5 text-center font-semibold text-primary sm:px-2 sm:py-3`}
+                >
+                  {r.position}
+                </td>
+                <td
+                  className={`${stickyCell} left-8 min-w-10 border-r border-border px-1 py-2.5 text-left font-semibold sm:border-r-0 sm:px-2 sm:py-3`}
+                >
                   <Link
                     to="/arhiva/$season/$club"
                     params={{ season, club: r.team }}
@@ -73,7 +87,7 @@ export function ArchiveTable({ season }: { season: string }) {
                       <span className="hidden sm:inline">{r.team}</span>
                       {pen > 0 && (
                         <span
-                          className="text-xs font-medium text-muted-foreground sm:ml-1.5"
+                          className="whitespace-nowrap text-xs font-medium text-muted-foreground sm:ml-1.5"
                           title="Oduzeti bodovi"
                         >
                           (−{pen})
@@ -82,13 +96,19 @@ export function ArchiveTable({ season }: { season: string }) {
                     </span>
                   </Link>
                 </td>
+                <td className="px-1 py-2.5 text-center font-bold text-primary sm:hidden">{r.points}</td>
                 <td className="px-0.5 py-2.5 text-center sm:px-1 sm:py-3">{r.played}</td>
                 <td className="px-0.5 py-2.5 text-center sm:px-1 sm:py-3">{r.wins}</td>
                 <td className="px-0.5 py-2.5 text-center sm:px-1 sm:py-3">{r.draws}</td>
                 <td className="px-0.5 py-2.5 text-center sm:px-1 sm:py-3">{r.losses}</td>
-                <td className="hidden px-1 py-3 text-center sm:table-cell">{r.goals_for}:{r.goals_against}</td>
-                <td className="px-0.5 py-2.5 text-center sm:px-1 sm:py-3">{gd > 0 ? "+" : ""}{gd}</td>
-                <td className="px-1 py-2.5 text-center font-bold text-primary sm:px-2 sm:py-3">{r.points}</td>
+                <td className="whitespace-nowrap px-1 py-2.5 text-center sm:py-3">
+                  {r.goals_for}:{r.goals_against}
+                </td>
+                <td className="px-0.5 py-2.5 text-center sm:px-1 sm:py-3">
+                  {gd > 0 ? "+" : ""}
+                  {gd}
+                </td>
+                <td className="hidden px-2 py-3 text-center font-bold text-primary sm:table-cell">{r.points}</td>
               </tr>
             );
           })}
