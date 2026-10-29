@@ -76,116 +76,15 @@ function wavg(sum: number, count: number): number | null {
 
 const fmtAvg = (n: number | null) => (n !== null ? n.toLocaleString("de-DE") : "—");
 
-function Mini({
-  value,
-  label,
-  tone,
-}: {
-  value: string | number;
-  label: string;
-  tone?: "good" | "bad";
-}) {
-  return (
-    <div className="text-center">
-      <p
-        className={`text-base font-bold leading-tight tabular-nums ${
-          tone === "good" ? "text-primary" : tone === "bad" ? "text-destructive" : ""
-        }`}
-      >
-        {value}
-      </p>
-      <p className="mt-0.5 text-[10px] font-semibold uppercase text-muted-foreground">{label}</p>
-    </div>
-  );
-}
-
-// Kartica sezone za mobitel
-function SeasonCard({
-  title,
-  note,
-  onOpen,
-  pos,
-  points,
-  stage,
-  played,
-  w,
-  d,
-  l,
-  gf,
-  ga,
-  avg,
-  total,
-}: {
-  title: string;
-  note?: string;
-  onOpen?: () => void;
-  pos?: number | null;
-  points?: number;
-  stage?: string;
+type MobileRow = {
+  season: string;
+  sub?: string;
   played: number;
   w: number;
   d: number;
   l: number;
-  gf: number;
-  ga: number;
   avg: number | null;
-  total?: boolean;
-}) {
-  return (
-    <div className={`border-t border-border px-3 py-3 ${total ? "border-t-4 border-foreground/30 bg-surface" : ""}`}>
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          {onOpen ? (
-            <button
-              type="button"
-              onClick={onOpen}
-              title="Prikaži sve utakmice ove sezone"
-              className="text-left text-base font-bold text-primary"
-            >
-              {title}
-            </button>
-          ) : (
-            <span className="text-base font-bold uppercase">{title}</span>
-          )}
-          {note && <span className="ml-1.5 text-xs text-muted-foreground">{note}</span>}
-        </div>
-
-        <div className="flex shrink-0 items-center gap-3">
-          {stage && (
-            <span className="rounded-full bg-primary/15 px-2.5 py-0.5 text-xs font-semibold text-primary">
-              {stage}
-            </span>
-          )}
-          {points !== undefined && (
-            <div className="text-right">
-              <p className="text-base font-bold leading-tight tabular-nums">{points}</p>
-              <p className="text-[10px] font-semibold uppercase text-muted-foreground">bod</p>
-            </div>
-          )}
-          {pos !== undefined && (
-            <span className="flex size-8 items-center justify-center rounded-full bg-primary/15 text-sm font-bold text-primary">
-              {pos ?? "—"}
-            </span>
-          )}
-        </div>
-      </div>
-
-      <div className="mt-2.5 grid grid-cols-5 rounded-md bg-muted/60 py-2">
-        <Mini value={played} label="Ut" />
-        <Mini value={w} label="P" tone="good" />
-        <Mini value={d} label="N" />
-        <Mini value={l} label="I" tone="bad" />
-        <Mini value={`${gf}:${ga}`} label="GR" />
-      </div>
-
-      {avg !== null && (
-        <p className="mt-1.5 text-right text-[11px] text-muted-foreground">
-          Prosjek gledalaca <span className="font-semibold text-foreground">{fmtAvg(avg)}</span>
-        </p>
-      )}
-    </div>
-  );
-}
+};
 
 function Klub() {
   const { name } = Route.useParams();
@@ -212,6 +111,52 @@ function Klub() {
       {season}
       {note && <span className="ml-1 text-xs font-normal text-muted-foreground">{note}</span>}
     </button>
+  );
+
+  // Kompaktna tabela za mobitel (kao "Pregled po godinama"): sezona, Ut., P, N, I, prosjek
+  const MobileSeasonTable = ({ rows }: { rows: MobileRow[] }) => (
+    <div className="max-h-80 overflow-auto sm:hidden">
+      <table className="w-full border-collapse text-sm tabular-nums">
+        <thead className="sticky top-0 z-10 bg-card">
+          <tr className="border-b border-border text-xs uppercase text-muted-foreground">
+            <th className="px-3 py-2 text-left">Sezona</th>
+            <th className="px-1.5 py-2 text-right">Ut.</th>
+            <th className="px-1.5 py-2 text-right">P</th>
+            <th className="px-1.5 py-2 text-right">N</th>
+            <th className="px-1.5 py-2 text-right">I</th>
+            <th className="px-3 py-2 text-right">Prosjek</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => {
+            const selected = matchSeason !== "" && ns(r.season) === matchSeason;
+            return (
+              <tr
+                key={r.season}
+                onClick={() => openSeason(r.season)}
+                className={`cursor-pointer border-b border-border/70 last:border-0 ${
+                  selected ? "bg-primary/10 font-semibold" : ""
+                }`}
+              >
+                <td className="px-3 py-2.5">
+                  <span className="text-primary">{r.season}</span>
+                  {r.sub && (
+                    <span className="block text-[10px] font-normal leading-tight text-muted-foreground">
+                      {r.sub}
+                    </span>
+                  )}
+                </td>
+                <td className="px-1.5 py-2.5 text-right">{r.played}</td>
+                <td className="px-1.5 py-2.5 text-right">{r.w}</td>
+                <td className="px-1.5 py-2.5 text-right">{r.d}</td>
+                <td className="px-1.5 py-2.5 text-right">{r.l}</td>
+                <td className="px-3 py-2.5 text-right">{fmtAvg(r.avg)}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
   );
 
   const { data } = useQuery({
@@ -476,38 +421,23 @@ function Klub() {
             <p className="px-4 py-6 text-sm text-muted-foreground">Još nema podataka.</p>
           ) : (
             <>
-              {/* ---- Mobitel: kartice sezona ---- */}
-              <div className="sm:hidden">
-                {history.map((r) => (
-                  <SeasonCard
-                    key={r.season}
-                    title={r.season}
-                    note={r.current ? "(u toku)" : undefined}
-                    onOpen={() => openSeason(r.season)}
-                    pos={r.position}
-                    points={r.points}
-                    played={r.played}
-                    w={r.wins}
-                    d={r.draws}
-                    l={r.losses}
-                    gf={r.gf}
-                    ga={r.ga}
-                    avg={r.avg}
-                  />
-                ))}
-                <SeasonCard
-                  total
-                  title="Ukupno"
-                  points={sumLiga((r) => r.points)}
-                  played={sumLiga((r) => r.played)}
-                  w={sumLiga((r) => r.wins)}
-                  d={sumLiga((r) => r.draws)}
-                  l={sumLiga((r) => r.losses)}
-                  gf={sumLiga((r) => r.gf)}
-                  ga={sumLiga((r) => r.ga)}
-                  avg={ligaTotalAvg}
-                />
-              </div>
+              {/* ---- Mobitel: kompaktna tabela, klik otvara utakmice ispod ---- */}
+              <MobileSeasonTable
+                rows={history.map((r) => ({
+                  season: r.season,
+                  sub: [
+                    r.position ? `${r.position}. mjesto` : "",
+                    r.current ? "u toku" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" · "),
+                  played: r.played,
+                  w: r.wins,
+                  d: r.draws,
+                  l: r.losses,
+                  avg: r.avg,
+                }))}
+              />
 
               {/* ---- Računar: tabela kao do sada ---- */}
               <div className="hidden overflow-x-auto sm:block">
@@ -572,35 +502,18 @@ function Klub() {
           </p>
         ) : (
           <>
-            {/* ---- Mobitel: kartice sezona ---- */}
-            <div className="sm:hidden">
-              {otherRows.map((r) => (
-                <SeasonCard
-                  key={r.season}
-                  title={r.season}
-                  onOpen={() => openSeason(r.season)}
-                  stage={showStage ? r.stage : undefined}
-                  played={r.played}
-                  w={r.wins}
-                  d={r.draws}
-                  l={r.losses}
-                  gf={r.gf}
-                  ga={r.ga}
-                  avg={r.avg}
-                />
-              ))}
-              <SeasonCard
-                total
-                title="Ukupno"
-                played={sumOther((r) => r.played)}
-                w={sumOther((r) => r.wins)}
-                d={sumOther((r) => r.draws)}
-                l={sumOther((r) => r.losses)}
-                gf={sumOther((r) => r.gf)}
-                ga={sumOther((r) => r.ga)}
-                avg={otherTotalAvg}
-              />
-            </div>
+            {/* ---- Mobitel: kompaktna tabela, klik otvara utakmice ispod ---- */}
+            <MobileSeasonTable
+              rows={otherRows.map((r) => ({
+                season: r.season,
+                sub: showStage ? r.stage : undefined,
+                played: r.played,
+                w: r.wins,
+                d: r.draws,
+                l: r.losses,
+                avg: r.avg,
+              }))}
+            />
 
             {/* ---- Računar: tabela kao do sada ---- */}
             <div className="hidden overflow-x-auto sm:block">
