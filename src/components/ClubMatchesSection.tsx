@@ -46,6 +46,16 @@ function attendanceText(n: number | null): string {
   return n > 0 ? n.toLocaleString("de-DE") : n < 0 ? "x" : "—";
 }
 
+function initials(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0] ?? "")
+    .join("")
+    .toUpperCase();
+}
+
 // "2:1" ili "2:1 (4:3 p)" -> [2, 1]; "-" ili prazno -> null
 function pair(s: string | null | undefined): [number, number] | null {
   const m = /^\s*(\d+)\s*[:\-–]\s*(\d+)/.exec(s ?? "");
@@ -77,6 +87,8 @@ type MatchRow = {
   sh: number | null;
   sa: number | null;
   pen: string | null;
+  /** Penali: [domaći, gosti] kad je utakmica odlučena penalima */
+  penPair: [number, number] | null;
   att: number | null;
   /** Redoslijed za utakmice bez datuma (npr. kolo) */
   order: number;
@@ -166,6 +178,19 @@ export function ClubMatchesSection({
     return null;
   };
 
+  // Veći grb za mobitel; ako ga nema, zastava ili krug s inicijalima
+  const MobileBadge = ({ club }: { club: string }) => {
+    const c = crestFor(club) || clubCrest(club);
+    if (c) return <img src={c} alt="" className="size-8 shrink-0 object-contain" />;
+    const f = flagUrl(flags.get(normClub(club)) ?? "");
+    if (f) return <img src={f} alt="" className="h-5 w-8 shrink-0 object-cover" />;
+    return (
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-bold text-muted-foreground">
+        {initials(club)}
+      </span>
+    );
+  };
+
   const MatchCell = ({
     home,
     away,
@@ -191,6 +216,23 @@ export function ClubMatchesSection({
       </span>
     </div>
   );
+
+  // Boja rezultata iz ugla ovog kluba
+  const pillClass = (r: MatchRow): string => {
+    if (r.sh === null || r.sa === null) return "bg-muted text-foreground";
+    const isHome = sameClub(r.home, name);
+    const isAway = sameClub(r.away, name);
+    if (!isHome && !isAway) return "bg-muted text-foreground";
+    let mine = isHome ? r.sh : r.sa;
+    let theirs = isHome ? r.sa : r.sh;
+    if (mine === theirs && r.penPair) {
+      mine = isHome ? r.penPair[0] : r.penPair[1];
+      theirs = isHome ? r.penPair[1] : r.penPair[0];
+    }
+    if (mine > theirs) return "bg-primary/15 text-primary";
+    if (mine < theirs) return "bg-destructive/15 text-destructive";
+    return "bg-muted text-foreground";
+  };
 
   const clubCup = (cup ?? []).filter((m) => sameClub(m.home, name) || sameClub(m.away, name));
   const clubEuro = (euro ?? []).filter((e) => sameClub(e.club, name));
@@ -294,6 +336,7 @@ export function ClubMatchesSection({
         sh: m.score_home,
         sa: m.score_away,
         pen: null,
+        penPair: null,
         att: m.attendance,
         order: i,
       });
@@ -311,6 +354,7 @@ export function ClubMatchesSection({
         sh: m.score_home,
         sa: m.score_away,
         pen: null,
+        penPair: null,
         att: m.attendance,
         order: m.round ?? i,
       });
@@ -322,6 +366,7 @@ export function ClubMatchesSection({
 
     seasonCup.forEach((m, i) => {
       if (isCurrent && seen.has(pairKey(m.match_date, m.home, m.away))) return;
+      const hasPen = m.pen_home != null && m.pen_away != null;
       push({
         key: `kup-${m.id}`,
         date: m.match_date,
@@ -332,7 +377,8 @@ export function ClubMatchesSection({
         away: m.away,
         sh: m.score_home,
         sa: m.score_away,
-        pen: m.pen_home != null && m.pen_away != null ? `pen. ${m.pen_home}:${m.pen_away}` : null,
+        pen: hasPen ? `pen. ${m.pen_home}:${m.pen_away}` : null,
+        penPair: hasPen ? [Number(m.pen_home), Number(m.pen_away)] : null,
         att: m.attendance,
         order: i,
       });
@@ -355,6 +401,7 @@ export function ClubMatchesSection({
         sh: l.sh,
         sa: l.sa,
         pen: null,
+        penPair: null,
         att: l.att,
         order: i,
       });
@@ -413,40 +460,101 @@ export function ClubMatchesSection({
               {isCurrent ? "Još nema utakmica." : "Za ovu sezonu još nema unesenih utakmica."}
             </p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[680px] text-sm tabular-nums">
-                <thead>
-                  <tr className="text-xs uppercase text-muted-foreground">
-                    <th className="px-4 py-2 text-left">Datum</th>
-                    <th className="px-4 py-2 text-left">Takmičenje</th>
-                    <th className="px-4 py-2 text-center">Utakmica</th>
-                    <th className="px-4 py-2 text-right">Gledalaca</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sorted.map((r) => (
-                    <tr key={r.key} className="border-t border-border">
-                      <td className="whitespace-nowrap px-4 py-3">{fmtDate(r.date)}</td>
-                      <td className="px-4 py-3">
-                        <span className="block font-semibold">{r.title}</span>
-                        {r.sub && (
-                          <span className="block text-xs text-muted-foreground">{r.sub}</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <MatchCell home={r.home} away={r.away} sh={r.sh} sa={r.sa} />
-                        {r.pen && (
-                          <p className="mt-0.5 text-center text-[10px] font-semibold uppercase text-muted-foreground">
-                            {r.pen}
-                          </p>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-right">{attendanceText(r.att)}</td>
+            <>
+              {/* ---- Mobitel: grbovi, obojen rezultat, takmičenje ispod ---- */}
+              <div className="sm:hidden">
+                <div className="grid grid-cols-[3.75rem_1fr_3.5rem] items-center gap-2 px-3 py-2 text-xs uppercase text-muted-foreground">
+                  <span>Datum</span>
+                  <span className="text-center">Utakmica</span>
+                  <span className="text-right">Gledalaca</span>
+                </div>
+
+                {sorted.map((r) => (
+                  <div key={r.key} className="border-t border-border px-3 py-3">
+                    <div className="grid grid-cols-[3.75rem_1fr_3.5rem] items-center gap-2">
+                      <span className="text-[10px] leading-tight text-muted-foreground tabular-nums">
+                        {fmtDate(r.date)}
+                      </span>
+
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="flex flex-1 justify-end" title={r.home}>
+                          <MobileBadge club={r.home} />
+                        </span>
+                        <span
+                          className={`min-w-14 rounded-md px-2 py-1 text-center text-sm font-bold tabular-nums ${pillClass(r)}`}
+                        >
+                          {r.sh !== null && r.sa !== null ? `${r.sh}:${r.sa}` : "–"}
+                        </span>
+                        <span className="flex flex-1" title={r.away}>
+                          <MobileBadge club={r.away} />
+                        </span>
+                      </div>
+
+                      <span className="text-right text-xs tabular-nums">
+                        {attendanceText(r.att)}
+                      </span>
+                    </div>
+
+                    <p className="mt-1 text-center text-[10px] text-muted-foreground">
+                      <span className="font-semibold">{r.title}</span>
+                      {r.sub ? ` · ${r.sub}` : ""}
+                      {r.pen ? ` · ${r.pen}` : ""}
+                    </p>
+                  </div>
+                ))}
+
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border px-3 py-3 text-[10px] uppercase text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <span className="size-2.5 rounded-sm bg-primary/15 ring-1 ring-primary/40" />
+                    Pobjeda
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="size-2.5 rounded-sm bg-muted ring-1 ring-border" />
+                    Remi
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="size-2.5 rounded-sm bg-destructive/15 ring-1 ring-destructive/40" />
+                    Poraz
+                  </span>
+                </div>
+              </div>
+
+              {/* ---- Računar: tabela kao do sada ---- */}
+              <div className="hidden overflow-x-auto sm:block">
+                <table className="w-full min-w-[680px] text-sm tabular-nums">
+                  <thead>
+                    <tr className="text-xs uppercase text-muted-foreground">
+                      <th className="px-4 py-2 text-left">Datum</th>
+                      <th className="px-4 py-2 text-left">Takmičenje</th>
+                      <th className="px-4 py-2 text-center">Utakmica</th>
+                      <th className="px-4 py-2 text-right">Gledalaca</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {sorted.map((r) => (
+                      <tr key={r.key} className="border-t border-border">
+                        <td className="whitespace-nowrap px-4 py-3">{fmtDate(r.date)}</td>
+                        <td className="px-4 py-3">
+                          <span className="block font-semibold">{r.title}</span>
+                          {r.sub && (
+                            <span className="block text-xs text-muted-foreground">{r.sub}</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <MatchCell home={r.home} away={r.away} sh={r.sh} sa={r.sa} />
+                          {r.pen && (
+                            <p className="mt-0.5 text-center text-[10px] font-semibold uppercase text-muted-foreground">
+                              {r.pen}
+                            </p>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-right">{attendanceText(r.att)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
 
           {past && scorers.length > 0 && (
