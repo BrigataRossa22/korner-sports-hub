@@ -42,6 +42,16 @@ function tagOf(g: CupGoal): string {
   return g.kind === "p" ? " (pen.)" : g.kind === "o" ? " (autogol)" : "";
 }
 
+function initials(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0] ?? "")
+    .join("")
+    .toUpperCase();
+}
+
 function GoalText({ g }: { g: CupGoal }) {
   return (
     <span>
@@ -74,6 +84,17 @@ function Team({ name, crest, align }: { name: string; crest: string; align: "lef
           {name}
         </>
       )}
+    </span>
+  );
+}
+
+// Grb za mobitel; ako ga nema, krug s inicijalima
+function MobileCrest({ name, crest }: { name: string; crest: string }) {
+  return crest ? (
+    <img src={crest} alt="" className="size-8 shrink-0 object-contain" />
+  ) : (
+    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-bold text-muted-foreground">
+      {initials(name)}
     </span>
   );
 }
@@ -143,12 +164,146 @@ export function RoundTable({
       )
       .sort((a, b) => a.minute - b.minute || a.extra - b.extra);
 
+  const attText = (n: number): string =>
+    n > 0 ? n.toLocaleString("de-DE") : n < 0 ? "x" : "—";
+
   return (
     <section className="mt-8 rounded-lg border border-border bg-card">
       <h2 className="border-b border-border px-4 py-3 font-display text-lg font-bold uppercase">
         {title}
       </h2>
-      <div className="overflow-x-auto">
+
+      {/* ---- Mobitel: grbovi, rezultat i klik na strijelce ---- */}
+      <div className="sm:hidden">
+        <div className="grid grid-cols-[3.75rem_1fr_4rem] items-center gap-2 px-3 py-2 text-xs uppercase text-muted-foreground">
+          <span>Datum</span>
+          <span className="text-center">Utakmica</span>
+          <span className="text-right">Gledalaca</span>
+        </div>
+
+        {rows.map((m) => {
+          const mg = goalsOf(m);
+          const canOpen = mg.length > 0;
+          const isOpen = canOpen && open.has(m.id);
+          const leg = legs.get(m.id);
+          const hasPen = m.pen_home != null && m.pen_away != null;
+
+          return (
+            <div key={m.id} className="border-t border-border">
+              <div
+                className={`grid grid-cols-[3.75rem_1fr_4rem] items-center gap-2 px-3 py-3 ${
+                  canOpen ? "cursor-pointer" : ""
+                } ${isOpen ? "bg-muted" : ""}`}
+                role={canOpen ? "button" : undefined}
+                tabIndex={canOpen ? 0 : undefined}
+                aria-expanded={canOpen ? isOpen : undefined}
+                onClick={canOpen ? () => toggle(m.id) : undefined}
+                onKeyDown={
+                  canOpen
+                    ? (e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          toggle(m.id);
+                        }
+                      }
+                    : undefined
+                }
+              >
+                <span className="text-[10px] leading-tight text-muted-foreground tabular-nums">
+                  {fmtDate(m.match_date)}
+                  {leg && (
+                    <span className="block text-[9px] font-semibold uppercase">
+                      {leg.leg}. meč
+                    </span>
+                  )}
+                </span>
+
+                <div className="flex items-center justify-center gap-2">
+                  <span className="flex flex-1 justify-end" title={m.home}>
+                    <MobileCrest name={m.home} crest={crestFor(m.home) || m.home_crest} />
+                  </span>
+                  <span className="flex min-w-14 flex-col items-center">
+                    <span className="w-full rounded-md bg-muted px-2 py-1 text-center text-sm font-bold tabular-nums">
+                      {m.score_home !== null && m.score_away !== null
+                        ? `${m.score_home}:${m.score_away}`
+                        : "–"}
+                    </span>
+                    {hasPen && (
+                      <span className="mt-0.5 whitespace-nowrap text-[9px] font-semibold uppercase text-muted-foreground">
+                        pen. {m.pen_home}:{m.pen_away}
+                      </span>
+                    )}
+                    {leg?.aggregate && (
+                      <span className="mt-0.5 whitespace-nowrap text-[9px] font-semibold uppercase text-muted-foreground">
+                        ukupno {leg.aggregate}
+                      </span>
+                    )}
+                  </span>
+                  <span className="flex flex-1" title={m.away}>
+                    <MobileCrest name={m.away} crest={crestFor(m.away) || m.away_crest} />
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-end gap-1 text-sm tabular-nums">
+                  <span>{attText(m.attendance)}</span>
+                  <span className="inline-flex size-4 shrink-0 items-center justify-center">
+                    {canOpen && (
+                      <ChevronDown
+                        className={`size-4 text-muted-foreground transition-transform ${
+                          isOpen ? "rotate-180" : ""
+                        }`}
+                      />
+                    )}
+                  </span>
+                </div>
+              </div>
+
+              {isOpen && (
+                <div className="bg-muted px-3 pb-4 pt-1">
+                  <p className="mb-3 text-center text-xs font-semibold text-muted-foreground">
+                    {m.home} – {m.away}
+                  </p>
+                  <div className="relative">
+                    <div
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-foreground/30"
+                    />
+                    <ul className="space-y-2 text-xs">
+                      {mg.map((g) => {
+                        const isHome = g.side === "H";
+                        const minute = (
+                          <span className="font-semibold tabular-nums">{minuteOf(g)}</span>
+                        );
+                        return (
+                          <li
+                            key={g.id}
+                            className="relative grid grid-cols-[1fr_auto_1fr] items-center gap-3"
+                          >
+                            <div className="min-w-0 text-right">
+                              {isHome ? <GoalText g={g} /> : minute}
+                            </div>
+                            <span className="relative z-10 flex min-w-8 justify-center">
+                              <span className="rounded-full bg-muted p-0.5">
+                                <img src={BALL_URL} alt="" className="size-5 object-contain" />
+                              </span>
+                            </span>
+                            <div className="min-w-0 text-left">
+                              {isHome ? minute : <GoalText g={g} />}
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ---- Računar: tabela kao do sada ---- */}
+      <div className="hidden overflow-x-auto sm:block">
         <table className="w-full min-w-[560px] text-sm tabular-nums">
           <thead>
             <tr className="text-xs uppercase text-muted-foreground">
@@ -221,11 +376,7 @@ export function RoundTable({
                     </td>
                     <td className="px-4 py-3 text-right">
                       <span className="inline-flex items-center justify-end gap-2">
-                        {m.attendance > 0
-                          ? m.attendance.toLocaleString("de-DE")
-                          : m.attendance < 0
-                            ? "x"
-                            : "—"}
+                        {attText(m.attendance)}
                         <span className="inline-flex size-4 shrink-0 items-center justify-center">
                           {canOpen && (
                             <ChevronDown
@@ -401,4 +552,3 @@ export function CupMatches({ scope = "all" }: { scope?: Scope }) {
     </div>
   );
 }
-
