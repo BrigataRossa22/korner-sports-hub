@@ -10,6 +10,8 @@ export type SeasonMatch = {
   score_home: number | null;
   score_away: number | null;
   attendance: number;
+  // naziv grupe ili faze; prazno kod sezona s jednom tabelom
+  grp?: string | null;
 };
 
 export const getSeasonMatches = createServerFn({ method: "GET" })
