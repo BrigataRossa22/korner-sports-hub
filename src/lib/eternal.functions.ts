@@ -16,8 +16,11 @@ export type EternalRow = {
 // Mora biti ista oznaka kao u clubhistory.functions.ts
 const CURRENT_SEASON = "2026-27";
 
-export const getEternalTable = createServerFn({ method: "GET" }).handler(
-  async (): Promise<EternalRow[]> => {
+// prva: true → vječna lista samo za Prvu ligu BiH (sezone 1994/95 do 2001/02)
+export const getEternalTable = createServerFn({ method: "GET" })
+  .inputValidator((input: { prva?: boolean } | undefined) => input)
+  .handler(async ({ data }): Promise<EternalRow[]> => {
+    const prva = data?.prva === true;
     const url = process.env["SUPABASE_URL"];
     const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
     if (!url || !key) return [];
@@ -42,7 +45,7 @@ export const getEternalTable = createServerFn({ method: "GET" }).handler(
       getAll(
         "season_standings?select=season,team,played,wins,draws,losses,goals_for,goals_against,points&order=season.desc,position.asc",
       ),
-      getAll("standings?select=*&order=sort_order.asc"),
+      prva ? Promise.resolve([]) : getAll("standings?select=*&order=sort_order.asc"),
     ]);
 
     const items: EternalRow[] = [];
@@ -59,9 +62,10 @@ export const getEternalTable = createServerFn({ method: "GET" }).handler(
       });
     }
     for (const r of archive) {
-      if (standings.length > 0 && r.season === CURRENT_SEASON) continue;
-      // Prva liga BiH (sezone 1994/95 do 2001/02) se ne računa u vječnu listu
-      if (isPrvaLiga(r.season)) continue;
+      if (!prva && standings.length > 0 && r.season === CURRENT_SEASON) continue;
+      // Prva liga BiH (sezone 1994/95 do 2001/02) ima svoju vječnu listu
+      // i ne računa se u običnu
+      if (isPrvaLiga(r.season) !== prva) continue;
       items.push({
         team: r.team,
         played: r.played,
@@ -99,5 +103,4 @@ export const getEternalTable = createServerFn({ method: "GET" }).handler(
         b.gf - a.gf ||
         a.team.localeCompare(b.team, "bs"),
     );
-  },
-);
+  });
