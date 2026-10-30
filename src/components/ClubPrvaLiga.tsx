@@ -103,4 +103,4 @@ export function ClubPrvaLiga({ name }: { name: string }) {
       </table>
     </div>
   );
-}
+} 
