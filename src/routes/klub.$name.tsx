@@ -2,6 +2,7 @@ import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ClubMatchesSection } from "@/components/ClubMatchesSection";
+import { ClubPrvaLiga } from "@/components/ClubPrvaLiga";
 import { ClubTopScorers } from "@/components/ClubTopScorers";
 import { LoadError } from "@/components/RouteFallbacks";
 import { TableSkeleton } from "@/components/TableSkeleton";
@@ -495,7 +496,7 @@ function Klub() {
             </>
           )
         ) : comp === "prva" ? (
-          <p className="px-4 py-6 text-sm text-muted-foreground">Još nema podataka.</p>
+          <ClubPrvaLiga name={name} />
         ) : otherRows.length === 0 ? (
           <p className="px-4 py-6 text-sm text-muted-foreground">
             Za ovo takmičenje još nema podataka za ovaj klub.
