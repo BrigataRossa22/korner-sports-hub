@@ -22,6 +22,9 @@ export type ClubSeasonRow = {
 // Oznaka aktuelne sezone (mijenjaš je kad počne nova sezona)
 const CURRENT_SEASON = "2026-27";
 
+// Sezone koje nisu WWIN/Premijer liga (npr. Prvo prvenstvo BiH 1994/95): ne prikazuju se u kartici "WWIN liga"
+const NOT_IN_LIGA = new Set(["1994-95"]);
+
 export const getClubHistory = createServerFn({ method: "GET" })
   .inputValidator((input: { name: string }) => input)
   .handler(async ({ data }): Promise<ClubSeasonRow[]> => {
@@ -105,6 +108,7 @@ export const getClubHistory = createServerFn({ method: "GET" })
     for (const r of archive) {
       if (!sameClub(r.team, data.name)) continue;
       if (r.season === CURRENT_SEASON && cur) continue;
+      if (NOT_IN_LIGA.has(r.season)) continue;
       const games = homeGames.filter((g) => g.season === r.season && sameClub(g.home, r.team));
       const attSum = games.reduce((s, g) => s + g.attendance, 0);
       const avg = games.length ? Math.round(attSum / games.length) : null;
@@ -128,4 +132,3 @@ export const getClubHistory = createServerFn({ method: "GET" })
 
     return rows;
   });
-
