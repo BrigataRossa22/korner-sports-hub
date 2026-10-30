@@ -27,6 +27,20 @@ export function ClubPrvaLiga({ name }: { name: string }) {
     return <p className="px-4 py-6 text-sm text-muted-foreground">Još nema podataka.</p>;
   }
 
+  const tot = rows.reduce(
+    (s, r) => ({
+      played: s.played + r.played,
+      wins: s.wins + r.wins,
+      draws: s.draws + r.draws,
+      losses: s.losses + r.losses,
+      gf: s.gf + r.gf,
+      ga: s.ga + r.ga,
+      points: s.points + r.points,
+    }),
+    { played: 0, wins: 0, draws: 0, losses: 0, gf: 0, ga: 0, points: 0 },
+  );
+  const seasons = new Set(rows.map((r) => r.season)).size;
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[760px] text-sm tabular-nums">
@@ -70,6 +84,22 @@ export function ClubPrvaLiga({ name }: { name: string }) {
             </tr>
           ))}
         </tbody>
+        <tfoot>
+          <tr className="border-t-2 border-border bg-surface font-bold">
+            <td className="px-3 py-3">
+              Ukupno <span className="text-xs font-normal text-muted-foreground">({seasons} sez.)</span>
+            </td>
+            <td className="px-3 py-3" />
+            <td className="px-3 py-3 text-right">{tot.played}</td>
+            <td className="px-3 py-3 text-right">{tot.wins}</td>
+            <td className="px-3 py-3 text-right">{tot.draws}</td>
+            <td className="px-3 py-3 text-right">{tot.losses}</td>
+            <td className="px-3 py-3 text-right">{tot.gf}</td>
+            <td className="px-3 py-3 text-right">{tot.ga}</td>
+            <td className="px-3 py-3 text-right">{tot.points}</td>
+            <td className="px-3 py-3" />
+          </tr>
+        </tfoot>
       </table>
     </div>
   );
