@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { LoadError } from "@/components/RouteFallbacks";
@@ -24,9 +25,10 @@ const stickyHead = "sticky z-20 bg-card sm:static sm:bg-transparent";
 const stickyCell = "sticky z-10 bg-card sm:static sm:bg-transparent";
 
 function Vjecna() {
+  const [prva, setPrva] = useState(false);
   const { data, isLoading } = useQuery({
-    queryKey: ["eternal-table"],
-    queryFn: () => getEternalTable(),
+    queryKey: ["eternal-table", prva],
+    queryFn: () => getEternalTable({ data: { prva } }),
   });
   const crestFor = useClubCrest();
   const rows = data ?? [];
@@ -36,6 +38,30 @@ function Vjecna() {
       <div className="rule-top mb-5 pt-3">
         <p className="kicker">Statistika</p>
         <h1 className="mt-2 font-display text-3xl uppercase sm:text-4xl">Vječna lista</h1>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {[
+            { v: false, label: "WWIN liga" },
+            { v: true, label: "Prva liga BiH" },
+          ].map((o) => (
+            <button
+              key={o.label}
+              type="button"
+              onClick={() => setPrva(o.v)}
+              className={`rounded-md border px-3 py-1 font-display text-xs font-semibold uppercase tracking-wide ${
+                prva === o.v
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-card hover:bg-muted"
+              }`}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+        {prva && (
+          <p className="mt-3 text-sm text-muted-foreground">
+            Sezone 1994/95 do 2001/02 (uključene i grupe, play-off i finalne utakmice).
+          </p>
+        )}
       </div>
       {isLoading ? (
         <div className="rounded-lg border border-border bg-card">
