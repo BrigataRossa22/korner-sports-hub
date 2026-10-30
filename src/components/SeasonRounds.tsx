@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useId, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
 import { TableSkeleton } from "@/components/TableSkeleton";
@@ -44,7 +44,8 @@ function GoalText({ g }: { g: SeasonGoal }) {
   );
 }
 
-export function SeasonRounds({ season }: { season: string }) {
+// grp: kod sezona s više grupa (npr. 1994/95) prikazuju se samo utakmice te grupe/faze
+export function SeasonRounds({ season, grp: grpProp }: { season: string; grp?: string }) {
   const { data, isLoading } = useQuery({
     queryKey: ["season-matches", season],
     queryFn: () => getSeasonMatches({ data: { season } }),
@@ -54,6 +55,7 @@ export function SeasonRounds({ season }: { season: string }) {
     queryFn: () => getSeasonGoals({ data: { season } }),
   });
   const crestFor = useClubCrest();
+  const uid = useId();
   const [picked, setPicked] = useState<number | null>(null);
   const [open, setOpen] = useState<Set<string>>(new Set());
 
@@ -64,8 +66,10 @@ export function SeasonRounds({ season }: { season: string }) {
 
   const rows = data ?? [];
   const goals = goalsData ?? [];
+  const hasGroups = rows.some((m) => (m.grp ?? "") !== "");
+  const grp = grpProp ?? "";
   const groups = new Map<number, SeasonMatch[]>();
-  for (const m of rows) {
+  for (const m of rows.filter((x) => (x.grp ?? "") === grp)) {
     const r = m.round ?? 0;
     groups.set(r, [...(groups.get(r) ?? []), m]);
   }
@@ -112,9 +116,14 @@ export function SeasonRounds({ season }: { season: string }) {
     );
   };
 
+  // Sezone s grupama crta ArchiveTable (tabela + kola za svaku grupu)
+  if (hasGroups && grpProp === undefined) return null;
+
+  const gap = grpProp !== undefined ? "mt-4" : "mt-10";
+
   if (isLoading) {
     return (
-      <div className="mt-10 rounded-lg border border-border bg-card">
+      <div className={`${gap} rounded-lg border border-border bg-card`}>
         <TableSkeleton rows={8} cols={3} />
       </div>
     );
@@ -122,24 +131,26 @@ export function SeasonRounds({ season }: { season: string }) {
 
   if (rounds.length === 0) {
     return (
-      <p className="mt-10 border-y border-border py-6 text-sm text-muted-foreground">
+      <p className={`${gap} border-y border-border py-6 text-sm text-muted-foreground`}>
         Utakmice po kolima za ovu sezonu još nisu unesene.
       </p>
     );
   }
 
+  const selectId = `kolo-arhiva-${uid}`;
+
   return (
-    <section className="mt-10 rounded-lg border border-border bg-card">
+    <section className={`${gap} rounded-lg border border-border bg-card`}>
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
-        <h2 className="font-display text-lg font-bold uppercase">
+        <h3 className="font-display text-lg font-bold uppercase">
           {round === 0 ? "Bez kola" : `${round}. kolo`}
-        </h2>
+        </h3>
         <div className="flex items-center gap-2">
-          <label htmlFor="kolo-arhiva" className="text-xs font-semibold uppercase text-muted-foreground">
+          <label htmlFor={selectId} className="text-xs font-semibold uppercase text-muted-foreground">
             Kolo
           </label>
           <select
-            id="kolo-arhiva"
+            id={selectId}
             value={round}
             onChange={(e) => setPicked(Number(e.target.value))}
             className="rounded-md border border-border bg-card px-3 py-1.5 text-sm font-semibold"
