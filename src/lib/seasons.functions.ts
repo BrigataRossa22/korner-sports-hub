@@ -13,6 +13,8 @@ export type SeasonRow = {
   goals_against: number;
   points: number;
   penalty: number;
+  // naziv grupe ili faze (npr. Grupa Tuzla); prazno kod sezona s jednom tabelom
+  grp?: string | null;
 };
 
 export const getSeasonStandings = createServerFn({ method: "GET" }).handler(
