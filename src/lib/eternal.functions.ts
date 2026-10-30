@@ -15,8 +15,8 @@ export type EternalRow = {
 // Mora biti ista oznaka kao u clubhistory.functions.ts
 const CURRENT_SEASON = "2026-27";
 
-// Sezone koje se NE računaju u vječnu listu (npr. Prvo prvenstvo BiH 1994/95)
-const NOT_IN_ETERNAL = new Set(["1994-95"]);
+// Sezone koje se NE računaju u vječnu listu (Prvo prvenstvo BiH 1994/95 i Prva liga BiH 1995/96)
+const NOT_IN_ETERNAL = new Set(["1994-95", "1995-96"]);
 
 export const getEternalTable = createServerFn({ method: "GET" }).handler(
   async (): Promise<EternalRow[]> => {
