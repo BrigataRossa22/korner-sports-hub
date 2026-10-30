@@ -4,6 +4,8 @@ import { TableSkeleton } from "@/components/TableSkeleton";
 import { getClubPrva } from "@/lib/clubprva.functions";
 import { groupRank } from "@/lib/season-groups";
 
+const fmtAvg = (n: number | null) => (n !== null ? n.toLocaleString("de-DE") : "—");
+
 // Kartica "Prva liga BiH" na stranici kluba: sezone 1994/95 do 2001/02
 export function ClubPrvaLiga({ name }: { name: string }) {
   const { data, isLoading } = useQuery({
@@ -11,7 +13,7 @@ export function ClubPrvaLiga({ name }: { name: string }) {
     queryFn: () => getClubPrva({ data: { name } }),
   });
 
-  if (isLoading) return <TableSkeleton rows={4} cols={9} />;
+  if (isLoading) return <TableSkeleton rows={4} cols={10} />;
 
   // Najnovija sezona prva; unutar sezone prvo finalna grupa, pa ostale grupe
   const rows = [...(data ?? [])].sort(
@@ -27,7 +29,7 @@ export function ClubPrvaLiga({ name }: { name: string }) {
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[640px] text-sm tabular-nums">
+      <table className="w-full min-w-[760px] text-sm tabular-nums">
         <thead>
           <tr className="border-b border-border bg-surface text-xs uppercase text-muted-foreground">
             <th className="px-3 py-3 text-left">Sezona</th>
@@ -39,6 +41,7 @@ export function ClubPrvaLiga({ name }: { name: string }) {
             <th className="px-3 py-3 text-right">Golovi</th>
             <th className="px-3 py-3 text-right">Primljeni</th>
             <th className="px-3 py-3 text-right">Bodova</th>
+            <th className="px-3 py-3 text-right">Prosjek gledalaca</th>
           </tr>
         </thead>
         <tbody>
@@ -63,6 +66,7 @@ export function ClubPrvaLiga({ name }: { name: string }) {
               <td className="px-3 py-3 text-right">{r.gf}</td>
               <td className="px-3 py-3 text-right">{r.ga}</td>
               <td className="px-3 py-3 text-right font-bold">{r.points}</td>
+              <td className="px-3 py-3 text-right">{fmtAvg(r.avg)}</td>
             </tr>
           ))}
         </tbody>
