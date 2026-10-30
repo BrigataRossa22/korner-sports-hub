@@ -5,11 +5,15 @@ const PREFIXES = new Set(["fk", "nk", "hsk", "hnk", "sk", "gnk", "fc", "nogometn
 const ALIASES: Record<string, string> = {
   "zovko zepce": "zepce",
   "zepce limorad": "zepce",
+  "alfa modrica": "modrica",
+  "modrica alfa": "modrica",
+  "modrica maxima": "modrica",
 };
 
 // Ime koje se prikazuje za spojeni klub (ključ je zajedničko normalizovano ime)
 const DISPLAY: Record<string, string> = {
   zepce: "Žepče",
+  modrica: "Modriča",
 };
 
 export function normClub(s: string): string {
