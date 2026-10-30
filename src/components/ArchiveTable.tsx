@@ -1,7 +1,11 @@
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { SeasonRounds } from "@/components/SeasonRounds";
 import { TableSkeleton } from "@/components/TableSkeleton";
-import { getSeasonStandings } from "@/lib/seasons.functions";
+import { compareGroups, groupRank } from "@/lib/season-groups";
+import { getSeasonMatches } from "@/lib/seasonmatches.functions";
+import { getSeasonStandings, type SeasonRow } from "@/lib/seasons.functions";
 import { useClubCrest } from "@/lib/use-club-crest";
 
 export function useSeasons() {
@@ -18,22 +22,8 @@ export function useSeasons() {
 const stickyHead = "sticky z-20 bg-surface sm:static sm:bg-transparent";
 const stickyCell = "sticky z-10 bg-card sm:static sm:bg-transparent";
 
-export function ArchiveTable({ season }: { season: string }) {
-  const { rows, isLoading } = useSeasons();
+function StandingsBlock({ list, season }: { list: SeasonRow[]; season: string }) {
   const crestFor = useClubCrest();
-  const list = rows.filter((r) => r.season === season).sort((a, b) => a.position - b.position);
-
-  if (isLoading) {
-    return (
-      <div className="rounded-lg border border-border bg-card">
-        <TableSkeleton rows={10} cols={8} />
-      </div>
-    );
-  }
-  if (list.length === 0) {
-    return <p className="border-y border-border py-8 text-muted-foreground">Nema podataka za ovu sezonu.</p>;
-  }
-
   return (
     <div className="overflow-x-auto border-y border-border">
       <table className="w-full min-w-[500px] border-collapse text-sm tabular-nums sm:min-w-[600px]">
@@ -122,6 +112,96 @@ export function ArchiveTable({ season }: { season: string }) {
           })}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+export function ArchiveTable({ season }: { season: string }) {
+  const { rows, isLoading } = useSeasons();
+  const { data: matchData } = useQuery({
+    queryKey: ["season-matches", season],
+    queryFn: () => getSeasonMatches({ data: { season } }),
+  });
+  const [pickedGroup, setPickedGroup] = useState<string | null>(null);
+
+  useEffect(() => {
+    setPickedGroup(null);
+  }, [season]);
+
+  const all = rows.filter((r) => r.season === season);
+
+  if (isLoading) {
+    return (
+      <div className="rounded-lg border border-border bg-card">
+        <TableSkeleton rows={10} cols={8} />
+      </div>
+    );
+  }
+  if (all.length === 0) {
+    return <p className="border-y border-border py-8 text-muted-foreground">Nema podataka za ovu sezonu.</p>;
+  }
+
+  const sorted = (n: string) =>
+    all.filter((r) => (r.grp ?? "") === n).sort((a, b) => a.position - b.position);
+
+  // Obična sezona: jedna tabela
+  const tableNames = [...new Set(all.map((r) => r.grp ?? ""))];
+  if (tableNames.length === 1) {
+    return <StandingsBlock list={sorted(tableNames[0] ?? "")} season={season} />;
+  }
+
+  // Sezona s grupama (npr. 1994/95): izbor grupe, pretkolo play-offa, na dnu finalna grupa
+  const allNames = [
+    ...new Set([...tableNames, ...(matchData ?? []).map((m) => m.grp ?? "").filter((n) => n !== "")]),
+  ].sort(compareGroups);
+  const groupNames = allNames.filter((n) => groupRank(n) === 1);
+  const playoffNames = allNames.filter((n) => groupRank(n) === 2);
+  const finalNames = allNames.filter((n) => groupRank(n) === 3);
+  const sel = pickedGroup !== null && groupNames.includes(pickedGroup) ? pickedGroup : (groupNames[0] ?? "");
+
+  const heading = "mb-3 font-display text-xl font-bold uppercase";
+
+  return (
+    <div className="space-y-12">
+      {groupNames.length > 0 && (
+        <section>
+          <h2 className={heading}>Grupe</h2>
+          <div className="mb-4 flex flex-wrap gap-2">
+            {groupNames.map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => setPickedGroup(n)}
+                aria-pressed={n === sel}
+                className={`rounded-md border px-3 py-1.5 text-sm font-semibold ${
+                  n === sel
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-card hover:bg-muted"
+                }`}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+          <StandingsBlock list={sorted(sel)} season={season} />
+          <SeasonRounds key={sel} season={season} grp={sel} />
+        </section>
+      )}
+
+      {playoffNames.map((n) => (
+        <section key={n}>
+          <h2 className={heading}>{n}</h2>
+          <SeasonRounds season={season} grp={n} />
+        </section>
+      ))}
+
+      {finalNames.map((n) => (
+        <section key={n}>
+          <h2 className={heading}>{n}</h2>
+          {sorted(n).length > 0 && <StandingsBlock list={sorted(n)} season={season} />}
+          <SeasonRounds season={season} grp={n} />
+        </section>
+      ))}
     </div>
   );
 }
