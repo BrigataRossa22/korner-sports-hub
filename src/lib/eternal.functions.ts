@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { displayClub, sameClub } from "@/lib/club-match";
+import { isPrvaLiga } from "@/lib/prva-liga";
 
 export type EternalRow = {
   team: string;
@@ -14,9 +15,6 @@ export type EternalRow = {
 
 // Mora biti ista oznaka kao u clubhistory.functions.ts
 const CURRENT_SEASON = "2026-27";
-
-// Sezone koje se NE računaju u vječnu listu (Prvo prvenstvo BiH 1994/95 i Prva liga BiH 1995/96)
-const NOT_IN_ETERNAL = new Set(["1994-95", "1995-96"]);
 
 export const getEternalTable = createServerFn({ method: "GET" }).handler(
   async (): Promise<EternalRow[]> => {
@@ -62,7 +60,8 @@ export const getEternalTable = createServerFn({ method: "GET" }).handler(
     }
     for (const r of archive) {
       if (standings.length > 0 && r.season === CURRENT_SEASON) continue;
-      if (NOT_IN_ETERNAL.has(r.season)) continue;
+      // Prva liga BiH (sezone 1994/95 do 2001/02) se ne računa u vječnu listu
+      if (isPrvaLiga(r.season)) continue;
       items.push({
         team: r.team,
         played: r.played,
