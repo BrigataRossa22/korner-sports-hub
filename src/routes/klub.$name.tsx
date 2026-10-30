@@ -10,7 +10,7 @@ import { getClubHistory } from "@/lib/clubhistory.functions";
 import { getClubInfo } from "@/lib/clubinfo.functions";
 import { getCupMatches, type CupMatch } from "@/lib/cupmatches.functions";
 import { getEuroMatches } from "@/lib/euromatches.functions";
-import { sameClub } from "@/lib/club-match";
+import { displayClub, sameClub } from "@/lib/club-match";
 import { useCrest } from "@/lib/use-crest";
 import { useClubCrest } from "@/lib/use-club-crest";
 
@@ -19,8 +19,8 @@ const SUPA = "https://wxyxcfalnqttwchxebpn.supabase.co/storage/v1/object/public/
 export const Route = createFileRoute("/klub/$name")({
   head: ({ params }) => ({
     meta: [
-      { title: `${params.name} — Korner BiH` },
-      { name: "description", content: `${params.name}: utakmice, trofeji i uspjesi.` },
+      { title: `${displayClub(params.name)} — Korner BiH` },
+      { name: "description", content: `${displayClub(params.name)}: utakmice, trofeji i uspjesi.` },
     ],
   }),
   errorComponent: LoadError,
@@ -335,7 +335,7 @@ function Klub() {
         {crest && <img src={crest} alt="" className="size-16 object-contain" />}
         <div>
           <p className="kicker">Klub · sezona 2026/27</p>
-          <h1 className="mt-1 font-display text-3xl uppercase sm:text-4xl">{name}</h1>
+          <h1 className="mt-1 font-display text-3xl uppercase sm:text-4xl">{displayClub(name)}</h1>
         </div>
       </div>
 
