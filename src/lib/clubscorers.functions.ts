@@ -9,6 +9,8 @@ export type ClubScorer = {
   lastSeason: string;
 };
 
+export type ScorerComp = "liga" | "kup" | "evropa";
+
 export type ClubScorersData = {
   scorers: ClubScorer[];
   firstSeason: string;
@@ -31,7 +33,7 @@ const CURRENT_SEASON = "2026-27";
 const norm = (s: string) =>
   s
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[̀-ͯ]/g, "")
     .replace(/đ/gi, "d")
     .toLowerCase()
     .replace(/\s+/g, " ")
@@ -81,16 +83,20 @@ async function load(url: string, key: string, table: string, selects: string[]):
 }
 
 export const getClubTopScorers = createServerFn({ method: "GET" })
-  .inputValidator((input: { name: string }) => input)
+  .inputValidator((input: { name: string; comp?: ScorerComp }) => input)
   .handler(async ({ data }): Promise<ClubScorersData> => {
     const url = process.env["SUPABASE_URL"];
     const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
     const empty: ClubScorersData = { scorers: [], firstSeason: "", lastSeason: "" };
     if (!url || !key) return empty;
 
+    const comp: ScorerComp = data.comp ?? "liga";
+    const sideSelects = ["season,player,kind,side,home,away", "season,player,kind"];
+    // Liga: arhiva + aktuelna sezona. Kup i Evropa: jedna tabela golova
+    // (ako tabela još ne postoji, lista je prazna)
     const [archive, current] = await Promise.all([
-      load(url, key, "season_goals", ["season,player,kind,side,home,away", "season,player,kind"]),
-      load(url, key, "match_goals", ["player,kind,team", "player,kind"]),
+      load(url, key, comp === "liga" ? "season_goals" : comp === "kup" ? "cup_goals" : "euro_goals", sideSelects),
+      comp === "liga" ? load(url, key, "match_goals", ["player,kind,team", "player,kind"]) : Promise.resolve([]),
     ]);
 
     type Agg = {
