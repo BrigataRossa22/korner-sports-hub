@@ -24,7 +24,7 @@ const COMPS: { id: ScorerComp; label: string; note: string; empty: string }[] = 
   },
 ];
 
-const MEDAL = ["bg-yellow-500/90", "bg-zinc-400", "bg-amber-700"];
+const MEDAL = ["bg-yellow-500", "bg-zinc-400", "bg-amber-700"];
 
 // Mjesto u tabeli: isti broj golova = isto mjesto
 function withRank<T extends { goals: number }>(rows: T[]) {
@@ -53,12 +53,11 @@ export function ClubTopScorers({ name }: { name: string }) {
   });
 
   const ranked = withRank(data?.scorers ?? []);
-  const max = ranked[0]?.goals ?? 1;
   const range = data && data.firstSeason && data.lastSeason ? seasonsLabel(data.firstSeason, data.lastSeason) : "";
 
   return (
     <section className="mt-10 overflow-hidden rounded-lg border border-border bg-card">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4">
         <div>
           <h2 className="font-display text-lg font-bold uppercase">Top 10 strijelaca</h2>
           {range && <p className="mt-0.5 text-xs text-muted-foreground">Sezone {range}</p>}
@@ -69,7 +68,7 @@ export function ClubTopScorers({ name }: { name: string }) {
               key={c.id}
               type="button"
               onClick={() => setComp(c.id)}
-              className={`rounded-md border px-3 py-1 font-display text-xs font-semibold uppercase tracking-wide ${
+              className={`rounded-full border px-4 py-1 font-display text-xs font-semibold uppercase tracking-wide transition-colors ${
                 comp === c.id
                   ? "border-primary bg-primary text-primary-foreground"
                   : "border-border bg-card hover:bg-muted"
@@ -84,20 +83,22 @@ export function ClubTopScorers({ name }: { name: string }) {
       {isLoading ? (
         <TableSkeleton rows={6} cols={3} />
       ) : ranked.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
+        <div className="flex flex-col items-center gap-2 px-4 pb-10 pt-6 text-center">
           <span className="text-3xl" aria-hidden>
             ⚽
           </span>
           <p className="text-sm text-muted-foreground">{cfg.empty}</p>
         </div>
       ) : (
-        <ul>
+        <ul className="space-y-1.5 px-3 pb-3 sm:px-4 sm:pb-4">
           {ranked.map((r, i) => {
             const top = r.rank <= 3;
             return (
               <li
                 key={`${r.name}-${i}`}
-                className="flex items-center gap-3 border-b border-border/70 px-4 py-3 last:border-0 even:bg-surface/50"
+                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 sm:gap-4 sm:px-4 ${
+                  top ? "bg-primary/10" : "bg-surface/60"
+                }`}
               >
                 <span
                   className={`flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-bold tabular-nums ${
@@ -107,35 +108,23 @@ export function ClubTopScorers({ name }: { name: string }) {
                   {r.rank}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <p className={`truncate font-semibold ${top ? "text-primary" : ""}`}>{r.name}</p>
-                    <p className="shrink-0 text-lg font-bold tabular-nums">
-                      {r.goals}
-                      <span className="ml-1 text-xs font-normal text-muted-foreground">gol.</span>
+                  <p className="truncate font-semibold leading-tight">{r.name}</p>
+                  {r.firstSeason && (
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {seasonsLabel(r.firstSeason, r.lastSeason)}
                     </p>
-                  </div>
-                  <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted">
-                    <div
-                      className="h-full rounded-full bg-primary"
-                      style={{ width: `${Math.max(6, Math.round((r.goals / max) * 100))}%` }}
-                    />
-                  </div>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {seasonsLabel(r.firstSeason, r.lastSeason)}
-                    {r.penalties > 0 && (
-                      <>
-                        {r.firstSeason ? " · " : ""}
-                        {r.penalties} {r.penalties === 1 ? "penal" : "penala"}
-                      </>
-                    )}
-                  </p>
+                  )}
+                </div>
+                <div className="shrink-0 text-right">
+                  <span className={`text-2xl font-bold tabular-nums ${top ? "text-primary" : ""}`}>{r.goals}</span>
+                  <span className="ml-1 text-xs uppercase text-muted-foreground">gol.</span>
                 </div>
               </li>
             );
           })}
         </ul>
       )}
-      <p className="border-t border-border px-4 py-2 text-xs text-muted-foreground">{cfg.note}</p>
+      <p className="px-4 pb-3 text-xs text-muted-foreground">{cfg.note}</p>
     </section>
   );
 }
