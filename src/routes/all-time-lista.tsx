@@ -59,7 +59,7 @@ function Vjecna() {
         </div>
         {prva && (
           <p className="mt-3 text-sm text-muted-foreground">
-            Sezone 1994/95 do 2001/02 (uključene i grupe, play-off i finalne utakmice).
+            Samo ligaške utakmice, sezone 1995/96 do 2001/02 (bez 1994/95 i bez play-off utakmica).
           </p>
         )}
       </div>
