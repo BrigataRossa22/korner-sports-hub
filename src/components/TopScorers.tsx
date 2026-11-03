@@ -2,7 +2,16 @@ import { useQuery } from "@tanstack/react-query";
 import { getSeasonGoals } from "@/lib/seasongoals.functions";
 import { useClubCrest } from "@/lib/use-club-crest";
 
-type Scorer = { player: string; team: string; goals: number };
+type Scorer = { player: string; team: string; goals: number; pens: number };
+
+const isOwn = (k: string | null | undefined) => {
+  const x = (k ?? "").toLowerCase();
+  return x === "o" || x === "own" || x.startsWith("auto");
+};
+const isPen = (k: string | null | undefined) => {
+  const x = (k ?? "").toLowerCase();
+  return x === "p" || x === "pen" || x.startsWith("penal");
+};
 
 export function TopScorers({ season }: { season: string }) {
   const { data } = useQuery({
@@ -11,13 +20,16 @@ export function TopScorers({ season }: { season: string }) {
   });
   const crestFor = useClubCrest();
 
+  // Računaju se SVI golovi (obični i penali); samo se autogol ne računa strijelcu
   const map = new Map<string, Scorer>();
   for (const g of data ?? []) {
-    if (g.kind === "o") continue; // autogol se ne računa strijelcu
+    if (!g.player || isOwn(g.kind)) continue;
+    const player = g.player.replace(/\s+/g, " ").trim();
     const team = g.side === "H" ? g.home : g.away;
-    const key = `${g.player}|${team}`;
-    const s = map.get(key) ?? { player: g.player, team, goals: 0 };
+    const key = `${player}|${team}`;
+    const s = map.get(key) ?? { player, team, goals: 0, pens: 0 };
     s.goals += 1;
+    if (isPen(g.kind)) s.pens += 1;
     map.set(key, s);
   }
 
@@ -60,7 +72,12 @@ export function TopScorers({ season }: { season: string }) {
                       </span>
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-right text-base font-bold">{s.goals}</td>
+                  <td className="px-4 py-3 text-right">
+                    <span className="text-base font-bold">{s.goals}</span>
+                    {s.pens > 0 && (
+                      <span className="block text-xs text-muted-foreground">od toga {s.pens} pen.</span>
+                    )}
+                  </td>
                 </tr>
               );
             })}
