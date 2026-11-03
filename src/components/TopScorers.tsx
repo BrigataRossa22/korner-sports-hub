@@ -2,7 +2,12 @@ import { useQuery } from "@tanstack/react-query";
 import { getSeasonGoals } from "@/lib/seasongoals.functions";
 import { useClubCrest } from "@/lib/use-club-crest";
 
-type Scorer = { player: string; team: string; goals: number; pens: number };
+type Scorer = {
+  player: string;
+  goals: number;
+  pens: number;
+  teams: Map<string, number>;
+};
 
 const isOwn = (k: string | null | undefined) => {
   const x = (k ?? "").toLowerCase();
@@ -13,6 +18,16 @@ const isPen = (k: string | null | undefined) => {
   return x === "p" || x === "pen" || x.startsWith("penal");
 };
 
+// Ime igrača bez razmaka viška, velikih/malih slova i kvačica (za spajanje istog igrača)
+const normPlayer = (s: string) =>
+  s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/đ/g, "d")
+    .replace(/\s+/g, " ")
+    .trim();
+
 export function TopScorers({ season }: { season: string }) {
   const { data } = useQuery({
     queryKey: ["season-goals", season],
@@ -20,20 +35,27 @@ export function TopScorers({ season }: { season: string }) {
   });
   const crestFor = useClubCrest();
 
-  // Računaju se SVI golovi (obični i penali); samo se autogol ne računa strijelcu
+  // Računaju se SVI golovi (obični i penali); samo se autogol ne računa strijelcu.
+  // Golovi se zbrajaju po igraču, bez obzira kako je klub napisan u pojedinoj utakmici.
   const map = new Map<string, Scorer>();
   for (const g of data ?? []) {
     if (!g.player || isOwn(g.kind)) continue;
     const player = g.player.replace(/\s+/g, " ").trim();
+    const key = normPlayer(player);
     const team = g.side === "H" ? g.home : g.away;
-    const key = `${player}|${team}`;
-    const s = map.get(key) ?? { player, team, goals: 0, pens: 0 };
+    const s = map.get(key) ?? { player, goals: 0, pens: 0, teams: new Map<string, number>() };
     s.goals += 1;
     if (isPen(g.kind)) s.pens += 1;
+    s.teams.set(team, (s.teams.get(team) ?? 0) + 1);
     map.set(key, s);
   }
 
   const top = [...map.values()]
+    .map((s) => {
+      // klub u kojem je igrač dao najviše golova
+      const team = [...s.teams.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? "";
+      return { player: s.player, team, goals: s.goals, pens: s.pens };
+    })
     .sort((a, b) => b.goals - a.goals || a.player.localeCompare(b.player, "bs"))
     .slice(0, 10);
 
