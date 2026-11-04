@@ -1,8 +1,8 @@
 import { Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, Menu, X } from "lucide-react";
-import { contentOptions } from "@/lib/content";
+import { getLeagueMatches } from "@/lib/leaguematches.functions";
 import { useHydrated } from "@/lib/use-hydrated";
 
 const linkClass =
@@ -51,21 +51,54 @@ const mobileGroups: { id: string; label: string; items: ReadonlyArray<Item> }[] 
   { id: "rep", label: "Reprezentacija", items: repSub },
 ];
 
-function useTicker(): string {
+type Ticker = { round: number; items: string[] };
+
+// Datum kao "07.11." (i vrijeme, ako je upisano)
+function shortDate(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const date = `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.`;
+  if (iso.length > 10 && (d.getHours() !== 0 || d.getMinutes() !== 0)) {
+    return `${date} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  }
+  return date;
+}
+
+// Sljedeće kolo lige: prvo kolo u kojem je odigrano manje od pola utakmica
+// (odgođene utakmice iz ranijih kola ne smetaju). Prikazuju se njegove neodigrane utakmice.
+function useTicker(): Ticker | null {
   const hydrated = useHydrated();
-  const { data } = useQuery({ ...contentOptions, enabled: hydrated });
-  if (!data || data.fixtures.length === 0) return "";
+  const { data } = useQuery({
+    queryKey: ["league-matches"],
+    queryFn: () => getLeagueMatches(),
+    enabled: hydrated,
+  });
+  if (!data || data.length === 0) return null;
 
-  const upcoming = data.fixtures.filter((f) => !f.finished);
-  const shown = (upcoming.length ? upcoming : data.fixtures).slice(0, 2);
+  const hasResult = (m: { score_home: number | null; score_away: number | null }) =>
+    m.score_home !== null && m.score_away !== null;
 
-  return shown
-    .map((f) =>
-      f.finished && f.scoreHome !== null && f.scoreAway !== null
-        ? `${f.home} ${f.scoreHome}:${f.scoreAway} ${f.away}`
-        : `${f.home} – ${f.away} ${f.when}`,
-    )
-    .join(" · ");
+  const byRound = new Map<number, typeof data>();
+  for (const m of data) {
+    if (!m.round) continue;
+    byRound.set(m.round, [...(byRound.get(m.round) ?? []), m]);
+  }
+  const rounds = [...byRound.keys()].sort((a, b) => a - b);
+
+  for (const r of rounds) {
+    const ms = byRound.get(r) ?? [];
+    const played = ms.filter(hasResult).length;
+    if (played * 2 >= ms.length) continue;
+    const upcoming = ms
+      .filter((m) => !hasResult(m))
+      .sort((a, b) => a.match_date.localeCompare(b.match_date));
+    if (upcoming.length === 0) continue;
+    return {
+      round: r,
+      items: upcoming.map((m) => `${m.home} – ${m.away} ${shortDate(m.match_date)}`.trim()),
+    };
+  }
+  return null;
 }
 
 function Dropdown({
@@ -198,11 +231,30 @@ export function SiteHeader() {
 
       {ticker && (
         <div className="bg-primary">
+          <style>{`
+            @keyframes korner-ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+            .korner-ticker-track { display: inline-flex; white-space: nowrap; animation: korner-ticker var(--korner-ticker-time, 30s) linear infinite; }
+            .korner-ticker-wrap:hover .korner-ticker-track { animation-play-state: paused; }
+            @media (prefers-reduced-motion: reduce) { .korner-ticker-track { animation: none; } }
+          `}</style>
           <div className="mx-auto flex max-w-6xl items-center gap-3 overflow-hidden px-4 py-1.5 text-xs text-primary-foreground">
             <span className="shrink-0 font-display font-semibold uppercase tracking-[0.15em]">
-              Uživo
+              Sljedeće utakmice:
             </span>
-            <span className="truncate">{ticker}</span>
+            <div className="korner-ticker-wrap min-w-0 flex-1 overflow-hidden">
+              <div
+                className="korner-ticker-track"
+                style={{ "--korner-ticker-time": `${Math.max(20, ticker.items.join("").length * 0.3)}s` } as CSSProperties}
+              >
+                {[0, 1].map((n) => (
+                  <span key={n} className="pr-12" aria-hidden={n === 1}>
+                    <span className="font-semibold">{ticker.round}. kolo</span>
+                    {" · "}
+                    {ticker.items.join(" · ")}
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}
