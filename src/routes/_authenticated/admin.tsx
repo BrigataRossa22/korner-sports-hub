@@ -6,7 +6,6 @@ import { ExternalLink, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { getEditorStatus, claimFirstEditor } from "@/lib/admin.functions";
-import logoAsset from "@/assets/korner-logo.png.asset.json";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -62,7 +61,7 @@ function AdminLayout() {
       <header className="border-b border-border bg-card">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-4 px-4 py-3">
           <Link to="/admin" className="flex items-center gap-2">
-            <img src={logoAsset.url} alt="Korner BiH" className="size-8" />
+            <img src="/korner-logo.png" alt="Korner BiH" className="size-8 rounded-md" />
             <span className="font-display text-lg font-bold uppercase tracking-tight">
               Korner <span className="text-primary">BiH</span>
             </span>
