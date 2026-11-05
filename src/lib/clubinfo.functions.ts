@@ -5,6 +5,8 @@ export type ClubInfo = {
   club: string;
   founded: string;
   stadium: string;
+  /** Uspjesi: tekst, jedan red po stavci (vidi klub.$name.tsx) */
+  honours?: string | null;
 };
 
 export const getClubInfo = createServerFn({ method: "GET" })
