@@ -23,7 +23,7 @@ const stickyHead = "sticky z-20 bg-surface sm:static sm:bg-transparent";
 const stickyCell = "sticky z-10 bg-card sm:static sm:bg-transparent";
 
 function StandingsBlock({ list, season }: { list: SeasonRow[]; season: string }) {
-  const crestFor = useClubCrest();
+  const crestFor = useClubCrest(season);
   return (
     <div className="overflow-x-auto border-y border-border">
       <table className="w-full min-w-[500px] border-collapse text-sm tabular-nums sm:min-w-[600px]">
