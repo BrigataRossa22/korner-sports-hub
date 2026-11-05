@@ -8,7 +8,6 @@ import { getEuroMatches, type EuroMatch } from "@/lib/euromatches.functions";
 import { getSeasonGoals } from "@/lib/seasongoals.functions";
 import { getSeasonMatches } from "@/lib/seasonmatches.functions";
 import { normClub, sameClub } from "@/lib/club-match";
-import { useCrest } from "@/lib/use-crest";
 import { useClubCrest } from "@/lib/use-club-crest";
 
 // Mora biti ista oznaka kao u clubhistory.functions.ts
@@ -123,10 +122,10 @@ export function ClubMatchesSection({
   season?: string;
   onSeasonChange?: (s: string) => void;
 }) {
-  const crestFor = useCrest();
-  const clubCrest = useClubCrest();
   const [localSeason, setLocalSeason] = useState("");
   const season = seasonProp ?? localSeason;
+  // Grb za tu sezonu (isti kao u arhivi sezona), uz povratak na grb iz tabele clubs
+  const clubCrest = useClubCrest(season || undefined);
   const setSeason = onSeasonChange ?? setLocalSeason;
 
   const { data, isLoading } = useQuery({
@@ -169,18 +168,16 @@ export function ClubMatchesSection({
     !f ? "" : f.startsWith("http") ? f : `https://flagcdn.com/w40/${f.toLowerCase()}.png`;
 
   const Badge = ({ club }: { club: string }) => {
-    const c = crestFor(club);
+    const c = clubCrest(club);
     if (c) return <img src={c} alt="" className="size-6 shrink-0 object-contain" />;
     const f = flagUrl(flags.get(normClub(club)) ?? "");
     if (f) return <img src={f} alt="" className="h-4 w-6 shrink-0 object-cover" />;
-    const b = clubCrest(club);
-    if (b) return <img src={b} alt="" className="size-6 shrink-0 object-contain" />;
     return null;
   };
 
   // Veći grb za mobitel; ako ga nema, zastava ili krug s inicijalima
   const MobileBadge = ({ club }: { club: string }) => {
-    const c = crestFor(club) || clubCrest(club);
+    const c = clubCrest(club);
     if (c) return <img src={c} alt="" className="size-8 shrink-0 object-contain" />;
     const f = flagUrl(flags.get(normClub(club)) ?? "");
     if (f) return <img src={f} alt="" className="h-5 w-8 shrink-0 object-cover" />;
