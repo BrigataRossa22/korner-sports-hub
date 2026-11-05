@@ -5,7 +5,6 @@ import { LoadError } from "@/components/RouteFallbacks";
 import { TableSkeleton } from "@/components/TableSkeleton";
 import { getAllTimeTeams } from "@/lib/alltimeteams.functions";
 import { getCurrentClubs } from "@/lib/currentclubs.functions";
-import { getLeagueMatches } from "@/lib/leaguematches.functions";
 import { displayClub, normClub } from "@/lib/club-match";
 import { useClubCrest } from "@/lib/use-club-crest";
 
@@ -22,21 +21,6 @@ export const Route = createFileRoute("/klubovi")({
 
 type Group = { label: string; fixed: boolean; raws: string[] };
 
-const DAYS = ["NED", "PON", "UTO", "SRI", "ČET", "PET", "SUB"];
-
-function dayLabel(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  return `${DAYS[d.getDay()]}, ${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.`;
-}
-
-function timeLabel(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime()) || iso.length <= 10) return "—";
-  if (d.getHours() === 0 && d.getMinutes() === 0) return "—";
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-}
-
 function Klubovi() {
   const { data, isLoading } = useQuery({
     queryKey: ["all-time-teams"],
@@ -46,47 +30,14 @@ function Klubovi() {
     queryKey: ["current-clubs"],
     queryFn: () => getCurrentClubs(),
   });
-  const { data: league } = useQuery({
-    queryKey: ["league-matches"],
-    queryFn: () => getLeagueMatches(),
-  });
   const crestFor = useClubCrest();
   const scroller = useRef<HTMLDivElement>(null);
-  const roundScroller = useRef<HTMLDivElement>(null);
 
   const scrollBy = (dir: number) => {
     const el = scroller.current;
     if (!el) return;
     el.scrollBy({ left: dir * Math.max(240, el.clientWidth * 0.8), behavior: "smooth" });
   };
-
-  const scrollRound = (dir: number) => {
-    const el = roundScroller.current;
-    if (!el) return;
-    el.scrollBy({ left: dir * Math.max(240, el.clientWidth * 0.8), behavior: "smooth" });
-  };
-
-  // Sljedeće kolo lige: prvo kolo u kojem je odigrano manje od pola utakmica;
-  // prikazuju se njegove neodigrane utakmice (isto kao traka u zaglavlju)
-  const nextRound = (() => {
-    const all = league ?? [];
-    const hasResult = (m: { score_home: number | null; score_away: number | null }) =>
-      m.score_home !== null && m.score_away !== null;
-    const byRound = new Map<number, typeof all>();
-    for (const m of all) {
-      if (!m.round) continue;
-      byRound.set(m.round, [...(byRound.get(m.round) ?? []), m]);
-    }
-    for (const r of [...byRound.keys()].sort((a, b) => a - b)) {
-      const ms = byRound.get(r) ?? [];
-      if (ms.filter(hasResult).length * 2 >= ms.length) continue;
-      const upcoming = ms
-        .filter((m) => !hasResult(m))
-        .sort((a, b) => a.match_date.localeCompare(b.match_date));
-      if (upcoming.length > 0) return { round: r, matches: upcoming };
-    }
-    return null;
-  })();
 
   // Klubovi koji se trenutno takmiče u ligi (gore, u traci)
   const currentItems = (current ?? []).map((team) => ({
@@ -188,73 +139,6 @@ function Klubovi() {
                   {c.label}
                 </span>
               </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {nextRound && (
-        <section className="mb-10">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <h2 className="font-display text-xl font-bold uppercase">
-              Sljedeće kolo · {nextRound.round}. kolo
-            </h2>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => scrollRound(-1)}
-                aria-label="Nazad"
-                className="flex size-9 items-center justify-center rounded-full border border-border bg-card text-lg hover:bg-muted"
-              >
-                ‹
-              </button>
-              <button
-                type="button"
-                onClick={() => scrollRound(1)}
-                aria-label="Naprijed"
-                className="flex size-9 items-center justify-center rounded-full border border-border bg-card text-lg hover:bg-muted"
-              >
-                ›
-              </button>
-            </div>
-          </div>
-          <div
-            ref={roundScroller}
-            className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-3 sm:mx-0 sm:px-0"
-            style={{ scrollbarWidth: "thin" }}
-          >
-            {nextRound.matches.map((m) => (
-              <div
-                key={m.id}
-                className="w-64 shrink-0 snap-start rounded-xl border border-border bg-card px-4 py-3 sm:w-72"
-              >
-                <div className="flex items-center justify-between text-[11px] font-semibold uppercase text-muted-foreground">
-                  <span>{dayLabel(m.match_date)}</span>
-                  <span>{nextRound.round}. kolo</span>
-                </div>
-                <div className="mt-3 flex items-center justify-between gap-3">
-                  <div className="min-w-0 flex-1 space-y-2">
-                    {[m.home, m.away].map((team) => {
-                      const c = crestFor(team);
-                      return (
-                        <div key={team} className="flex items-center gap-2">
-                          {c ? (
-                            <img src={c} alt="" className="size-6 shrink-0 object-contain" />
-                          ) : (
-                            <span className="size-6 shrink-0" />
-                          )}
-                          <span className="truncate text-sm font-bold uppercase">
-                            {displayClub(team)}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <span className="font-display text-2xl font-bold tabular-nums">
-                    {timeLabel(m.match_date)}
-                  </span>
-                </div>
-              </div>
             ))}
           </div>
         </section>
