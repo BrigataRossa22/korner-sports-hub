@@ -8,12 +8,16 @@ const ALIASES: Record<string, string> = {
   "alfa modrica": "modrica",
   "modrica alfa": "modrica",
   "modrica maxima": "modrica",
+  // Drina Zvornik (Živinice), 1997-2000: drugi klub nego današnja Drina Zvornik
+  "drina zvornik zivinice": "zivinice drina",
+  "drina zvornik 93": "zivinice drina",
 };
 
 // Ime koje se prikazuje za spojeni klub (ključ je zajedničko normalizovano ime)
 const DISPLAY: Record<string, string> = {
   zepce: "Žepče",
   modrica: "Modriča",
+  "zivinice drina": "Drina Zvornik (Živinice)",
 };
 
 export function normClub(s: string): string {
