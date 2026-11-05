@@ -141,7 +141,7 @@ export function RoundTable({
   rows: CupMatch[];
   goals: CupGoal[];
 }) {
-  const crestFor = useClubCrest();
+  const crestFor = useClubCrest(rows[0]?.season);
   const [open, setOpen] = useState<Set<string>>(new Set());
   const legs = legInfo(rows);
 
