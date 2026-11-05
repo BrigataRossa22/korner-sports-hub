@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, Menu, X } from "lucide-react";
@@ -145,6 +145,8 @@ export function SiteHeader() {
   const ticker = useTicker();
   const crestFor = useClubCrest();
   const strip = useRef<HTMLDivElement>(null);
+  // Traka sa sljedećim kolom se prikazuje samo na prvoj (početnoj) stranici
+  const isHome = useRouterState({ select: (s) => s.location.pathname === "/" });
 
   const slide = (dir: number) => {
     const el = strip.current;
@@ -245,7 +247,7 @@ export function SiteHeader() {
 
     </header>
 
-    {ticker && (
+    {isHome && ticker && (
       <div className="bg-primary/25">
         <div className="relative mx-auto max-w-6xl px-4 py-3">
           <div
