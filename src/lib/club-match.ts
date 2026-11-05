@@ -21,7 +21,7 @@ const DISPLAY: Record<string, string> = {
   zepce: "Žepče",
   modrica: "Modriča",
   "zivinice drina": "Drina Zvornik (Živinice)",
-    "sloga ljubuski": "HNK Ljubuški",
+    "sloga ljubuski": "Ljubuški",
 };
 
 export function normClub(s: string): string {
