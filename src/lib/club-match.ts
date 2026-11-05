@@ -11,7 +11,7 @@ const ALIASES: Record<string, string> = {
   // Drina Zvornik (Živinice), 1997-2000: drugi klub nego današnja Drina Zvornik
   "drina zvornik zivinice": "zivinice drina",
   "drina zvornik 93": "zivinice drina",
-    // HNK Ljubuški (do 2005) i Sloga Ljubuški (2014-16) su isti klub pod različitim imenom.
+  // HNK Ljubuški (do 2005) i Sloga Ljubuški (2014-16) su isti klub pod različitim imenom.
   // Današnji NK Ljubuški je drugi klub i u bazi se zove "NK Ljubuški (novi)".
   ljubuski: "sloga ljubuski",
 };
@@ -21,7 +21,7 @@ const DISPLAY: Record<string, string> = {
   zepce: "Žepče",
   modrica: "Modriča",
   "zivinice drina": "Drina Zvornik (Živinice)",
-    "sloga ljubuski": "Ljubuški",
+  "sloga ljubuski": "Ljubuški",
 };
 
 export function normClub(s: string): string {
