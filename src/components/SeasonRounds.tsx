@@ -54,7 +54,7 @@ export function SeasonRounds({ season, grp: grpProp }: { season: string; grp?: s
     queryKey: ["season-goals", season],
     queryFn: () => getSeasonGoals({ data: { season } }),
   });
-  const crestFor = useClubCrest();
+  const crestFor = useClubCrest(season);
   const uid = useId();
   const [picked, setPicked] = useState<number | null>(null);
   const [open, setOpen] = useState<Set<string>>(new Set());
