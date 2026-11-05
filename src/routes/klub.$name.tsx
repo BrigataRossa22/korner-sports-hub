@@ -28,6 +28,29 @@ export const Route = createFileRoute("/klub/$name")({
   component: Klub,
 });
 
+type HonourGroup = { title: string; items: { label: string; value: string }[] };
+
+// Tekst iz kolone "honours": red bez dvotačke je naslov takmičenja, red s dvotačkom je uspjeh
+// ("Pobjednik (2): 2005-06, 2018-19"). Prazni redovi se preskaču.
+function parseHonours(text: string | null | undefined): HonourGroup[] {
+  const groups: HonourGroup[] = [];
+  for (const raw of (text ?? "").split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line) continue;
+    const i = line.indexOf(":");
+    if (i === -1) {
+      groups.push({ title: line, items: [] });
+      continue;
+    }
+    if (groups.length === 0) groups.push({ title: "Uspjesi", items: [] });
+    groups[groups.length - 1]!.items.push({
+      label: line.slice(0, i).trim(),
+      value: line.slice(i + 1).trim(),
+    });
+  }
+  return groups.filter((g) => g.items.length > 0);
+}
+
 type Comp = "liga" | "kup" | "evropa" | "prva";
 
 const COMP_LABEL: Record<Comp, string> = {
@@ -172,6 +195,7 @@ function Klub() {
     queryKey: ["club-info", name],
     queryFn: () => getClubInfo({ data: { name } }),
   });
+  const honours = parseHonours(info?.honours);
   const { data: euro } = useQuery({
     queryKey: ["euro-matches"],
     queryFn: () => getEuroMatches(),
@@ -345,9 +369,11 @@ function Klub() {
           {info.founded && (
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Datum osnivanja
+                Godina osnivanja
               </p>
-              <p className="mt-1 text-base font-semibold">{info.founded}</p>
+              <p className="mt-1 text-base font-semibold">
+                {/\b(\d{4})\b/.exec(info.founded)?.[1] ?? info.founded}
+              </p>
             </div>
           )}
           {info.stadium && (
@@ -358,6 +384,30 @@ function Klub() {
               <p className="mt-1 text-base font-semibold">{info.stadium}</p>
             </div>
           )}
+        </section>
+      )}
+
+      {honours.length > 0 && (
+        <section className="mb-8 rounded-lg border border-border bg-card">
+          <h2 className="border-b border-border px-4 py-3 font-display text-lg font-bold uppercase">
+            Uspjesi
+          </h2>
+          <div className="grid gap-x-8 gap-y-5 p-4 sm:grid-cols-2 sm:p-5">
+            {honours.map((g) => (
+              <div key={g.title}>
+                <h3 className="font-display text-base font-bold">{g.title}</h3>
+                <ul className="mt-2 space-y-1.5 border-l-2 border-primary/40 pl-3 text-sm">
+                  {g.items.map((it, i) => (
+                    <li key={i}>
+                      {it.label && <span className="font-semibold">{it.label}</span>}
+                      {it.label && it.value ? ": " : ""}
+                      <span className="text-muted-foreground">{it.value}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
         </section>
       )}
 
@@ -579,7 +629,7 @@ function Klub() {
         <ClubMatchesSection name={name} season={matchSeason} onSeasonChange={setMatchSeason} />
       </div>
 
-      {data && data.achievements.length > 0 && (
+      {honours.length === 0 && data && data.achievements.length > 0 && (
         <section className="mt-10 rounded-lg border border-border bg-card">
           <h2 className="border-b border-border px-4 py-3 font-display text-lg font-bold uppercase">
             Uspjesi
