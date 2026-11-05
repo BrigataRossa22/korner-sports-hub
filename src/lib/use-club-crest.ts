@@ -9,7 +9,7 @@ const PREFIXES = new Set(["fk", "nk", "hsk", "hnk", "sk", "gnk", "fc", "nogometn
 function norm(s: string): string {
   return s
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
     .replace(/đ/g, "d")
     .replace(/[^a-z0-9 ]+/g, " ")
@@ -20,12 +20,20 @@ function norm(s: string): string {
 
 const full = (crest: string): string => (crest.startsWith("http") ? crest : `${SUPA}${crest}`);
 
+// Grb koji vrijedi samo u određenim sezonama (ključ: početna godina sezone -> ime kluba -> fajl grba).
+// Novi slučaj dodaješ kao jedan red.
+const SEASON_CRESTS: Record<string, Record<string, string>> = {
+  "2000": { ljubuski: "hnkljubuski.webp" },
+  "2003": { ljubuski: "hnkljubuski.webp" },
+  "2004": { ljubuski: "hnkljubuski.webp" },
+};
+
 /**
- * Ime kluba -> adresa grba.
+ * Ime kluba -> adresa grba. Ako je zadana sezona, prvo se gleda grb koji vrijedi samo za tu sezonu.
  * Redoslijed: Vječna lista (tačno ime), grb upisan u utakmicama Kupa BiH (tačno ime),
  * Vječna lista (slično ime), pa tabela clubs.
  */
-export function useClubCrest(): (club: string) => string {
+export function useClubCrest(season?: string): (club: string) => string {
   const { data } = useQuery({ queryKey: ["all-time-teams"], queryFn: () => getAllTimeTeams() });
   const { data: cup } = useQuery({ queryKey: ["cup-matches"], queryFn: () => getCupMatches() });
   const fallback = useCrest();
@@ -48,9 +56,14 @@ export function useClubCrest(): (club: string) => string {
     }
   }
 
+  const startYear = season?.match(/\d{4}/)?.[0] ?? "";
+
   return (club: string) => {
     const n = norm(club);
     if (n) {
+      const bySeason = SEASON_CRESTS[startYear]?.[n];
+      if (bySeason) return full(bySeason);
+
       const exact = list.find((t) => t.key === n);
       if (exact) return full(exact.crest);
 
