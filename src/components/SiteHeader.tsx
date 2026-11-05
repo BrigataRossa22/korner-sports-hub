@@ -1,8 +1,10 @@
 import { Link } from "@tanstack/react-router";
-import { useState, type CSSProperties } from "react";
+import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, Menu, X } from "lucide-react";
-import { getLeagueMatches } from "@/lib/leaguematches.functions";
+import { getLeagueMatches, type LeagueMatch } from "@/lib/leaguematches.functions";
+import { displayClub } from "@/lib/club-match";
+import { useClubCrest } from "@/lib/use-club-crest";
 import { useHydrated } from "@/lib/use-hydrated";
 
 const linkClass =
@@ -51,17 +53,23 @@ const mobileGroups: { id: string; label: string; items: ReadonlyArray<Item> }[] 
   { id: "rep", label: "Reprezentacija", items: repSub },
 ];
 
-type Ticker = { round: number; items: string[] };
+type Ticker = { round: number; matches: LeagueMatch[] };
 
-// Datum kao "07.11." (i vrijeme, ako je upisano)
-function shortDate(iso: string): string {
+const DAYS = ["NED", "PON", "UTO", "SRI", "ČET", "PET", "SUB"];
+
+// Dan i datum, npr. "PET, 06.11."
+function dayLabel(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
-  const date = `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.`;
-  if (iso.length > 10 && (d.getHours() !== 0 || d.getMinutes() !== 0)) {
-    return `${date} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-  }
-  return date;
+  return `${DAYS[d.getDay()]}, ${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.`;
+}
+
+// Vrijeme utakmice (ako je upisano), inače crtica
+function timeLabel(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime()) || iso.length <= 10) return "—";
+  if (d.getHours() === 0 && d.getMinutes() === 0) return "—";
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
 // Sljedeće kolo lige: prvo kolo u kojem je odigrano manje od pola utakmica
@@ -93,10 +101,7 @@ function useTicker(): Ticker | null {
       .filter((m) => !hasResult(m))
       .sort((a, b) => a.match_date.localeCompare(b.match_date));
     if (upcoming.length === 0) continue;
-    return {
-      round: r,
-      items: upcoming.map((m) => `${m.home} – ${m.away} ${shortDate(m.match_date)}`.trim()),
-    };
+    return { round: r, matches: upcoming };
   }
   return null;
 }
@@ -138,6 +143,14 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false);
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const ticker = useTicker();
+  const crestFor = useClubCrest();
+  const strip = useRef<HTMLDivElement>(null);
+
+  const slide = (dir: number) => {
+    const el = strip.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * Math.max(240, el.clientWidth * 0.8), behavior: "smooth" });
+  };
 
   const closeAll = () => {
     setOpen(false);
@@ -145,6 +158,7 @@ export function SiteHeader() {
   };
 
   return (
+    <>
     <header className="sticky top-0 z-50 bg-ink text-ink-foreground">
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
         <Link to="/" className="flex items-center gap-2.5">
@@ -229,35 +243,61 @@ export function SiteHeader() {
         </nav>
       )}
 
-      {ticker && (
-        <div className="bg-primary">
-          <style>{`
-            @keyframes korner-ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-            .korner-ticker-track { display: inline-flex; white-space: nowrap; animation: korner-ticker var(--korner-ticker-time, 30s) linear infinite; }
-            .korner-ticker-wrap:hover .korner-ticker-track { animation-play-state: paused; }
-            @media (prefers-reduced-motion: reduce) { .korner-ticker-track { animation: none; } }
-          `}</style>
-          <div className="mx-auto flex max-w-6xl items-center gap-3 overflow-hidden px-4 py-1.5 text-xs text-primary-foreground">
-            <span className="shrink-0 font-display font-semibold uppercase tracking-[0.15em]">
-              Sljedeće utakmice:
-            </span>
-            <div className="korner-ticker-wrap min-w-0 flex-1 overflow-hidden">
-              <div
-                className="korner-ticker-track"
-                style={{ "--korner-ticker-time": `${Math.max(20, ticker.items.join("").length * 0.3)}s` } as CSSProperties}
-              >
-                {[0, 1].map((n) => (
-                  <span key={n} className="pr-12" aria-hidden={n === 1}>
-                    <span className="font-semibold">{ticker.round}. kolo</span>
-                    {" · "}
-                    {ticker.items.join(" · ")}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </header>
+
+    {ticker && (
+      <div className="bg-primary/25">
+        <div className="relative mx-auto max-w-6xl px-4 py-3">
+          <div
+            ref={strip}
+            className="flex snap-x gap-3 overflow-x-auto pb-1 pr-12"
+            style={{ scrollbarWidth: "none" }}
+          >
+            {ticker.matches.map((m) => (
+              <div
+                key={m.id}
+                className="w-60 shrink-0 snap-start rounded-lg border border-border bg-card px-3 py-2 text-card-foreground shadow-sm sm:w-64"
+              >
+                <div className="flex items-center justify-between text-[10px] font-semibold uppercase text-muted-foreground">
+                  <span>{dayLabel(m.match_date)}</span>
+                  <span>{ticker.round}. kolo</span>
+                </div>
+                <div className="mt-1.5 flex items-center justify-between gap-3">
+                  <div className="min-w-0 flex-1 space-y-1">
+                    {[m.home, m.away].map((team) => {
+                      const c = crestFor(team);
+                      return (
+                        <div key={team} className="flex items-center gap-2">
+                          {c ? (
+                            <img src={c} alt="" className="size-5 shrink-0 object-contain" />
+                          ) : (
+                            <span className="size-5 shrink-0" />
+                          )}
+                          <span className="truncate text-xs font-bold uppercase">
+                            {displayClub(team)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <span className="font-display text-xl font-bold tabular-nums">
+                    {timeLabel(m.match_date)}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => slide(1)}
+            aria-label="Sljedeće utakmice"
+            className="absolute right-4 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full bg-primary text-lg text-primary-foreground shadow-md hover:opacity-90"
+          >
+            ›
+          </button>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
