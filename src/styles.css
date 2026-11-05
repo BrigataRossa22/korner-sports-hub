@@ -128,3 +128,8 @@
 @utility rule-top {
   border-top: 3px solid var(--color-primary);
 }
+
+/* Lopta kod golova: u tamnom načinu je bijela */
+.dark img[src$="/lopta.webp"] {
+  filter: invert(1);
+}
