@@ -30,7 +30,8 @@ function Vjecna() {
     queryKey: ["eternal-table", prva],
     queryFn: () => getEternalTable({ data: { prva } }),
   });
-  const crestFor = useClubCrest();
+  // Vječna lista Prve lige BiH (1995-2002) koristi grbove iz tog doba (npr. HNK Ljubuški)
+  const crestFor = useClubCrest(prva ? "2000-01" : undefined);
   const rows = data ?? [];
 
   return (
