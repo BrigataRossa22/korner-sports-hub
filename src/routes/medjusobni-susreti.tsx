@@ -72,16 +72,20 @@ function ClubSelect({
   clubs: string[];
 }) {
   return (
-    <div className="flex flex-1 flex-col items-center gap-3">
-      <div className="flex size-20 items-center justify-center">
-        {crest ? <img src={crest} alt="" className="size-20 object-contain" /> : <span className="size-20" />}
+    <div className="flex min-w-0 flex-1 flex-col items-center gap-2 sm:gap-3">
+      <div className="flex size-16 items-center justify-center sm:size-20">
+        {crest ? (
+          <img src={crest} alt="" className="size-16 object-contain sm:size-20" />
+        ) : (
+          <span className="size-16 sm:size-20" />
+        )}
       </div>
-      <label className="w-full text-xs font-semibold uppercase text-muted-foreground">
+      <label className="w-full min-w-0 text-xs font-semibold uppercase text-muted-foreground">
         {label}
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="mt-1 w-full rounded-md border border-border bg-card px-3 py-2.5 text-sm font-semibold normal-case text-foreground"
+          className="mt-1 w-full min-w-0 truncate rounded-md border border-border bg-card px-2 py-2.5 text-xs font-semibold normal-case text-foreground sm:px-3 sm:text-sm"
         >
           <option value="">Izaberi klub</option>
           {clubs.map((c) => (
@@ -177,16 +181,17 @@ function HeadToHeadPage() {
         </div>
       ) : (
         <>
-          <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-start">
+          {/* Klub 1 i Klub 2 su jedan pored drugog i na mobitelu */}
+          <div className="flex items-start gap-2 sm:gap-4">
             <ClubSelect value={a} onChange={setA} label="Klub 1" crest={crestA} clubs={clubs} />
-            <div className="flex items-center justify-center sm:pt-24">
+            <div className="flex shrink-0 items-center justify-center pt-3 sm:pt-24">
               <button
                 type="button"
                 onClick={() => {
                   setA(b);
                   setB(a);
                 }}
-                className="rounded-md border border-border px-3 py-2 text-sm font-semibold hover:bg-surface"
+                className="rounded-md border border-border px-2.5 py-2 text-sm font-semibold hover:bg-surface sm:px-3"
                 title="Zamijeni klubove"
               >
                 ⇄
