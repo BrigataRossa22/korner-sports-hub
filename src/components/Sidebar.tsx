@@ -4,6 +4,9 @@ import type { PublicContent } from "@/lib/content.functions";
 import { useClubCrest } from "@/lib/use-club-crest";
 import { Link } from "@tanstack/react-router";
 
+const WWIN_LOGO =
+  "https://wxyxcfalnqttwchxebpn.supabase.co/storage/v1/object/public/slike/wwin-liga-logo.png.webp";
+
 export function Sidebar({ content }: { content: PublicContent }) {
   const read = mostRead(content.articles);
   const crestFor = useClubCrest();
@@ -20,13 +23,20 @@ export function Sidebar({ content }: { content: PublicContent }) {
       </section>
 
       <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-        <div className="flex items-center justify-between bg-ink px-4 py-3 text-ink-foreground">
-          <h3 className="font-display text-xl font-bold uppercase tracking-wide">Tabela</h3>
+        <div className="flex items-center justify-between gap-3 bg-ink px-4 py-3 text-ink-foreground">
+          <div className="flex items-center gap-3">
+            <img
+              src={WWIN_LOGO}
+              alt="WWIN liga"
+              className="h-12 w-auto shrink-0 rounded-md object-contain"
+            />
+            <h3 className="font-display text-xl font-bold uppercase tracking-wide">Tabela</h3>
+          </div>
           <Link
             to="/tabela"
             aria-label="Cijela tabela"
             title="Cijela tabela"
-            className="flex size-9 items-center justify-center rounded-full bg-primary text-lg text-primary-foreground transition hover:opacity-90"
+            className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-lg text-primary-foreground transition hover:opacity-90"
           >
             →
           </Link>
