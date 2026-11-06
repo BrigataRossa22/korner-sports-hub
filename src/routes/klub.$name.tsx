@@ -207,6 +207,14 @@ function Klub() {
 
   const crest = clubCrest(name) || crestFor(name);
 
+  // Godina osnivanja (samo godina), slika stadiona u pozadini, podaci za klub u aktuelnoj ligi
+  const foundedYear = info?.founded
+    ? (/\b(\d{4})\b/.exec(info.founded)?.[1] ?? info.founded)
+    : "";
+  const cover = (info?.cover ?? "").trim();
+  const coverUrl = cover ? (cover.startsWith("http") ? cover : `${SUPA}${cover}`) : "";
+  const currentRow = (history ?? []).find((r) => r.current);
+
   // ---- Kup BiH po sezonama ----
   const kupRows: CompRow[] = (() => {
     const bySeason = new Map<string, CupMatch[]>();
@@ -356,36 +364,71 @@ function Klub() {
       <Link to="/klubovi" className="text-sm text-muted-foreground hover:underline">
         ← Nazad na klubove
       </Link>
-      <div className="rule-top mb-5 mt-3 flex items-center gap-4 pt-3">
-        {crest && <img src={crest} alt="" className="size-16 object-contain" />}
-        <div>
-          <p className="kicker">Klub · sezona 2026/27</p>
-          <h1 className="mt-1 font-display text-3xl uppercase sm:text-4xl">{displayClub(name)}</h1>
-        </div>
-      </div>
 
-      {info && (info.founded || info.stadium) && (
-        <section className="mb-8 flex flex-wrap gap-x-12 gap-y-4 rounded-lg border border-border bg-card px-5 py-4">
-          {info.founded && (
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Godina osnivanja
-              </p>
-              <p className="mt-1 text-base font-semibold">
-                {/\b(\d{4})\b/.exec(info.founded)?.[1] ?? info.founded}
+      {/* ---- Naslovni dio kluba: grb, ime, godina osnivanja | stadion, slika stadiona u pozadini ---- */}
+      <section className="relative mb-8 mt-3 overflow-hidden rounded-2xl bg-ink text-white">
+        {coverUrl && (
+          <img
+            src={coverUrl}
+            alt=""
+            className="absolute inset-0 size-full object-cover"
+            loading="eager"
+          />
+        )}
+        <div
+          className={`absolute inset-0 ${
+            coverUrl
+              ? "bg-gradient-to-r from-black/85 via-black/60 to-black/30"
+              : "bg-gradient-to-br from-primary/40 via-ink to-ink"
+          }`}
+        />
+        <div className="relative flex flex-col gap-6 px-5 py-8 sm:px-8 sm:py-10 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center gap-5 sm:gap-8">
+            {crest && (
+              <img
+                src={crest}
+                alt=""
+                className="size-24 shrink-0 object-contain drop-shadow-lg sm:size-36"
+              />
+            )}
+            <div className="min-w-0">
+              {(foundedYear || info?.stadium) && (
+                <p className="text-sm text-white/80 sm:text-base">
+                  {foundedYear}
+                  {foundedYear && info?.stadium ? (
+                    <span className="mx-2 inline-block h-3.5 w-px bg-white/50 align-middle" />
+                  ) : null}
+                  {info?.stadium}
+                </p>
+              )}
+              <h1 className="mt-1 font-display text-3xl font-bold uppercase leading-tight sm:text-5xl">
+                {displayClub(name)}
+              </h1>
+              <p className="mt-2 text-xs uppercase tracking-[0.15em] text-white/60">
+                Klub · sezona 2026/27
               </p>
             </div>
+          </div>
+
+          {currentRow && (
+            <dl className="w-full shrink-0 divide-y divide-white/20 rounded-xl border border-white/20 bg-white/10 px-4 backdrop-blur-md lg:w-72">
+              {[
+                ["Trenutna pozicija", currentRow.position ?? "—"],
+                ["Odigrano utakmica", currentRow.played],
+                ["Pobjeda", currentRow.wins],
+                ["Postignuto golova", currentRow.gf],
+              ].map(([label, value]) => (
+                <div key={String(label)} className="flex items-center justify-between py-3">
+                  <dt className="text-xs font-semibold uppercase tracking-wide text-white/85">
+                    {label}
+                  </dt>
+                  <dd className="font-display text-2xl font-bold tabular-nums">{value}</dd>
+                </div>
+              ))}
+            </dl>
           )}
-          {info.stadium && (
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Stadion
-              </p>
-              <p className="mt-1 text-base font-semibold">{info.stadium}</p>
-            </div>
-          )}
-        </section>
-      )}
+        </div>
+      </section>
 
       {honours.length > 0 && (
         <section className="mb-8 rounded-lg border border-border bg-card">
