@@ -19,25 +19,6 @@ export function Sidebar({ content }: { content: PublicContent }) {
         </div>
       </section>
 
-      <section>
-        <h3 className="rule-top pt-2 font-display text-lg uppercase">Raspored</h3>
-        <ul className="mt-2 divide-y divide-border">
-          {content.fixtures.map((fixture) => (
-            <li key={fixture.id} className="py-2.5">
-              <p className="text-sm font-medium">
-                {fixture.home} <span className="text-muted-foreground">–</span> {fixture.away}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {fixture.comp} ·{" "}
-                {fixture.finished && fixture.scoreHome !== null && fixture.scoreAway !== null
-                  ? `${fixture.scoreHome}:${fixture.scoreAway}`
-                  : fixture.when}
-              </p>
-            </li>
-          ))}
-        </ul>
-      </section>
-
       <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
         <div className="flex items-center justify-between bg-ink px-4 py-3 text-ink-foreground">
           <h3 className="font-display text-xl font-bold uppercase tracking-wide">Tabela</h3>
