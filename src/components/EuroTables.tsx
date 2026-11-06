@@ -1,175 +1,89 @@
 import { useQuery } from "@tanstack/react-query";
-import { TableSkeleton } from "@/components/TableSkeleton";
-import { getEuroMatches, type EuroMatch } from "@/lib/euromatches.functions";
+import { getEuroMatches } from "@/lib/euromatches.functions";
 import { useClubCrest } from "@/lib/use-club-crest";
 
-const COMPETITIONS: { key: EuroMatch["competition"]; title: string }[] = [
-  { key: "LP", title: "Liga prvaka" },
-  { key: "LE", title: "Liga Evrope" },
-  { key: "KL", title: "Konferencijska liga" },
-  { key: "KPK", title: "Kup pobjednika kupova" },
-];
+type Stat = { club: string; played: number; w: number; d: number; l: number; gf: number; ga: number };
 
-function initials(name: string): string {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0] ?? "")
-    .join("")
-    .toUpperCase();
+function parse(score: string): [number, number] | null {
+  const m = /^\s*(\d+)\s*[:\-–]\s*(\d+)/.exec(score ?? "");
+  return m ? [Number(m[1]), Number(m[2])] : null;
 }
 
-function Table({ title, rows: rawRows }: { title: string; rows: EuroMatch[] }) {
+export function EuroTotals() {
+  const { data } = useQuery({ queryKey: ["euro-matches"], queryFn: () => getEuroMatches() });
   const crestFor = useClubCrest();
-
-  const firstOrder = new Map<string, number>();
-  for (const r of rawRows) {
-    const k = `${r.season}|${r.club}`;
-    firstOrder.set(k, Math.min(firstOrder.get(k) ?? Infinity, r.sort_order));
-  }
-  const rows = [...rawRows].sort(
-    (a, b) =>
-      a.season.localeCompare(b.season) ||
-      firstOrder.get(`${a.season}|${a.club}`)! - firstOrder.get(`${b.season}|${b.club}`)! ||
-      a.club.localeCompare(b.club) ||
-      a.sort_order - b.sort_order,
-  );
-
-  const info = rows.map((row, i) => {
-    const prev = rows[i - 1];
-    const next = rows[i + 1];
-    const newSeason = !prev || prev.season !== row.season;
-    const newClub = newSeason || prev.club !== row.club;
-    let seasonCount = 0;
-    let clubCount = 0;
-    if (newSeason) {
-      for (let j = i; j < rows.length && rows[j]!.season === row.season; j++) seasonCount++;
-    }
-    if (newClub) {
-      for (
-        let j = i;
-        j < rows.length && rows[j]!.season === row.season && rows[j]!.club === row.club;
-        j++
-      )
-        clubCount++;
-    }
-    const lastOfSeason = !next || next.season !== row.season;
-    const lastOfClub = lastOfSeason || next.club !== row.club;
-    return { newSeason, newClub, seasonCount, clubCount, lastOfSeason, lastOfClub };
-  });
-
-  return (
-    <section className="mt-10 rounded-lg border border-border bg-card">
-      <h2 className="border-b border-border px-4 py-3 font-display text-lg font-bold uppercase">
-        {title}
-      </h2>
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[680px] border-collapse text-sm tabular-nums sm:min-w-[720px]">
-          <thead>
-            <tr className="border-b border-border text-xs uppercase text-muted-foreground">
-              {/* Na mobitelu su Sezona i grb zaglavljeni lijevo, ime kluba klizi ispod grba */}
-              <th className="sticky left-0 z-20 w-[4.5rem] min-w-[4.5rem] bg-card px-2 py-2 text-left sm:static sm:w-auto sm:min-w-0 sm:px-3">
-                Sezona
-              </th>
-              <th className="sticky left-[4.5rem] z-20 w-11 min-w-11 border-r border-border bg-card px-1 py-2 sm:static sm:w-auto sm:min-w-0 sm:border-r-0 sm:px-0" />
-              <th className="w-32 min-w-32 px-2 py-2 text-left sm:w-auto sm:px-3">Klub</th>
-              <th className="px-3 py-2 text-left">Runda</th>
-              <th className="px-3 py-2 text-left">Protivnik</th>
-              <th className="px-3 py-2 text-center">Domaćin</th>
-              <th className="px-3 py-2 text-center">Gost</th>
-              <th className="px-3 py-2 text-center">Ukupno</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r, i) => {
-              const x = info[i]!;
-              const border = x.lastOfSeason
-                ? "border-b-4 border-foreground/30"
-                : x.lastOfClub
-                  ? "border-b border-border"
-                  : "";
-              const flag = r.opponent_flag
-                ? r.opponent_flag.startsWith("http")
-                  ? r.opponent_flag
-                  : `https://flagcdn.com/w40/${r.opponent_flag.toLowerCase()}.png`
-                : "";
-              const crest = crestFor(r.club) || r.club_crest;
-              return (
-                <tr key={r.id} className={border}>
-                  {x.newSeason && (
-                    <td
-                      rowSpan={x.seasonCount}
-                      className="sticky left-0 z-10 w-[4.5rem] min-w-[4.5rem] bg-card px-2 py-2 align-middle font-semibold sm:static sm:w-auto sm:min-w-0 sm:border-r sm:border-border sm:bg-transparent sm:px-3"
-                    >
-                      {r.season}
-                    </td>
-                  )}
-                  {x.newClub && (
-                    <>
-                      <td
-                        rowSpan={x.clubCount}
-                        className="sticky left-[4.5rem] z-10 w-11 min-w-11 border-b border-r border-border bg-card px-1 py-2 align-middle sm:static sm:w-auto sm:min-w-0 sm:border-r-0 sm:bg-transparent sm:pl-3 sm:pr-0"
-                      >
-                        <span className="flex items-center justify-center sm:justify-start" title={r.club}>
-                          {crest ? (
-                            <img src={crest} alt="" className="size-7 shrink-0 object-contain sm:size-6" />
-                          ) : (
-                            <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-bold text-muted-foreground sm:size-6">
-                              {initials(r.club)}
-                            </span>
-                          )}
-                        </span>
-                      </td>
-                      <td
-                        rowSpan={x.clubCount}
-                        className="w-32 min-w-32 border-b border-r border-border px-2 py-2 align-middle sm:w-auto sm:px-3 sm:pl-2"
-                      >
-                        <span className="block whitespace-nowrap font-semibold">{r.club}</span>
-                      </td>
-                    </>
-                  )}
-                  <td className="whitespace-nowrap px-3 py-2">{r.round}</td>
-                  <td className="px-3 py-2">
-                    <span className="flex items-center gap-2 whitespace-nowrap">
-                      {flag && <img src={flag} alt="" className="h-4 w-6 shrink-0 object-cover" />}
-                      {r.opponent}
-                    </span>
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-2 text-center">{r.home || "—"}</td>
-                  <td className="whitespace-nowrap px-3 py-2 text-center">{r.away || "—"}</td>
-                  <td className="whitespace-nowrap px-3 py-2 text-center font-bold">{r.agg || "—"}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  );
-}
-
-export function EuroTables() {
-  const { data, isLoading } = useQuery({
-    queryKey: ["euro-matches"],
-    queryFn: () => getEuroMatches(),
-  });
   const rows = data ?? [];
 
-  if (isLoading) {
-    return (
-      <div className="mt-10 rounded-lg border border-border bg-card">
-        <TableSkeleton rows={8} cols={6} />
-      </div>
-    );
+  const map = new Map<string, Stat>();
+  for (const r of rows) {
+    const name = r.club.trim();
+    const s = map.get(name) ?? { club: name, played: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0 };
+    for (const leg of [r.home, r.away]) {
+      const p = parse(leg);
+      if (!p) continue;
+      s.played++;
+      s.gf += p[0];
+      s.ga += p[1];
+      if (p[0] > p[1]) s.w++;
+      else if (p[0] === p[1]) s.d++;
+      else s.l++;
+    }
+    map.set(name, s);
   }
+  const list = [...map.values()]
+    .filter((s) => s.played > 0)
+    .sort((a, b) => b.played - a.played || b.w - a.w || a.club.localeCompare(b.club));
+
+  if (list.length === 0) return null;
 
   return (
-    <>
-      {COMPETITIONS.map(({ key, title }) => {
-        const list = rows.filter((m) => m.competition === key);
-        return list.length ? <Table key={key} title={title} rows={list} /> : null;
-      })}
-    </>
+    <section className="mt-10 overflow-hidden rounded-lg border border-border bg-card">
+      <h2 className="border-b border-border px-4 py-3 font-display text-lg font-bold uppercase">
+        Ukupno: BiH klubovi u Evropi
+      </h2>
+      <table className="w-full table-fixed text-[13px] tabular-nums sm:table-auto sm:text-sm">
+        <thead>
+          <tr className="text-xs uppercase text-muted-foreground">
+            <th className="px-2 py-2 text-left sm:px-3">Ekipa</th>
+            <th className="w-9 px-1 py-2 text-right sm:w-auto sm:px-3">Ut</th>
+            <th className="w-8 px-1 py-2 text-right sm:w-auto sm:px-3">P</th>
+            <th className="w-8 px-1 py-2 text-right sm:w-auto sm:px-3">N</th>
+            <th className="w-8 px-1 py-2 text-right sm:w-auto sm:px-3">I</th>
+            {/* Telefon: golovi skraćeno kao postignuti:primljeni */}
+            <th className="w-14 px-2 py-2 text-right sm:hidden">Gol</th>
+            <th className="hidden px-3 py-2 text-right sm:table-cell">Golovi</th>
+            <th className="hidden px-3 py-2 text-right sm:table-cell">Primljeni</th>
+          </tr>
+        </thead>
+        <tbody>
+          {list.map((s) => {
+            const crest = crestFor(s.club);
+            return (
+              <tr key={s.club} className="border-t border-border">
+                <td className="min-w-0 px-2 py-2.5 sm:px-3 sm:py-2">
+                  <span className="flex min-w-0 items-center gap-1.5 font-semibold sm:gap-2">
+                    {crest ? (
+                      <img src={crest} alt="" className="size-5 shrink-0 object-contain sm:size-6" />
+                    ) : (
+                      <span className="size-5 shrink-0 sm:size-6" />
+                    )}
+                    <span className="truncate">{s.club}</span>
+                  </span>
+                </td>
+                <td className="px-1 py-2.5 text-right font-bold sm:px-3 sm:py-2">{s.played}</td>
+                <td className="px-1 py-2.5 text-right sm:px-3 sm:py-2">{s.w}</td>
+                <td className="px-1 py-2.5 text-right sm:px-3 sm:py-2">{s.d}</td>
+                <td className="px-1 py-2.5 text-right sm:px-3 sm:py-2">{s.l}</td>
+                <td className="px-2 py-2.5 text-right sm:hidden">
+                  {s.gf}:{s.ga}
+                </td>
+                <td className="hidden px-3 py-2 text-right sm:table-cell">{s.gf}</td>
+                <td className="hidden px-3 py-2 text-right sm:table-cell">{s.ga}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </section>
   );
 }
