@@ -404,14 +404,14 @@ function Klub() {
               <h1 className="mt-1 font-display text-3xl font-bold uppercase leading-tight sm:text-5xl">
                 {displayClub(name)}
               </h1>
-              <p className="mt-2 text-xs uppercase tracking-[0.15em] text-white/60">
+              <p className="mt-2 hidden text-xs uppercase tracking-[0.15em] text-white/60 sm:block">
                 Klub · sezona 2026/27
               </p>
             </div>
           </div>
 
           {currentRow && (
-            <dl className="w-full shrink-0 divide-y divide-white/20 rounded-xl border border-white/20 bg-white/10 px-4 backdrop-blur-md lg:w-72">
+            <dl className="hidden w-full shrink-0 divide-y divide-white/20 rounded-xl border border-white/20 bg-white/10 px-4 backdrop-blur-md sm:block lg:w-72">
               {[
                 ["Trenutna pozicija", currentRow.position ?? "—"],
                 ["Odigrano utakmica", currentRow.played],
