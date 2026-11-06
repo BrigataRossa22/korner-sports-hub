@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { ChevronDown } from "lucide-react";
 import { ClubMatchesSection } from "@/components/ClubMatchesSection";
 import { ClubPrvaLiga } from "@/components/ClubPrvaLiga";
 import { ClubTopScorers } from "@/components/ClubTopScorers";
@@ -116,6 +117,8 @@ function Klub() {
   const clubCrest = useClubCrest();
   const [comp, setComp] = useState<Comp>("liga");
   const [matchSeason, setMatchSeason] = useState("");
+  // Telefon: Uspjesi / Trofeji / Najbolji strijelci jedan ispod drugog, otvara se onaj koji izabereš
+  const [mobileOpen, setMobileOpen] = useState<string | null>(null);
 
   // Klik na sezonu u tabeli: izaberi sezonu u dijelu "Utakmice" i klizi do njega
   const openSeason = (s: string) => {
@@ -359,6 +362,85 @@ function Klub() {
     sumOther((r) => r.attCount),
   );
 
+  // ---- Telefon: stavke menija (Uspjesi, Trofeji, Najbolji strijelci) ----
+  const mobileItems: { id: string; label: string; body: ReactNode }[] = [];
+  if (honours.length > 0) {
+    mobileItems.push({
+      id: "uspjesi",
+      label: "Uspjesi",
+      body: (
+        <div className="grid gap-y-5 p-4">
+          {honours.map((g) => (
+            <div key={g.title}>
+              <h3 className="font-display text-base font-bold">{g.title}</h3>
+              <ul className="mt-2 space-y-1.5 border-l-2 border-primary/40 pl-3 text-sm">
+                {g.items.map((it, i) => (
+                  <li key={i}>
+                    {it.label && <span className="font-semibold">{it.label}</span>}
+                    {it.label && it.value ? ": " : ""}
+                    <span className="text-muted-foreground">{it.value}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      ),
+    });
+  } else if (data && data.achievements.length > 0) {
+    mobileItems.push({
+      id: "uspjesi",
+      label: "Uspjesi",
+      body: (
+        <ul className="space-y-2 p-4 text-sm">
+          {data.achievements.map((a) => (
+            <li key={a.id} className="border-b border-border pb-2 last:border-0">
+              {a.text}
+            </li>
+          ))}
+        </ul>
+      ),
+    });
+  }
+  if (data && data.trophies.length > 0) {
+    mobileItems.push({
+      id: "trofeji",
+      label: "Trofeji",
+      body: (
+        <div className="grid gap-2 p-3">
+          {data.trophies.map((t) => (
+            <div
+              key={t.id}
+              className="flex items-center gap-3 rounded-md border border-border p-2.5"
+            >
+              {t.image && (
+                <img
+                  src={t.image.startsWith("http") ? t.image : `${SUPA}${t.image}`}
+                  alt=""
+                  className="h-12 w-10 shrink-0 object-contain"
+                />
+              )}
+              <div className="min-w-0">
+                <p className="font-display text-lg font-bold leading-tight">{t.times}×</p>
+                <p className="text-sm font-semibold leading-tight">{t.title}</p>
+                {t.years && <p className="mt-0.5 text-xs text-muted-foreground">{t.years}</p>}
+              </div>
+            </div>
+          ))}
+        </div>
+      ),
+    });
+  }
+  mobileItems.push({
+    id: "strijelci",
+    label: "Najbolji strijelci",
+    body: (
+      <div className="[&>section]:mt-0 [&>section]:rounded-none [&>section]:border-0">
+        <ClubTopScorers name={name} />
+      </div>
+    ),
+  });
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
       <Link to="/klubovi" className="text-sm text-muted-foreground hover:underline">
@@ -430,8 +512,33 @@ function Klub() {
         </div>
       </section>
 
+      {/* ---- Telefon: Uspjesi, Trofeji i Najbolji strijelci jedan ispod drugog ---- */}
+      <div className="mb-8 space-y-2 sm:hidden">
+        {mobileItems.map((it) => {
+          const isOpen = mobileOpen === it.id;
+          return (
+            <div key={it.id} className="overflow-hidden rounded-lg border border-border bg-card">
+              <button
+                type="button"
+                aria-expanded={isOpen}
+                onClick={() => setMobileOpen(isOpen ? null : it.id)}
+                className="flex w-full items-center justify-between px-4 py-3.5 font-display text-base font-bold uppercase"
+              >
+                {it.label}
+                <ChevronDown
+                  className={`size-5 text-muted-foreground transition-transform ${
+                    isOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+              {isOpen && <div className="border-t border-border">{it.body}</div>}
+            </div>
+          );
+        })}
+      </div>
+
       {honours.length > 0 && (
-        <section className="mb-8 rounded-lg border border-border bg-card">
+        <section className="mb-8 hidden rounded-lg border border-border bg-card sm:block">
           <h2 className="border-b border-border px-4 py-3 font-display text-lg font-bold uppercase">
             Uspjesi
           </h2>
@@ -455,7 +562,7 @@ function Klub() {
       )}
 
       {data && data.trophies.length > 0 && (
-        <section className="rounded-lg border border-border bg-card">
+        <section className="hidden rounded-lg border border-border bg-card sm:block">
           <h2 className="border-b border-border px-4 py-3 font-display text-lg font-bold uppercase">
             Trofeji
           </h2>
@@ -666,14 +773,16 @@ function Klub() {
         </p>
       </section>
 
-      <ClubTopScorers name={name} />
+      <div className="hidden sm:block">
+        <ClubTopScorers name={name} />
+      </div>
 
       <div className="mt-10">
         <ClubMatchesSection name={name} season={matchSeason} onSeasonChange={setMatchSeason} />
       </div>
 
       {honours.length === 0 && data && data.achievements.length > 0 && (
-        <section className="mt-10 rounded-lg border border-border bg-card">
+        <section className="mt-10 hidden rounded-lg border border-border bg-card sm:block">
           <h2 className="border-b border-border px-4 py-3 font-display text-lg font-bold uppercase">
             Uspjesi
           </h2>
