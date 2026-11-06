@@ -37,50 +37,53 @@ export function EuroTotals() {
   if (list.length === 0) return null;
 
   return (
-    <section className="mt-10 rounded-lg border border-border bg-card">
+    <section className="mt-10 overflow-hidden rounded-lg border border-border bg-card">
       <h2 className="border-b border-border px-4 py-3 font-display text-lg font-bold uppercase">
         Ukupno: BiH klubovi u Evropi
       </h2>
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[520px] text-sm tabular-nums">
-          <thead>
-            <tr className="text-xs uppercase text-muted-foreground">
-              <th className="px-3 py-2 text-left">Ekipa</th>
-              <th className="px-3 py-2 text-right">Ut</th>
-              <th className="px-3 py-2 text-right">P</th>
-              <th className="px-3 py-2 text-right">N</th>
-              <th className="px-3 py-2 text-right">I</th>
-              <th className="px-3 py-2 text-right">Golovi</th>
-              <th className="px-3 py-2 text-right">Primljeni</th>
-            </tr>
-          </thead>
-          <tbody>
-            {list.map((s) => {
-              const crest = crestFor(s.club);
-              return (
-                <tr key={s.club} className="border-t border-border">
-                  <td className="px-3 py-2">
-                    <span className="flex items-center gap-2 font-semibold">
-                      {crest ? (
-                        <img src={crest} alt="" className="size-6 shrink-0 object-contain" />
-                      ) : (
-                        <span className="size-6 shrink-0" />
-                      )}
-                      {s.club}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2 text-right font-bold">{s.played}</td>
-                  <td className="px-3 py-2 text-right">{s.w}</td>
-                  <td className="px-3 py-2 text-right">{s.d}</td>
-                  <td className="px-3 py-2 text-right">{s.l}</td>
-                  <td className="px-3 py-2 text-right">{s.gf}</td>
-                  <td className="px-3 py-2 text-right">{s.ga}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      <table className="w-full table-fixed text-[13px] tabular-nums sm:table-auto sm:text-sm">
+        <thead>
+          <tr className="text-xs uppercase text-muted-foreground">
+            <th className="px-2 py-2 text-left sm:px-3">Ekipa</th>
+            <th className="w-9 px-1 py-2 text-right sm:w-auto sm:px-3">Ut</th>
+            <th className="w-8 px-1 py-2 text-right sm:w-auto sm:px-3">P</th>
+            <th className="w-8 px-1 py-2 text-right sm:w-auto sm:px-3">N</th>
+            <th className="w-8 px-1 py-2 text-right sm:w-auto sm:px-3">I</th>
+            {/* Telefon: golovi skraćeno kao postignuti:primljeni */}
+            <th className="w-14 px-2 py-2 text-right sm:hidden">Gol</th>
+            <th className="hidden px-3 py-2 text-right sm:table-cell">Golovi</th>
+            <th className="hidden px-3 py-2 text-right sm:table-cell">Primljeni</th>
+          </tr>
+        </thead>
+        <tbody>
+          {list.map((s) => {
+            const crest = crestFor(s.club);
+            return (
+              <tr key={s.club} className="border-t border-border">
+                <td className="min-w-0 px-2 py-2.5 sm:px-3 sm:py-2">
+                  <span className="flex min-w-0 items-center gap-1.5 font-semibold sm:gap-2">
+                    {crest ? (
+                      <img src={crest} alt="" className="size-5 shrink-0 object-contain sm:size-6" />
+                    ) : (
+                      <span className="size-5 shrink-0 sm:size-6" />
+                    )}
+                    <span className="truncate">{s.club}</span>
+                  </span>
+                </td>
+                <td className="px-1 py-2.5 text-right font-bold sm:px-3 sm:py-2">{s.played}</td>
+                <td className="px-1 py-2.5 text-right sm:px-3 sm:py-2">{s.w}</td>
+                <td className="px-1 py-2.5 text-right sm:px-3 sm:py-2">{s.d}</td>
+                <td className="px-1 py-2.5 text-right sm:px-3 sm:py-2">{s.l}</td>
+                <td className="px-2 py-2.5 text-right sm:hidden">
+                  {s.gf}:{s.ga}
+                </td>
+                <td className="hidden px-3 py-2 text-right sm:table-cell">{s.gf}</td>
+                <td className="hidden px-3 py-2 text-right sm:table-cell">{s.ga}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </section>
   );
 }
