@@ -26,7 +26,6 @@ const kupSub: ReadonlyArray<Item> = [
 
 const statSub: ReadonlyArray<Item> = [
   { to: "/stare-sezone", label: "Arhiva sezona" },
-  { to: "/pobjednici", label: "Pobjednici" },
   { to: "/medjusobni-susreti", label: "Međusobni susreti" },
   { to: "/brojke", label: "Brojke" },
   { to: "/gledanost", label: "Gledanost" },
