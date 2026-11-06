@@ -18,6 +18,7 @@ export const Route = createFileRoute("/reprezentacija-statistika")({
 });
 
 const ALL = "sve";
+const TOP_N = 10;
 
 type Tab = "strijelci" | "treneri";
 
@@ -99,7 +100,7 @@ function CoachAvatar({ name }: { name: string }) {
     .join("");
   if (i >= PHOTO_EXTS.length) {
     return (
-      <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground sm:size-11">
         {initials}
       </span>
     );
@@ -111,7 +112,7 @@ function CoachAvatar({ name }: { name: string }) {
       alt={name}
       loading="lazy"
       onError={() => setI(i + 1)}
-      className="size-11 shrink-0 rounded-full border border-border object-cover object-top"
+      className="size-9 shrink-0 rounded-full border border-border object-cover object-top sm:size-11"
     />
   );
 }
@@ -152,12 +153,6 @@ function buildScorers(goals: NationalGoal[]): Scorer[] {
         a.player.localeCompare(b.player, "hr"),
     );
 }
-
-const PODIUM = [
-  { ring: "border-amber-400/70", badge: "bg-amber-400 text-black", label: "1" },
-  { ring: "border-slate-300/70", badge: "bg-slate-300 text-black", label: "2" },
-  { ring: "border-orange-400/60", badge: "bg-orange-400 text-black", label: "3" },
-];
 
 const OPTIONS: { id: Tab; title: string; text: string }[] = [
   { id: "strijelci", title: "Najbolji strijelci", text: "Svi strijelci reprezentacije od 1995." },
@@ -207,7 +202,7 @@ function CoachesView() {
         ].map(([label, value]) => (
           <div
             key={label as string}
-            className="rounded-xl border border-border bg-card px-4 py-4 text-center"
+            className="rounded-xl border border-border bg-card px-3 py-4 text-center sm:px-4"
           >
             <p className="text-2xl font-bold tabular-nums text-primary">{value}</p>
             <p className="mt-1 text-xs font-semibold uppercase text-muted-foreground">{label}</p>
@@ -217,7 +212,7 @@ function CoachesView() {
 
       {most && best && (
         <div className="mb-6 grid gap-3 sm:grid-cols-2">
-          <div className="rounded-xl border-2 border-amber-400/70 bg-card px-5 py-5">
+          <div className="rounded-xl border-2 border-border bg-card px-5 py-5">
             <p className="text-xs font-semibold uppercase text-muted-foreground">
               Najviše utakmica
             </p>
@@ -230,7 +225,7 @@ function CoachesView() {
               {most.w} pobjeda · {most.d} neriješenih · {most.l} poraza
             </p>
           </div>
-          <div className="rounded-xl border-2 border-slate-300/70 bg-card px-5 py-5">
+          <div className="rounded-xl border-2 border-border bg-card px-5 py-5">
             <p className="text-xs font-semibold uppercase text-muted-foreground">
               Najbolji prosjek bodova (min. 10 utakmica)
             </p>
@@ -259,7 +254,7 @@ function CoachesView() {
             key={id}
             type="button"
             onClick={() => setView(id)}
-            className={`rounded-full border px-4 py-1.5 text-xs font-semibold uppercase ${
+            className={`rounded-full border px-3 py-1.5 text-xs font-semibold uppercase sm:px-4 ${
               view === id
                 ? "border-primary bg-primary text-primary-foreground"
                 : "border-border bg-card text-muted-foreground hover:border-primary/60"
@@ -271,116 +266,121 @@ function CoachesView() {
       </div>
 
       <section className="overflow-hidden rounded-xl border border-border bg-card">
-        <div className="overflow-x-auto">
-          {view === "mandati" ? (
-            <table className="w-full min-w-[640px] border-collapse text-sm tabular-nums">
-              <thead>
-                <tr className="border-b border-border text-xs uppercase text-muted-foreground">
-                  <th className="px-4 py-2 text-left">Selektor</th>
-                  <th className="px-3 py-2 text-left">Mandat</th>
-                  <th className="px-3 py-2 text-right">Ut.</th>
-                  <th className="px-3 py-2 text-right">P</th>
-                  <th className="px-3 py-2 text-right">N</th>
-                  <th className="px-3 py-2 text-right">I</th>
-                  <th className="px-3 py-2 text-right">Bod/ut.</th>
-                  <th className="px-4 py-2 text-right">% pob.</th>
-                </tr>
-              </thead>
-              <tbody>
-                {COACHES.map((c) => (
-                  <tr
-                    key={`${c.name}${c.from}`}
-                    className="border-b border-border/70 last:border-0"
-                  >
-                    <td className="px-4 py-2">
-                      <div className="flex items-center gap-3">
-                        <CoachAvatar name={c.name} />
-                        <div>
-                          <span className="font-medium">{c.name}</span>
-                          <span className="block text-xs text-muted-foreground">r. {c.born}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-3 py-2 text-xs text-muted-foreground">
-                      {c.from} –{" "}
-                      {c.to ?? (
-                        <span className="rounded-full bg-primary/15 px-2 py-0.5 font-bold text-primary">
-                          trenutno
+        {view === "mandati" ? (
+          <table className="w-full border-collapse text-[13px] tabular-nums sm:text-sm">
+            <thead>
+              <tr className="border-b border-border text-xs uppercase text-muted-foreground">
+                <th className="px-2 py-2 text-left sm:px-4">Selektor</th>
+                <th className="hidden px-3 py-2 text-left sm:table-cell">Mandat</th>
+                <th className="px-1.5 py-2 text-right sm:px-3">Ut.</th>
+                <th className="px-1.5 py-2 text-right sm:px-3">P</th>
+                <th className="px-1.5 py-2 text-right sm:px-3">N</th>
+                <th className="px-1.5 py-2 text-right sm:px-3">I</th>
+                <th className="hidden px-3 py-2 text-right sm:table-cell">Bod/ut.</th>
+                <th className="hidden px-4 py-2 text-right sm:table-cell">% pob.</th>
+              </tr>
+            </thead>
+            <tbody>
+              {COACHES.map((c) => (
+                <tr
+                  key={`${c.name}${c.from}`}
+                  className="border-b border-border/70 last:border-0"
+                >
+                  <td className="px-2 py-2 sm:px-4">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <CoachAvatar name={c.name} />
+                      <div className="min-w-0">
+                        <span className="block font-medium leading-tight">{c.name}</span>
+                        <span className="hidden text-xs text-muted-foreground sm:block">
+                          r. {c.born}
                         </span>
-                      )}
-                      <span className="block">{c.time}</span>
-                    </td>
-                    <td className="px-3 py-2 text-right font-bold">{c.m}</td>
-                    <td className="px-3 py-2 text-right">{c.w}</td>
-                    <td className="px-3 py-2 text-right">{c.d}</td>
-                    <td className="px-3 py-2 text-right">{c.l}</td>
-                    <td className="px-3 py-2 text-right font-semibold text-primary">
-                      {ppg(c.w, c.d, c.m).toFixed(2)}
-                    </td>
-                    <td className="px-4 py-2 text-right text-muted-foreground">
-                      {pct(c.w, c.m)}%
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <table className="w-full min-w-[640px] border-collapse text-sm tabular-nums">
-              <thead>
-                <tr className="border-b border-border text-xs uppercase text-muted-foreground">
-                  <th className="w-10 px-4 py-2 text-left">#</th>
-                  <th className="px-3 py-2 text-left">Selektor</th>
-                  <th className="px-3 py-2 text-left">Utakmice</th>
-                  <th className="px-3 py-2 text-right">P</th>
-                  <th className="px-3 py-2 text-right">N</th>
-                  <th className="px-3 py-2 text-right">I</th>
-                  <th className="px-3 py-2 text-right">Bod/ut.</th>
-                  <th className="px-4 py-2 text-right">% pob.</th>
+                        <span className="block text-[11px] leading-tight text-muted-foreground sm:hidden">
+                          {c.from.slice(6, 10)}–{c.to ? c.to.slice(6, 10) : "danas"}
+                        </span>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="hidden px-3 py-2 text-xs text-muted-foreground sm:table-cell">
+                    {c.from} –{" "}
+                    {c.to ?? (
+                      <span className="rounded-full bg-primary/15 px-2 py-0.5 font-bold text-primary">
+                        trenutno
+                      </span>
+                    )}
+                    <span className="block">{c.time}</span>
+                  </td>
+                  <td className="px-1.5 py-2 text-right font-bold sm:px-3">{c.m}</td>
+                  <td className="px-1.5 py-2 text-right sm:px-3">{c.w}</td>
+                  <td className="px-1.5 py-2 text-right sm:px-3">{c.d}</td>
+                  <td className="px-1.5 py-2 text-right sm:px-3">{c.l}</td>
+                  <td className="hidden px-3 py-2 text-right font-semibold text-primary sm:table-cell">
+                    {ppg(c.w, c.d, c.m).toFixed(2)}
+                  </td>
+                  <td className="hidden px-4 py-2 text-right text-muted-foreground sm:table-cell">
+                    {pct(c.w, c.m)}%
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {totals.map((t, i) => (
-                  <tr key={t.name} className="border-b border-border/70 last:border-0">
-                    <td className="px-4 py-2 text-muted-foreground">{i + 1}</td>
-                    <td className="px-3 py-2">
-                      <div className="flex items-center gap-3">
-                        <CoachAvatar name={t.name} />
-                        <div>
-                          <span className="font-medium">{t.name}</span>
-                          {t.mandates > 1 && (
-                            <span className="block text-xs text-muted-foreground">
-                              {t.mandates} mandata
-                            </span>
-                          )}
-                        </div>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <table className="w-full border-collapse text-[13px] tabular-nums sm:text-sm">
+            <thead>
+              <tr className="border-b border-border text-xs uppercase text-muted-foreground">
+                <th className="w-7 px-2 py-2 text-left sm:w-10 sm:px-4">#</th>
+                <th className="px-2 py-2 text-left sm:px-3">Selektor</th>
+                <th className="hidden px-3 py-2 text-left sm:table-cell">Utakmice</th>
+                <th className="px-1.5 py-2 text-right sm:hidden">Ut.</th>
+                <th className="px-1.5 py-2 text-right sm:px-3">P</th>
+                <th className="px-1.5 py-2 text-right sm:px-3">N</th>
+                <th className="px-1.5 py-2 text-right sm:px-3">I</th>
+                <th className="hidden px-3 py-2 text-right sm:table-cell">Bod/ut.</th>
+                <th className="hidden px-4 py-2 text-right sm:table-cell">% pob.</th>
+              </tr>
+            </thead>
+            <tbody>
+              {totals.map((t, i) => (
+                <tr key={t.name} className="border-b border-border/70 last:border-0">
+                  <td className="px-2 py-2 text-muted-foreground sm:px-4">{i + 1}</td>
+                  <td className="px-2 py-2 sm:px-3">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <CoachAvatar name={t.name} />
+                      <div className="min-w-0">
+                        <span className="block font-medium leading-tight">{t.name}</span>
+                        {t.mandates > 1 && (
+                          <span className="block text-[11px] text-muted-foreground sm:text-xs">
+                            {t.mandates} mandata
+                          </span>
+                        )}
                       </div>
-                    </td>
-                    <td className="px-3 py-2">
-                      <div className="flex items-center gap-2">
-                        <div className="h-2 w-20 overflow-hidden rounded-full bg-muted sm:w-32">
-                          <div
-                            className="h-full rounded-full bg-primary"
-                            style={{ width: `${Math.max(4, (t.m / maxM) * 100)}%` }}
-                          />
-                        </div>
-                        <span className="font-bold">{t.m}</span>
+                    </div>
+                  </td>
+                  <td className="hidden px-3 py-2 sm:table-cell">
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-32 overflow-hidden rounded-full bg-muted">
+                        <div
+                          className="h-full rounded-full bg-primary"
+                          style={{ width: `${Math.max(4, (t.m / maxM) * 100)}%` }}
+                        />
                       </div>
-                    </td>
-                    <td className="px-3 py-2 text-right">{t.w}</td>
-                    <td className="px-3 py-2 text-right">{t.d}</td>
-                    <td className="px-3 py-2 text-right">{t.l}</td>
-                    <td className="px-3 py-2 text-right font-semibold text-primary">
-                      {ppg(t.w, t.d, t.m).toFixed(2)}
-                    </td>
-                    <td className="px-4 py-2 text-right text-muted-foreground">
-                      {pct(t.w, t.m)}%
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+                      <span className="font-bold">{t.m}</span>
+                    </div>
+                  </td>
+                  <td className="px-1.5 py-2 text-right font-bold sm:hidden">{t.m}</td>
+                  <td className="px-1.5 py-2 text-right sm:px-3">{t.w}</td>
+                  <td className="px-1.5 py-2 text-right sm:px-3">{t.d}</td>
+                  <td className="px-1.5 py-2 text-right sm:px-3">{t.l}</td>
+                  <td className="hidden px-3 py-2 text-right font-semibold text-primary sm:table-cell">
+                    {ppg(t.w, t.d, t.m).toFixed(2)}
+                  </td>
+                  <td className="hidden px-4 py-2 text-right text-muted-foreground sm:table-cell">
+                    {pct(t.w, t.m)}%
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </section>
       <p className="mt-3 text-xs text-muted-foreground">
         P = pobjede, N = neriješeno, I = porazi. Bod/ut. = prosječan broj bodova po utakmici.
@@ -399,7 +399,6 @@ function StatistikaReprezentacije() {
 
   const [tab, setTab] = useState<Tab | null>(null);
   const [pick, setPick] = useState(ALL);
-  const [showAll, setShowAll] = useState(false);
 
   const years = useMemo(
     () =>
@@ -454,10 +453,10 @@ function StatistikaReprezentacije() {
 
   const max = scorers[0]?.goals ?? 1;
   const podium = scorers.slice(0, 3);
-  const rest = showAll ? scorers : scorers.slice(0, 25);
+  const rest = scorers.slice(0, TOP_N);
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-8">
+    <main className="mx-auto max-w-5xl px-3 py-6 sm:px-4 sm:py-8">
       <p className="text-xs font-semibold uppercase tracking-wider text-primary">Reprezentacija</p>
       <h1 className="font-display text-3xl font-bold uppercase">Statistika</h1>
       <p className="mb-6 mt-1 text-sm text-muted-foreground">
@@ -472,7 +471,7 @@ function StatistikaReprezentacije() {
               key={o.id}
               type="button"
               onClick={() => setTab(o.id)}
-              className={`rounded-xl border-2 px-5 py-5 text-left transition-colors ${
+              className={`rounded-xl border-2 px-4 py-4 text-left transition-colors sm:px-5 sm:py-5 ${
                 active
                   ? "border-primary bg-primary/10"
                   : "border-border bg-card hover:border-primary/60"
@@ -512,10 +511,7 @@ function StatistikaReprezentacije() {
               <select
                 id="godina-stat"
                 value={year}
-                onChange={(e) => {
-                  setPick(e.target.value);
-                  setShowAll(false);
-                }}
+                onChange={(e) => setPick(e.target.value)}
                 className="rounded-md border border-border bg-card px-3 py-1.5 text-sm font-semibold"
               >
                 <option value={ALL}>Svih vremena</option>
@@ -536,7 +532,7 @@ function StatistikaReprezentacije() {
               ].map(([label, value]) => (
                 <div
                   key={label as string}
-                  className="rounded-xl border border-border bg-card px-4 py-4 text-center"
+                  className="rounded-xl border border-border bg-card px-3 py-4 text-center sm:px-4"
                 >
                   <p className="text-2xl font-bold tabular-nums text-primary">{value}</p>
                   <p className="mt-1 text-xs font-semibold uppercase text-muted-foreground">
@@ -547,26 +543,26 @@ function StatistikaReprezentacije() {
             </div>
 
             {podium.length > 0 && (
-              <div className="mb-6 grid gap-3 sm:grid-cols-3">
+              <div className="mb-6 grid grid-cols-3 gap-2 sm:gap-3">
                 {podium.map((s, i) => (
                   <div
                     key={s.player}
-                    className={`relative overflow-hidden rounded-xl border-2 bg-card px-5 py-5 ${PODIUM[i].ring}`}
+                    className="relative overflow-hidden rounded-xl border border-border bg-card px-2.5 py-4 sm:px-5 sm:py-5"
                   >
-                    <span
-                      className={`absolute right-3 top-3 flex size-7 items-center justify-center rounded-full text-sm font-bold ${PODIUM[i].badge}`}
-                    >
-                      {PODIUM[i].label}
+                    <span className="absolute right-2 top-2 flex size-5 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground sm:right-3 sm:top-3 sm:size-7 sm:text-sm">
+                      {i + 1}
                     </span>
-                    <p className="pr-8 font-display text-lg font-bold uppercase leading-tight">
+                    <p className="pr-5 font-display text-sm font-bold uppercase leading-tight sm:pr-8 sm:text-lg">
                       {s.player}
                     </p>
-                    <p className="mt-3 text-4xl font-bold tabular-nums text-primary">{s.goals}</p>
-                    <p className="text-xs font-semibold uppercase text-muted-foreground">
+                    <p className="mt-2 text-3xl font-bold tabular-nums text-primary sm:mt-3 sm:text-4xl">
+                      {s.goals}
+                    </p>
+                    <p className="text-[10px] font-semibold uppercase text-muted-foreground sm:text-xs">
                       {s.goals === 1 ? "gol" : "golova"}
                     </p>
-                    <p className="mt-3 text-xs text-muted-foreground">
-                      {s.matches} utakmica s golom
+                    <p className="mt-2 text-[11px] leading-snug text-muted-foreground sm:mt-3 sm:text-xs">
+                      {s.matches} utak. s golom
                       {s.pens > 0 ? ` · ${s.pens} pen.` : ""}
                       <br />
                       {s.first === s.last ? s.first : `${s.first}–${s.last}`}
@@ -578,57 +574,48 @@ function StatistikaReprezentacije() {
 
             <section className="mb-6 overflow-hidden rounded-xl border border-border bg-card">
               <h2 className="border-b border-border bg-surface px-4 py-3 font-display text-lg font-bold uppercase">
-                {year === ALL ? "Svi strijelci" : `Strijelci ${year}.`}
+                {year === ALL ? "Top 10 strijelaca" : `Top 10 strijelaca ${year}.`}
               </h2>
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[520px] border-collapse text-sm tabular-nums">
-                  <thead>
-                    <tr className="border-b border-border text-xs uppercase text-muted-foreground">
-                      <th className="w-10 px-4 py-2 text-left">#</th>
-                      <th className="px-3 py-2 text-left">Igrač</th>
-                      <th className="px-3 py-2 text-left">Golovi</th>
-                      <th className="px-3 py-2 text-right">Pen.</th>
-                      <th className="px-3 py-2 text-right">Utak.</th>
-                      <th className="px-4 py-2 text-right">Period</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rest.map((s, i) => (
-                      <tr key={s.player} className="border-b border-border/70 last:border-0">
-                        <td className="px-4 py-2 text-muted-foreground">{i + 1}</td>
-                        <td className="px-3 py-2 font-medium">{s.player}</td>
-                        <td className="px-3 py-2">
-                          <div className="flex items-center gap-2">
-                            <div className="h-2 w-24 overflow-hidden rounded-full bg-muted sm:w-40">
-                              <div
-                                className="h-full rounded-full bg-primary"
-                                style={{ width: `${Math.max(4, (s.goals / max) * 100)}%` }}
-                              />
-                            </div>
-                            <span className="font-bold">{s.goals}</span>
+              <table className="w-full border-collapse text-[13px] tabular-nums sm:text-sm">
+                <thead>
+                  <tr className="border-b border-border text-xs uppercase text-muted-foreground">
+                    <th className="w-8 px-2 py-2 text-left sm:w-10 sm:px-4">#</th>
+                    <th className="px-2 py-2 text-left sm:px-3">Igrač</th>
+                    <th className="px-2 py-2 text-left sm:px-3">Golovi</th>
+                    <th className="hidden px-3 py-2 text-right sm:table-cell">Pen.</th>
+                    <th className="px-2 py-2 text-right sm:px-3">Utak.</th>
+                    <th className="hidden px-4 py-2 text-right sm:table-cell">Period</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rest.map((s, i) => (
+                    <tr key={s.player} className="border-b border-border/70 last:border-0">
+                      <td className="px-2 py-2.5 text-muted-foreground sm:px-4 sm:py-2">{i + 1}</td>
+                      <td className="px-2 py-2.5 font-medium sm:px-3 sm:py-2">{s.player}</td>
+                      <td className="px-2 py-2.5 sm:px-3 sm:py-2">
+                        <div className="flex items-center gap-2">
+                          <div className="h-2 w-12 overflow-hidden rounded-full bg-muted sm:w-40">
+                            <div
+                              className="h-full rounded-full bg-primary"
+                              style={{ width: `${Math.max(4, (s.goals / max) * 100)}%` }}
+                            />
                           </div>
-                        </td>
-                        <td className="px-3 py-2 text-right text-muted-foreground">
-                          {s.pens || "—"}
-                        </td>
-                        <td className="px-3 py-2 text-right text-muted-foreground">{s.matches}</td>
-                        <td className="px-4 py-2 text-right text-muted-foreground">
-                          {s.first === s.last ? s.first : `${s.first}–${s.last}`}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {scorers.length > 25 && (
-                <button
-                  type="button"
-                  onClick={() => setShowAll((v) => !v)}
-                  className="w-full border-t border-border px-4 py-3 text-xs font-semibold uppercase text-primary hover:bg-muted/40"
-                >
-                  {showAll ? "Prikaži prvih 25" : `Prikaži sve (${scorers.length})`}
-                </button>
-              )}
+                          <span className="font-bold">{s.goals}</span>
+                        </div>
+                      </td>
+                      <td className="hidden px-3 py-2 text-right text-muted-foreground sm:table-cell">
+                        {s.pens || "—"}
+                      </td>
+                      <td className="px-2 py-2.5 text-right text-muted-foreground sm:px-3 sm:py-2">
+                        {s.matches}
+                      </td>
+                      <td className="hidden px-4 py-2 text-right text-muted-foreground sm:table-cell">
+                        {s.first === s.last ? s.first : `${s.first}–${s.last}`}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </section>
 
             {multi.length > 0 && (
@@ -661,12 +648,12 @@ function StatistikaReprezentacije() {
                   Najbolji strijelac po godinama
                 </h2>
                 <div className="max-h-96 overflow-auto">
-                  <table className="w-full min-w-[420px] border-collapse text-sm tabular-nums">
+                  <table className="w-full border-collapse text-[13px] tabular-nums sm:text-sm">
                     <thead>
                       <tr className="border-b border-border text-xs uppercase text-muted-foreground">
-                        <th className="px-4 py-2 text-left">Godina</th>
-                        <th className="px-3 py-2 text-right">Golova tima</th>
-                        <th className="px-4 py-2 text-left">Najbolji strijelac</th>
+                        <th className="px-2 py-2 text-left sm:px-4">God.</th>
+                        <th className="px-2 py-2 text-right sm:px-3">Golova</th>
+                        <th className="px-2 py-2 text-left sm:px-4">Najbolji strijelac</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -676,9 +663,9 @@ function StatistikaReprezentacije() {
                           onClick={() => setPick(r.year)}
                           className="cursor-pointer border-b border-border/70 last:border-0 hover:bg-muted/40"
                         >
-                          <td className="px-4 py-2">{r.year}</td>
-                          <td className="px-3 py-2 text-right">{r.goals}</td>
-                          <td className="px-4 py-2">{r.top}</td>
+                          <td className="px-2 py-2 sm:px-4">{r.year}</td>
+                          <td className="px-2 py-2 text-right sm:px-3">{r.goals}</td>
+                          <td className="px-2 py-2 sm:px-4">{r.top}</td>
                         </tr>
                       ))}
                     </tbody>
