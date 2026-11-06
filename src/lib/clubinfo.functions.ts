@@ -7,6 +7,8 @@ export type ClubInfo = {
   stadium: string;
   /** Uspjesi: tekst, jedan red po stavci (vidi klub.$name.tsx) */
   honours?: string | null;
+  /** Slika stadiona za pozadinu na stranici kluba (ime fajla u storage "slike" ili cijela adresa) */
+  cover?: string | null;
 };
 
 export const getClubInfo = createServerFn({ method: "GET" })
