@@ -68,7 +68,11 @@ const COMP_RANK: Record<Comp, number> = { liga: 0, kup: 1, evropa: 2 };
 // Iz naziva takmičenja (tekuća sezona) pogodi o kojoj se vrsti utakmice radi
 function compOf(name: string): Comp {
   const s = name.toLowerCase();
-  if (/(liga prvaka|liga evrope|konferenc|uefa|champions|europa|pobjednika kupova|evrop)/.test(s)) {
+  if (
+    /(liga prvaka|liga evrope|konferenc|conference|league|uefa|champions|europa|pobjednika kupova|evrop)/.test(
+      s,
+    )
+  ) {
     return "evropa";
   }
   if (/kup/.test(s)) return "kup";
