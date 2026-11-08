@@ -5,6 +5,7 @@ import { getClubDetail } from "@/lib/clubdetail.functions";
 import { getClubHistory } from "@/lib/clubhistory.functions";
 import { getCupMatches } from "@/lib/cupmatches.functions";
 import { getEuroMatches, type EuroMatch } from "@/lib/euromatches.functions";
+import { getMatchGoals } from "@/lib/matchgoals.functions";
 import { getSeasonGoals } from "@/lib/seasongoals.functions";
 import { getSeasonMatches } from "@/lib/seasonmatches.functions";
 import { normClub, sameClub } from "@/lib/club-match";
@@ -164,6 +165,13 @@ export function ClubMatchesSection({
     enabled: past,
   });
 
+  // Golovi tekuće sezone (tabela match_goals)
+  const { data: matchGoals } = useQuery({
+    queryKey: ["match-goals-club"],
+    queryFn: () => getMatchGoals(),
+    enabled: isCurrent,
+  });
+
   const flags = new Map<string, string>();
   for (const e of euro ?? []) {
     if (e.opponent_flag) flags.set(normClub(e.opponent), e.opponent_flag);
@@ -259,10 +267,16 @@ export function ClubMatchesSection({
   // Strijelci kluba u ligi te sezone (autogol se ne računa igraču koji ga je dao)
   const scorers = (() => {
     const map = new Map<string, { player: string; goals: number }>();
-    for (const g of seasonGoals ?? []) {
-      if (g.kind === "o") continue;
-      const team = g.side === "H" ? g.home : g.away;
-      if (!sameClub(team, name)) continue;
+    const goalRows: { player: string; kind: string; team: string }[] = isCurrent
+      ? (matchGoals ?? []).map((g) => ({ player: g.player, kind: g.kind, team: g.team }))
+      : (seasonGoals ?? []).map((g) => ({
+          player: g.player,
+          kind: g.kind,
+          team: g.side === "H" ? g.home : g.away,
+        }));
+    for (const g of goalRows) {
+      if (g.kind === "o" || g.kind === "own") continue;
+      if (!g.player || !sameClub(g.team, name)) continue;
       const row = map.get(g.player) ?? { player: g.player, goals: 0 };
       row.goals += 1;
       map.set(g.player, row);
@@ -558,7 +572,7 @@ export function ClubMatchesSection({
             </>
           )}
 
-          {past && scorers.length > 0 && (
+          {season !== "" && scorers.length > 0 && (
             <div>
               <h3 className="bg-surface px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Strijelci u ligi · {season}
