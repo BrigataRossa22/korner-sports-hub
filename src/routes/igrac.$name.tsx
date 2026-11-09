@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { LoadError } from "@/components/RouteFallbacks";
 import { TableSkeleton } from "@/components/TableSkeleton";
+import { displayClub, normClub, sameClub } from "@/lib/club-match";
 import { getPlayerGoals } from "@/lib/playergoals.functions";
 import { useClubCrest } from "@/lib/use-club-crest";
 
@@ -12,6 +13,24 @@ export const Route = createFileRoute("/igrac/$name")({
   errorComponent: LoadError,
   component: Igrac,
 });
+
+// Isti klub pod više naziva ("HŠK Zrinjski", "Zrinjski Mostar") ispiši jednom, potpunijim imenom
+function mergeTeams(teams: Iterable<string>): string {
+  const groups: string[][] = [];
+  for (const t of teams) {
+    const g = groups.find((x) => x.some((y) => sameClub(y, t)));
+    if (g) g.push(t);
+    else groups.push([t]);
+  }
+  return groups
+    .map((g) => {
+      const best = [...g].sort(
+        (a, b) => normClub(b).length - normClub(a).length || a.length - b.length,
+      )[0]!;
+      return displayClub(best);
+    })
+    .join(", ");
+}
 
 function Igrac() {
   const { name } = Route.useParams();
@@ -43,7 +62,7 @@ function Igrac() {
     const src = crestFor(t);
     if (!src || seen.has(src)) continue;
     seen.add(src);
-    crests.push({ src, name: t });
+    crests.push({ src, name: displayClub(t) });
   }
 
   const newestFirst = [...goals].reverse();
@@ -100,7 +119,7 @@ function Igrac() {
                 {seasonRows.map(([season, e]) => (
                   <tr key={season} className="border-b border-border/70 last:border-0 even:bg-surface/50">
                     <td className="whitespace-nowrap px-3 py-2 font-semibold">{season}</td>
-                    <td className="px-2 py-2 text-muted-foreground">{[...e.teams].join(", ")}</td>
+                    <td className="px-2 py-2 text-muted-foreground">{mergeTeams(e.teams)}</td>
                     <td className="px-3 py-2 text-right text-base font-bold">{e.goals}</td>
                   </tr>
                 ))}
