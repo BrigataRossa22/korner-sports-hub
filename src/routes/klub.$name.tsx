@@ -9,6 +9,7 @@ import { LoadError } from "@/components/RouteFallbacks";
 import { TableSkeleton } from "@/components/TableSkeleton";
 import { getClubDetail } from "@/lib/clubdetail.functions";
 import { getClubHistory } from "@/lib/clubhistory.functions";
+import { getClubPrva } from "@/lib/clubprva.functions";
 import { getClubInfo } from "@/lib/clubinfo.functions";
 import { getCupMatches, type CupMatch } from "@/lib/cupmatches.functions";
 import { getEuroMatches } from "@/lib/euromatches.functions";
@@ -115,7 +116,7 @@ function Klub() {
   const { name } = Route.useParams();
   const crestFor = useCrest();
   const clubCrest = useClubCrest();
-  const [comp, setComp] = useState<Comp>("liga");
+  const [pickComp, setPickComp] = useState<Comp>("liga");
   const [matchSeason, setMatchSeason] = useState("");
   // Telefon: Uspjesi / Trofeji / Najbolji strijelci jedan ispod drugog, otvara se onaj koji izabereš
   const [mobileOpen, setMobileOpen] = useState<string | null>(null);
@@ -199,6 +200,10 @@ function Klub() {
     queryFn: () => getClubInfo({ data: { name } }),
   });
   const honours = parseHonours(info?.honours);
+  const { data: prvaData, isLoading: prvaLoading } = useQuery({
+    queryKey: ["club-prva", name],
+    queryFn: () => getClubPrva({ data: { name } }),
+  });
   const { data: euro } = useQuery({
     queryKey: ["euro-matches"],
     queryFn: () => getEuroMatches(),
@@ -345,6 +350,15 @@ function Klub() {
         };
       });
   })();
+
+  // Prikaži samo takmičenja u kojima je klub igrao
+  const availableComps: Comp[] = (["liga", "kup", "evropa", "prva"] as Comp[]).filter((c) => {
+    if (c === "liga") return historyLoading || (history ?? []).length > 0;
+    if (c === "kup") return kupRows.length > 0;
+    if (c === "evropa") return euroRows.length > 0;
+    return prvaLoading || (prvaData ?? []).length > 0;
+  });
+  const comp: Comp = availableComps.includes(pickComp) ? pickComp : (availableComps[0] ?? "liga");
 
   const otherRows = comp === "kup" ? kupRows : euroRows;
   const showStage = comp === "kup";
@@ -598,11 +612,11 @@ function Klub() {
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
           <h2 className="font-display text-lg font-bold uppercase">Sezone</h2>
           <div className="flex flex-wrap gap-2">
-            {(["liga", "kup", "evropa", "prva"] as Comp[]).map((c) => (
+            {availableComps.map((c) => (
               <button
                 key={c}
                 type="button"
-                onClick={() => setComp(c)}
+                onClick={() => setPickComp(c)}
                 className={`rounded-md border px-3 py-1 font-display text-xs font-semibold uppercase tracking-wide ${
                   comp === c
                     ? "border-primary bg-primary text-primary-foreground"
