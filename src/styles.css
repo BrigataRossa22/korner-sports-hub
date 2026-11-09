@@ -133,3 +133,9 @@
 .dark img[src$="/lopta.webp"] {
   filter: invert(1);
 }
+
+/* Golovi: lijeva i desna strana su uvijek jednake širine, pa je lopta tačno na sredini crte
+   (i na mobitelu, kad je ime strijelca dugo) */
+.grid-cols-\[1fr_auto_1fr\] {
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+}
