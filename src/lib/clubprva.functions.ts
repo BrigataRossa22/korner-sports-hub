@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { sameClub } from "@/lib/club-match";
 import { isPrvaLiga } from "@/lib/prva-liga";
+import { groupRank } from "@/lib/season-groups";
 
 export type PrvaRow = {
   season: string;
@@ -18,7 +19,8 @@ export type PrvaRow = {
   avg: number | null;
 };
 
-// Sezone Prve lige BiH (1994/95 do 2001/02) za jedan klub
+// Sezone Prve lige BiH (1994/95 do 2001/02) za jedan klub.
+// Samo redovne tabele: bez finalnih grupa, pretkola i play-offa.
 export const getClubPrva = createServerFn({ method: "GET" })
   .inputValidator((input: { name: string }) => input)
   .handler(async ({ data }): Promise<PrvaRow[]> => {
@@ -42,7 +44,12 @@ export const getClubPrva = createServerFn({ method: "GET" })
     const matches = resMatches.ok ? ((await resMatches.json()) as any[]) : [];
 
     return rows
-      .filter((r) => isPrvaLiga(r.season) && sameClub(r.team, data.name))
+      .filter(
+        (r) =>
+          isPrvaLiga(r.season) &&
+          sameClub(r.team, data.name) &&
+          groupRank(r.grp ?? "") === 1,
+      )
       .map((r) => {
         const grp: string = r.grp ?? "";
         const games = matches.filter(
