@@ -13,6 +13,8 @@ export const Route = createFileRoute("/medjusobni-susreti")({
 
 type Filter = "sve" | "liga" | "kup" | "jug";
 
+type Venue = "sve" | "dom" | "gost";
+
 const FILTER_LABEL: Record<Filter, string> = {
   sve: "Sve",
   liga: "Liga",
@@ -109,6 +111,7 @@ function HeadToHeadPage() {
   const [a, setA] = useState("");
   const [b, setB] = useState("");
   const [filter, setFilter] = useState<Filter>("sve");
+  const [venue, setVenue] = useState<Venue>("sve");
 
   const clubs = data?.clubs ?? [];
 
@@ -123,15 +126,19 @@ function HeadToHeadPage() {
       .sort((x, y) => sortKey(y).localeCompare(sortKey(x)));
   }, [data, a, b]);
 
-  // Dugme "Jugoslavija" se vidi samo kad za ovaj par klubova postoje takve utakmice
+  // "Jugoslavija" se nudi samo kad za ovaj par klubova postoje takve utakmice
   const hasJug = all.some((m) => m.comp === "jug");
   const filters: Filter[] = hasJug ? ["sve", "liga", "kup", "jug"] : ["sve", "liga", "kup"];
   const activeFilter: Filter = filters.includes(filter) ? filter : "sve";
 
-  const shown = useMemo(
-    () => (activeFilter === "sve" ? all : all.filter((m) => m.comp === activeFilter)),
-    [all, activeFilter],
-  );
+  // Takmičenje (Sve / Liga / Kup...), pa teren iz ugla Kluba 1:
+  // Domaćin = samo utakmice u kojima je Klub 1 domaćin, Gost = samo one u kojima je Klub 1 gost
+  const shown = useMemo(() => {
+    const byComp = activeFilter === "sve" ? all : all.filter((m) => m.comp === activeFilter);
+    if (venue === "dom") return byComp.filter((m) => sameClub(m.home, a));
+    if (venue === "gost") return byComp.filter((m) => sameClub(m.away, a));
+    return byComp;
+  }, [all, activeFilter, venue, a]);
 
   const stats = useMemo(() => {
     let winsA = 0;
@@ -208,19 +215,33 @@ function HeadToHeadPage() {
 
           {ready && (
             <>
-              <div className="mt-8 flex flex-wrap gap-2">
-                {filters.map((f) => (
-                  <button
-                    key={f}
-                    type="button"
-                    onClick={() => setFilter(f)}
-                    className={`rounded-full px-4 py-1.5 text-sm font-semibold ${
-                      activeFilter === f ? "bg-primary text-primary-foreground" : "bg-surface text-muted-foreground"
-                    }`}
+              <div className="mt-8 grid grid-cols-2 gap-3 sm:max-w-md">
+                <label className="min-w-0 text-xs font-semibold uppercase text-muted-foreground">
+                  Takmičenje
+                  <select
+                    value={activeFilter}
+                    onChange={(e) => setFilter(e.target.value as Filter)}
+                    className="mt-1 w-full min-w-0 truncate rounded-md border border-border bg-card px-2 py-2.5 text-sm font-semibold normal-case text-foreground sm:px-3"
                   >
-                    {FILTER_LABEL[f]}
-                  </button>
-                ))}
+                    {filters.map((f) => (
+                      <option key={f} value={f}>
+                        {FILTER_LABEL[f]}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="min-w-0 text-xs font-semibold uppercase text-muted-foreground">
+                  Teren
+                  <select
+                    value={venue}
+                    onChange={(e) => setVenue(e.target.value as Venue)}
+                    className="mt-1 w-full min-w-0 truncate rounded-md border border-border bg-card px-2 py-2.5 text-sm font-semibold normal-case text-foreground sm:px-3"
+                  >
+                    <option value="sve">Sve</option>
+                    <option value="dom">Domaćin ({a})</option>
+                    <option value="gost">Gost ({a})</option>
+                  </select>
+                </label>
               </div>
 
               <section className="mt-4 overflow-hidden rounded-xl border border-border bg-card">
