@@ -399,10 +399,17 @@ export function ClubMatchesSection({
       });
     });
 
+    // Datumi evropskih utakmica koje su već u listi (tekuća sezona)
+    const euroDates = new Set(
+      rows.filter((r) => r.comp === "evropa" && r.date).map((r) => (r.date ?? "").slice(0, 10)),
+    );
+
     euroLegs.forEach((l, i) => {
       if (isCurrent) {
         // Utakmica koja je već u listi (isti datum i par) se ne dodaje drugi put
         if (l.date && seen.has(pairKey(l.date, l.home, l.away))) return;
+        // Isti datum, a naziv protivnika je drugačiji (Milsami / Milsami Orhei)
+        if (l.date && euroDates.has(l.date.slice(0, 10))) return;
         if (!l.date && hasEuroRows) return;
       }
       push({
