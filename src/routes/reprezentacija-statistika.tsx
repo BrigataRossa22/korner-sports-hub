@@ -117,6 +117,36 @@ function CoachAvatar({ name }: { name: string }) {
   );
 }
 
+const PLAYER_BASE =
+  "https://wxyxcfalnqttwchxebpn.supabase.co/storage/v1/object/public/igraci";
+
+// Slika igrača: bucket "igraci", ime fajla npr. "edin.dzeko.jpg"
+function PlayerAvatar({ name }: { name: string }) {
+  const [i, setI] = useState(0);
+  const initials = name
+    .split(" ")
+    .map((p) => p[0])
+    .slice(0, 2)
+    .join("");
+  if (i >= PHOTO_EXTS.length) {
+    return (
+      <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+        {initials}
+      </span>
+    );
+  }
+  return (
+    <img
+      key={i}
+      src={`${PLAYER_BASE}/${photoName(name)}.${PHOTO_EXTS[i]}`}
+      alt={name}
+      loading="lazy"
+      onError={() => setI(i + 1)}
+      className="size-11 shrink-0 rounded-full object-cover object-top"
+    />
+  );
+}
+
 function fmtDate(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
@@ -451,9 +481,7 @@ function StatistikaReprezentacije() {
       });
   }, [goals]);
 
-  const max = scorers[0]?.goals ?? 1;
-  const podium = scorers.slice(0, 3);
-  const rest = scorers.slice(0, TOP_N);
+  const topList = scorers.slice(0, TOP_N);
 
   return (
     <main className="mx-auto max-w-5xl px-3 py-6 sm:px-4 sm:py-8">
@@ -542,80 +570,22 @@ function StatistikaReprezentacije() {
               ))}
             </div>
 
-            {podium.length > 0 && (
-              <div className="mb-6 grid grid-cols-3 gap-2 sm:gap-3">
-                {podium.map((s, i) => (
-                  <div
-                    key={s.player}
-                    className="relative overflow-hidden rounded-xl border border-border bg-card px-2.5 py-4 sm:px-5 sm:py-5"
-                  >
-                    <span className="absolute right-2 top-2 flex size-5 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground sm:right-3 sm:top-3 sm:size-7 sm:text-sm">
-                      {i + 1}
-                    </span>
-                    <p className="pr-5 font-display text-sm font-bold uppercase leading-tight sm:pr-8 sm:text-lg">
-                      {s.player}
-                    </p>
-                    <p className="mt-2 text-3xl font-bold tabular-nums text-primary sm:mt-3 sm:text-4xl">
-                      {s.goals}
-                    </p>
-                    <p className="text-[10px] font-semibold uppercase text-muted-foreground sm:text-xs">
-                      {s.goals === 1 ? "gol" : "golova"}
-                    </p>
-                    <p className="mt-2 text-[11px] leading-snug text-muted-foreground sm:mt-3 sm:text-xs">
-                      {s.matches} utak. s golom
-                      {s.pens > 0 ? ` · ${s.pens} pen.` : ""}
-                      <br />
-                      {s.first === s.last ? s.first : `${s.first}–${s.last}`}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <section className="mb-6 overflow-hidden rounded-xl border border-border bg-card">
-              <h2 className="border-b border-border bg-surface px-4 py-3 font-display text-lg font-bold uppercase">
+            <section className="mb-8">
+              <h2 className="mb-3 font-display text-xl font-bold uppercase">
                 {year === ALL ? "Top 10 strijelaca" : `Top 10 strijelaca ${year}.`}
               </h2>
-              <table className="w-full border-collapse text-[13px] tabular-nums sm:text-sm">
-                <thead>
-                  <tr className="border-b border-border text-xs uppercase text-muted-foreground">
-                    <th className="w-8 px-2 py-2 text-left sm:w-10 sm:px-4">#</th>
-                    <th className="px-2 py-2 text-left sm:px-3">Igrač</th>
-                    <th className="px-2 py-2 text-left sm:px-3">Golovi</th>
-                    <th className="hidden px-3 py-2 text-right sm:table-cell">Pen.</th>
-                    <th className="px-2 py-2 text-right sm:px-3">Utak.</th>
-                    <th className="hidden px-4 py-2 text-right sm:table-cell">Period</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rest.map((s, i) => (
-                    <tr key={s.player} className="border-b border-border/70 last:border-0">
-                      <td className="px-2 py-2.5 text-muted-foreground sm:px-4 sm:py-2">{i + 1}</td>
-                      <td className="px-2 py-2.5 font-medium sm:px-3 sm:py-2">{s.player}</td>
-                      <td className="px-2 py-2.5 sm:px-3 sm:py-2">
-                        <div className="flex items-center gap-2">
-                          <div className="h-2 w-12 overflow-hidden rounded-full bg-muted sm:w-40">
-                            <div
-                              className="h-full rounded-full bg-primary"
-                              style={{ width: `${Math.max(4, (s.goals / max) * 100)}%` }}
-                            />
-                          </div>
-                          <span className="font-bold">{s.goals}</span>
-                        </div>
-                      </td>
-                      <td className="hidden px-3 py-2 text-right text-muted-foreground sm:table-cell">
-                        {s.pens || "—"}
-                      </td>
-                      <td className="px-2 py-2.5 text-right text-muted-foreground sm:px-3 sm:py-2">
-                        {s.matches}
-                      </td>
-                      <td className="hidden px-4 py-2 text-right text-muted-foreground sm:table-cell">
-                        {s.first === s.last ? s.first : `${s.first}–${s.last}`}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <ol className="space-y-1">
+                {topList.map((s, i) => (
+                  <li key={s.player} className="flex items-center gap-3 px-1 py-1.5 sm:gap-4">
+                    <span className="w-6 shrink-0 text-center font-bold tabular-nums text-muted-foreground">
+                      {i + 1}
+                    </span>
+                    <PlayerAvatar name={s.player} />
+                    <span className="min-w-0 flex-1 truncate font-semibold">{s.player}</span>
+                    <span className="shrink-0 text-2xl font-bold tabular-nums">{s.goals}</span>
+                  </li>
+                ))}
+              </ol>
             </section>
 
             {multi.length > 0 && (
