@@ -8,7 +8,26 @@ import { getCurrentClubs } from "@/lib/currentclubs.functions";
 import { displayClub, normClub } from "@/lib/club-match";
 import { useClubCrest } from "@/lib/use-club-crest";
 
+const STALE = 10 * 60 * 1000;
+
 export const Route = createFileRoute("/klubovi")({
+  // Podaci se dohvate prije prikaza stranice, pa se klubovi pojave odmah
+  loader: async ({ context }) => {
+    const qc = context.queryClient;
+    const [teams, current] = await Promise.all([
+      qc.ensureQueryData({
+        queryKey: ["all-time-teams"],
+        queryFn: () => getAllTimeTeams(),
+        staleTime: STALE,
+      }),
+      qc.ensureQueryData({
+        queryKey: ["current-clubs"],
+        queryFn: () => getCurrentClubs(),
+        staleTime: STALE,
+      }),
+    ]);
+    return { teams, current };
+  },
   head: () => ({
     meta: [
       { title: "Klubovi — Korner BiH" },
@@ -22,13 +41,18 @@ export const Route = createFileRoute("/klubovi")({
 type Group = { label: string; fixed: boolean; raws: string[] };
 
 function Klubovi() {
+  const loaded = Route.useLoaderData();
   const { data, isLoading } = useQuery({
     queryKey: ["all-time-teams"],
     queryFn: () => getAllTimeTeams(),
+    initialData: loaded.teams,
+    staleTime: STALE,
   });
   const { data: current } = useQuery({
     queryKey: ["current-clubs"],
     queryFn: () => getCurrentClubs(),
+    initialData: loaded.current,
+    staleTime: STALE,
   });
   const crestFor = useClubCrest();
   const scroller = useRef<HTMLDivElement>(null);
@@ -128,7 +152,12 @@ function Klubovi() {
               >
                 <span className="flex flex-1 items-center justify-center">
                   {c.crest ? (
-                    <img src={c.crest} alt="" className="size-24 object-contain sm:size-28" />
+                    <img
+                      src={c.crest}
+                      alt=""
+                      loading="eager"
+                      className="size-24 object-contain sm:size-28"
+                    />
                   ) : (
                     <span className="flex size-24 items-center justify-center rounded-full bg-muted text-2xl font-bold text-muted-foreground sm:size-28">
                       {c.label.slice(0, 2).toUpperCase()}
@@ -164,7 +193,12 @@ function Klubovi() {
               className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 font-semibold hover:bg-muted"
             >
               {it.crest ? (
-                <img src={it.crest} alt="" className="size-8 shrink-0 object-contain" />
+                <img
+                  src={it.crest}
+                  alt=""
+                  loading="eager"
+                  className="size-8 shrink-0 object-contain"
+                />
               ) : (
                 <span className="size-8 shrink-0" />
               )}
