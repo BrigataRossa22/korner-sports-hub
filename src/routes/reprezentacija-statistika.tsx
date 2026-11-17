@@ -443,10 +443,6 @@ function StatistikaReprezentacije() {
   );
   const scorers = useMemo(() => buildScorers(filtered), [filtered]);
 
-  const totalGoals = filtered.filter((g) => g.team === "B").length;
-  const ownGoals = filtered.filter((g) => g.team === "B" && g.kind === "o").length;
-  const penGoals = filtered.filter((g) => g.team === "B" && g.kind === "p").length;
-
   const multi = useMemo(() => {
     const map = new Map<string, { player: string; date: string; n: number }>();
     for (const g of filtered) {
@@ -549,25 +545,6 @@ function StatistikaReprezentacije() {
                   </option>
                 ))}
               </select>
-            </div>
-
-            <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {[
-                ["Golova tima", totalGoals],
-                ["Strijelaca", scorers.length],
-                ["Penala", penGoals],
-                ["Autogolova", ownGoals],
-              ].map(([label, value]) => (
-                <div
-                  key={label as string}
-                  className="rounded-xl border border-border bg-card px-3 py-4 text-center sm:px-4"
-                >
-                  <p className="text-2xl font-bold tabular-nums text-primary">{value}</p>
-                  <p className="mt-1 text-xs font-semibold uppercase text-muted-foreground">
-                    {label}
-                  </p>
-                </div>
-              ))}
             </div>
 
             <section className="mb-8">
