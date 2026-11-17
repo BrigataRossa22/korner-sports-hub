@@ -24,8 +24,6 @@ const COMPS: { id: ScorerComp; label: string; note: string; empty: string }[] = 
   },
 ];
 
-const MEDAL = ["bg-yellow-500", "bg-zinc-400", "bg-amber-700"];
-
 // Mjesto u tabeli: isti broj golova = isto mjesto
 function withRank<T extends { goals: number }>(rows: T[]) {
   let rank = 0;
@@ -53,11 +51,15 @@ export function ClubTopScorers({ name }: { name: string }) {
   });
 
   const ranked = withRank(data?.scorers ?? []);
-  const range = data && data.firstSeason && data.lastSeason ? seasonsLabel(data.firstSeason, data.lastSeason) : "";
+  const max = ranked.reduce((m, r) => Math.max(m, r.goals), 0) || 1;
+  const range =
+    data && data.firstSeason && data.lastSeason
+      ? seasonsLabel(data.firstSeason, data.lastSeason)
+      : "";
 
   return (
     <section className="mt-10 overflow-hidden rounded-lg border border-border bg-card">
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-4">
         <div>
           <h2 className="font-display text-lg font-bold uppercase">Top 10 strijelaca</h2>
           {range && <p className="mt-0.5 text-xs text-muted-foreground">Sezone {range}</p>}
@@ -70,8 +72,8 @@ export function ClubTopScorers({ name }: { name: string }) {
               onClick={() => setComp(c.id)}
               className={`rounded-full border px-4 py-1 font-display text-xs font-semibold uppercase tracking-wide transition-colors ${
                 comp === c.id
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border bg-card hover:bg-muted"
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-border bg-card text-foreground hover:bg-muted"
               }`}
             >
               {c.label}
@@ -83,28 +85,13 @@ export function ClubTopScorers({ name }: { name: string }) {
       {isLoading ? (
         <TableSkeleton rows={6} cols={3} />
       ) : ranked.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 px-4 pb-10 pt-6 text-center">
-          <span className="text-3xl" aria-hidden>
-            ⚽
-          </span>
-          <p className="text-sm text-muted-foreground">{cfg.empty}</p>
-        </div>
+        <p className="px-4 py-10 text-center text-sm text-muted-foreground">{cfg.empty}</p>
       ) : (
-        <ul className="space-y-1.5 px-3 pb-3 sm:px-4 sm:pb-4">
-          {ranked.map((r, i) => {
-            const top = r.rank <= 3;
-            return (
-              <li
-                key={`${r.name}-${i}`}
-                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 sm:gap-4 sm:px-4 ${
-                  top ? "bg-primary/10" : "bg-surface/60"
-                }`}
-              >
-                <span
-                  className={`flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-bold tabular-nums ${
-                    top ? `${MEDAL[r.rank - 1]} text-white` : "bg-muted text-muted-foreground"
-                  }`}
-                >
+        <ol className="divide-y divide-border">
+          {ranked.map((r, i) => (
+            <li key={`${r.name}-${i}`} className="px-4 py-3">
+              <div className="flex items-center gap-4">
+                <span className="w-6 shrink-0 text-center text-base font-bold tabular-nums">
                   {r.rank}
                 </span>
                 <div className="min-w-0 flex-1">
@@ -116,15 +103,18 @@ export function ClubTopScorers({ name }: { name: string }) {
                   )}
                 </div>
                 <div className="shrink-0 text-right">
-                  <span className={`text-2xl font-bold tabular-nums ${top ? "text-primary" : ""}`}>{r.goals}</span>
+                  <span className="text-2xl font-bold tabular-nums">{r.goals}</span>
                   <span className="ml-1 text-xs uppercase text-muted-foreground">gol.</span>
                 </div>
-              </li>
-            );
-          })}
-        </ul>
+              </div>
+              <div className="ml-10 mt-2 h-0.5 bg-border">
+                <div className="h-full bg-foreground" style={{ width: `${(r.goals / max) * 100}%` }} />
+              </div>
+            </li>
+          ))}
+        </ol>
       )}
-      <p className="px-4 pb-3 text-xs text-muted-foreground">{cfg.note}</p>
+      <p className="border-t border-border px-4 py-3 text-xs text-muted-foreground">{cfg.note}</p>
     </section>
   );
 }
