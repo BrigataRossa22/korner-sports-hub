@@ -19,6 +19,11 @@ import { useClubCrest } from "@/lib/use-club-crest";
 
 const SUPA = "https://wxyxcfalnqttwchxebpn.supabase.co/storage/v1/object/public/slike/";
 
+// Boje u tabelama sezona: pobjede zeleno, neriješeno žuto, porazi crveno
+const WIN = "font-semibold text-green-600 dark:text-green-500";
+const DRAW = "font-semibold text-yellow-600 dark:text-yellow-400";
+const LOSS = "font-semibold text-red-600 dark:text-red-500";
+
 export const Route = createFileRoute("/klub/$name")({
   head: ({ params }) => ({
     meta: [
@@ -175,9 +180,9 @@ function Klub() {
                   )}
                 </td>
                 <td className="px-1.5 py-2.5 text-right">{r.played}</td>
-                <td className="px-1.5 py-2.5 text-right">{r.w}</td>
-                <td className="px-1.5 py-2.5 text-right">{r.d}</td>
-                <td className="px-1.5 py-2.5 text-right">{r.l}</td>
+                <td className={`px-1.5 py-2.5 text-right ${WIN}`}>{r.w}</td>
+                <td className={`px-1.5 py-2.5 text-right ${DRAW}`}>{r.d}</td>
+                <td className={`px-1.5 py-2.5 text-right ${LOSS}`}>{r.l}</td>
                 <td className="px-3 py-2.5 text-right">{fmtAvg(r.avg)}</td>
               </tr>
             );
@@ -654,21 +659,20 @@ function Klub() {
                 }))}
               />
 
-              {/* ---- Računar: tabela kao do sada ---- */}
+              {/* ---- Računar: tabela ---- */}
               <div className="hidden overflow-x-auto sm:block">
-                <table className="w-full min-w-[820px] text-sm tabular-nums">
+                <table className="w-full min-w-[700px] text-sm tabular-nums">
                   <thead>
                     <tr className="border-b border-border bg-surface text-xs uppercase text-muted-foreground">
                       <th className="px-3 py-3 text-left">Sezona</th>
-                      <th className="px-3 py-3 text-center">Poz.</th>
                       <th className="px-3 py-3 text-right">Utakmica</th>
-                      <th className="px-3 py-3 text-right">Pobjeda</th>
-                      <th className="px-3 py-3 text-right">Neriješeno</th>
-                      <th className="px-3 py-3 text-right">Poraza</th>
-                      <th className="px-3 py-3 text-right">Golovi</th>
-                      <th className="px-3 py-3 text-right">Primljeni</th>
-                      <th className="px-3 py-3 text-right">Bodova</th>
-                      <th className="px-3 py-3 text-right">Prosjek gledalaca</th>
+                      <th className="px-3 py-3 text-right">P</th>
+                      <th className="px-3 py-3 text-right">N</th>
+                      <th className="px-3 py-3 text-right">I</th>
+                      <th className="px-3 py-3 text-right">Golova</th>
+                      <th className="px-3 py-3 text-right">Primljenih</th>
+                      <th className="px-3 py-3 text-center">Plasman</th>
+                      <th className="px-3 py-3 text-right">Prosjek</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -677,16 +681,13 @@ function Klub() {
                         <td className="px-3 py-3">
                           <SeasonButton season={r.season} note={r.current ? "(u toku)" : undefined} />
                         </td>
-                        <td className="px-3 py-3 text-center font-semibold text-primary">
-                          {r.position ?? "—"}
-                        </td>
                         <td className="px-3 py-3 text-right">{r.played}</td>
-                        <td className="px-3 py-3 text-right">{r.wins}</td>
-                        <td className="px-3 py-3 text-right">{r.draws}</td>
-                        <td className="px-3 py-3 text-right">{r.losses}</td>
+                        <td className={`px-3 py-3 text-right ${WIN}`}>{r.wins}</td>
+                        <td className={`px-3 py-3 text-right ${DRAW}`}>{r.draws}</td>
+                        <td className={`px-3 py-3 text-right ${LOSS}`}>{r.losses}</td>
                         <td className="px-3 py-3 text-right">{r.gf}</td>
                         <td className="px-3 py-3 text-right">{r.ga}</td>
-                        <td className="px-3 py-3 text-right font-bold">{r.points}</td>
+                        <td className="px-3 py-3 text-center font-semibold">{r.position ?? "—"}</td>
                         <td className="px-3 py-3 text-right">{fmtAvg(r.avg)}</td>
                       </tr>
                     ))}
@@ -694,14 +695,13 @@ function Klub() {
                   <tfoot>
                     <tr className="border-t-4 border-foreground/30 bg-surface font-bold">
                       <td className="px-3 py-3 uppercase">Ukupno</td>
-                      <td className="px-3 py-3 text-center">—</td>
                       <td className="px-3 py-3 text-right">{sumLiga((r) => r.played)}</td>
-                      <td className="px-3 py-3 text-right">{sumLiga((r) => r.wins)}</td>
-                      <td className="px-3 py-3 text-right">{sumLiga((r) => r.draws)}</td>
-                      <td className="px-3 py-3 text-right">{sumLiga((r) => r.losses)}</td>
+                      <td className={`px-3 py-3 text-right ${WIN}`}>{sumLiga((r) => r.wins)}</td>
+                      <td className={`px-3 py-3 text-right ${DRAW}`}>{sumLiga((r) => r.draws)}</td>
+                      <td className={`px-3 py-3 text-right ${LOSS}`}>{sumLiga((r) => r.losses)}</td>
                       <td className="px-3 py-3 text-right">{sumLiga((r) => r.gf)}</td>
                       <td className="px-3 py-3 text-right">{sumLiga((r) => r.ga)}</td>
-                      <td className="px-3 py-3 text-right">{sumLiga((r) => r.points)}</td>
+                      <td className="px-3 py-3 text-center">—</td>
                       <td className="px-3 py-3 text-right">{fmtAvg(ligaTotalAvg)}</td>
                     </tr>
                   </tfoot>
@@ -730,7 +730,7 @@ function Klub() {
               }))}
             />
 
-            {/* ---- Računar: tabela kao do sada ---- */}
+            {/* ---- Računar: tabela ---- */}
             <div className="hidden overflow-x-auto sm:block">
               <table className="w-full min-w-[720px] text-sm tabular-nums">
                 <thead>
@@ -738,12 +738,12 @@ function Klub() {
                     <th className="px-3 py-3 text-left">Sezona</th>
                     {showStage && <th className="px-3 py-3 text-left">Najdalje</th>}
                     <th className="px-3 py-3 text-right">Utakmica</th>
-                    <th className="px-3 py-3 text-right">Pobjeda</th>
-                    <th className="px-3 py-3 text-right">Neriješeno</th>
-                    <th className="px-3 py-3 text-right">Poraza</th>
-                    <th className="px-3 py-3 text-right">Golovi</th>
-                    <th className="px-3 py-3 text-right">Primljeni</th>
-                    <th className="px-3 py-3 text-right">Prosjek gledalaca</th>
+                    <th className="px-3 py-3 text-right">P</th>
+                    <th className="px-3 py-3 text-right">N</th>
+                    <th className="px-3 py-3 text-right">I</th>
+                    <th className="px-3 py-3 text-right">Golova</th>
+                    <th className="px-3 py-3 text-right">Primljenih</th>
+                    <th className="px-3 py-3 text-right">Prosjek</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -756,9 +756,9 @@ function Klub() {
                         <td className="px-3 py-3 font-semibold text-primary">{r.stage}</td>
                       )}
                       <td className="px-3 py-3 text-right">{r.played}</td>
-                      <td className="px-3 py-3 text-right">{r.wins}</td>
-                      <td className="px-3 py-3 text-right">{r.draws}</td>
-                      <td className="px-3 py-3 text-right">{r.losses}</td>
+                      <td className={`px-3 py-3 text-right ${WIN}`}>{r.wins}</td>
+                      <td className={`px-3 py-3 text-right ${DRAW}`}>{r.draws}</td>
+                      <td className={`px-3 py-3 text-right ${LOSS}`}>{r.losses}</td>
                       <td className="px-3 py-3 text-right">{r.gf}</td>
                       <td className="px-3 py-3 text-right">{r.ga}</td>
                       <td className="px-3 py-3 text-right">{fmtAvg(r.avg)}</td>
@@ -770,9 +770,9 @@ function Klub() {
                     <td className="px-3 py-3 uppercase">Ukupno</td>
                     {showStage && <td className="px-3 py-3">—</td>}
                     <td className="px-3 py-3 text-right">{sumOther((r) => r.played)}</td>
-                    <td className="px-3 py-3 text-right">{sumOther((r) => r.wins)}</td>
-                    <td className="px-3 py-3 text-right">{sumOther((r) => r.draws)}</td>
-                    <td className="px-3 py-3 text-right">{sumOther((r) => r.losses)}</td>
+                    <td className={`px-3 py-3 text-right ${WIN}`}>{sumOther((r) => r.wins)}</td>
+                    <td className={`px-3 py-3 text-right ${DRAW}`}>{sumOther((r) => r.draws)}</td>
+                    <td className={`px-3 py-3 text-right ${LOSS}`}>{sumOther((r) => r.losses)}</td>
                     <td className="px-3 py-3 text-right">{sumOther((r) => r.gf)}</td>
                     <td className="px-3 py-3 text-right">{sumOther((r) => r.ga)}</td>
                     <td className="px-3 py-3 text-right">{fmtAvg(otherTotalAvg)}</td>
