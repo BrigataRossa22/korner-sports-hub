@@ -1,12 +1,14 @@
 import { useEffect, useSyncExternalStore } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { getOpponentCrest } from "@/lib/opponentcrest.functions";
+import { getOpponentCrestsDb } from "@/lib/opponentcrestsdb.functions";
 
-// Grbovi evropskih protivnika: traže se automatski u besplatnoj bazi TheSportsDB (preko servera)
-// i pamte se u pregledniku (localStorage), pa se svaki klub traži samo jednom.
+// Grbovi evropskih protivnika: prvo iz baze (tabela opponent_crests), a za klubove kojih tamo
+// nema traže se automatski u TheSportsDB i pamte u pregledniku.
 
 const STORE_KEY = "korner-opponent-crests-v2";
-const MISS_TTL = 7 * 24 * 3600 * 1000; // klub koji nije pronađen traži se opet tek nakon sedam dana
-const GAP_MS = 2300; // besplatna baza dozvoljava oko 30 upita u minuti
+const MISS_TTL = 7 * 24 * 3600 * 1000;
+const GAP_MS = 2300;
 const RATE_WAIT_MS = 65000;
 
 type Entry = { url: string; at: number };
@@ -131,17 +133,34 @@ function subscribe(l: () => void): () => void {
   };
 }
 
-/** Vraća funkciju: ime protivnika -> adresa grba ("" dok se ne pronađe ili ako ga nema). */
+/** Vraća funkciju: ime protivnika -> adresa grba ("" ako ga nema). */
 export function useOpponentCrests(names: string[]): (name: string) => string {
   useSyncExternalStore(
     subscribe,
     () => version,
     () => 0,
   );
+  const { data: dbRows, isSuccess } = useQuery({
+    queryKey: ["opponent-crests-db"],
+    queryFn: () => getOpponentCrestsDb(),
+    staleTime: Infinity,
+  });
+  const db = new Map<string, string>();
+  for (const r of dbRows ?? []) if (r.url) db.set(r.key, r.url);
+
   const sig = names.join("|");
+  const dbSize = db.size;
   useEffect(() => {
     ensureLoaded();
-    for (const n of sig.split("|")) request(n);
-  }, [sig]);
-  return (name: string) => cache.get(keyOf(name))?.url ?? "";
+    if (!isSuccess) return;
+    for (const n of sig.split("|")) {
+      if (!db.has(keyOf(n))) request(n);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sig, isSuccess, dbSize]);
+
+  return (name: string) => {
+    const k = keyOf(name);
+    return db.get(k) ?? cache.get(k)?.url ?? "";
+  };
 }
