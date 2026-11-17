@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { TableSkeleton } from "@/components/TableSkeleton";
 import { getEuroMatches, type EuroMatch } from "@/lib/euromatches.functions";
 import { useClubCrest } from "@/lib/use-club-crest";
+import { useOpponentCrests } from "@/lib/use-opponent-crest";
 
 const COMPETITIONS: { key: EuroMatch["competition"]; title: string }[] = [
   { key: "LP", title: "Liga prvaka" },
@@ -22,6 +23,7 @@ function initials(name: string): string {
 
 function Table({ title, rows: rawRows }: { title: string; rows: EuroMatch[] }) {
   const crestFor = useClubCrest();
+  const oppCrest = useOpponentCrests(rawRows.map((r) => r.opponent));
 
   const firstOrder = new Map<string, number>();
   for (const r of rawRows) {
@@ -95,6 +97,7 @@ function Table({ title, rows: rawRows }: { title: string; rows: EuroMatch[] }) {
                   : `https://flagcdn.com/w40/${r.opponent_flag.toLowerCase()}.png`
                 : "";
               const crest = crestFor(r.club) || r.club_crest;
+              const oppLogo = oppCrest(r.opponent);
               return (
                 <tr key={r.id} className={border}>
                   {x.newSeason && (
@@ -132,6 +135,19 @@ function Table({ title, rows: rawRows }: { title: string; rows: EuroMatch[] }) {
                   <td className="whitespace-nowrap px-3 py-2">{r.round}</td>
                   <td className="px-3 py-2">
                     <span className="flex items-center gap-2 whitespace-nowrap">
+                      <span className="flex size-5 shrink-0 items-center justify-center">
+                        {oppLogo && (
+                          <img
+                            src={oppLogo}
+                            alt=""
+                            loading="lazy"
+                            className="size-5 object-contain"
+                            onError={(e) => {
+                              e.currentTarget.style.display = "none";
+                            }}
+                          />
+                        )}
+                      </span>
                       {flag && <img src={flag} alt="" className="h-4 w-6 shrink-0 object-cover" />}
                       {r.opponent}
                     </span>
