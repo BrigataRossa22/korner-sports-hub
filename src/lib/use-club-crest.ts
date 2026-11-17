@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getAllTimeTeams } from "@/lib/alltimeteams.functions";
 import { getCupMatches } from "@/lib/cupmatches.functions";
+import { getOpponentCrestsDb } from "@/lib/opponentcrestsdb.functions";
 import { useCrest } from "@/lib/use-crest";
 
 const SUPA = "https://wxyxcfalnqttwchxebpn.supabase.co/storage/v1/object/public/slike/";
@@ -9,13 +10,24 @@ const PREFIXES = new Set(["fk", "nk", "hsk", "hnk", "sk", "gnk", "fc", "nogometn
 function norm(s: string): string {
   return s
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/đ/g, "d")
     .replace(/[^a-z0-9 ]+/g, " ")
     .split(/\s+/)
     .filter((w) => w && !PREFIXES.has(w))
     .join(" ");
+}
+
+// Ključ za grbove evropskih protivnika (tabela opponent_crests); isti postupak kao u use-opponent-crest.ts
+function oppKey(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/đ/g, "d")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
 }
 
 const full = (crest: string): string => (crest.startsWith("http") ? crest : `${SUPA}${crest}`);
@@ -31,12 +43,21 @@ const SEASON_CRESTS: Record<string, Record<string, string>> = {
 /**
  * Ime kluba -> adresa grba. Ako je zadana sezona, prvo se gleda grb koji vrijedi samo za tu sezonu.
  * Redoslijed: Vječna lista (tačno ime), grb upisan u utakmicama Kupa BiH (tačno ime),
- * Vječna lista (slično ime), pa tabela clubs.
+ * grb evropskog protivnika (tabela opponent_crests), Vječna lista (slično ime), pa tabela clubs.
  */
 export function useClubCrest(season?: string): (club: string) => string {
   const { data } = useQuery({ queryKey: ["all-time-teams"], queryFn: () => getAllTimeTeams() });
   const { data: cup } = useQuery({ queryKey: ["cup-matches"], queryFn: () => getCupMatches() });
+  const { data: oppRows } = useQuery({
+    queryKey: ["opponent-crests-db"],
+    queryFn: () => getOpponentCrestsDb(),
+    staleTime: Infinity,
+  });
   const fallback = useCrest();
+
+  // Grbovi evropskih protivnika (Evropa)
+  const oppMap = new Map<string, string>();
+  for (const r of oppRows ?? []) if (r.url) oppMap.set(r.key, r.url);
 
   const list = (data ?? [])
     .filter((t) => t.crest)
@@ -70,11 +91,14 @@ export function useClubCrest(season?: string): (club: string) => string {
       const fromCup = cupMap.get(n);
       if (fromCup) return full(fromCup);
 
+      const opp = oppMap.get(oppKey(club));
+      if (opp) return opp;
+
       const hit = list
         .filter((t) => t.key.length >= 4 && (n.includes(t.key) || t.key.includes(n)))
         .sort((a, b) => b.key.length - a.key.length)[0];
       if (hit) return full(hit.crest);
     }
-    return fallback(club);
+    return fallback(club) || oppMap.get(oppKey(club)) || "";
   };
 }
