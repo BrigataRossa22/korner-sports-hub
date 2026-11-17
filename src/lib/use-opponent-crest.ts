@@ -1,21 +1,15 @@
 import { useEffect, useSyncExternalStore } from "react";
+import { getOpponentCrest } from "@/lib/opponentcrest.functions";
 
-// Grbovi evropskih protivnika: traže se automatski u besplatnoj bazi TheSportsDB
+// Grbovi evropskih protivnika: traže se automatski u besplatnoj bazi TheSportsDB (preko servera)
 // i pamte se u pregledniku (localStorage), pa se svaki klub traži samo jednom.
 
-const STORE_KEY = "korner-opponent-crests-v1";
+const STORE_KEY = "korner-opponent-crests-v2";
 const MISS_TTL = 7 * 24 * 3600 * 1000; // klub koji nije pronađen traži se opet tek nakon sedam dana
 const GAP_MS = 2300; // besplatna baza dozvoljava oko 30 upita u minuti
 const RATE_WAIT_MS = 65000;
-const API = "https://www.thesportsdb.com/api/v1/json/3/searchteams.php?t=";
 
 type Entry = { url: string; at: number };
-type ApiTeam = {
-  strTeam?: string | null;
-  strSport?: string | null;
-  strBadge?: string | null;
-  strTeamBadge?: string | null;
-};
 
 const cache = new Map<string, Entry>();
 const pending = new Set<string>();
@@ -80,15 +74,10 @@ function variants(name: string): string[] {
 }
 
 async function fetchBadge(query: string): Promise<string> {
-  const res = await fetch(`${API}${encodeURIComponent(query)}`);
-  if (res.status === 429) throw new Error("rate");
-  if (!res.ok) throw new Error("http");
-  const json = (await res.json()) as { teams?: ApiTeam[] | null };
-  const soccer = (json.teams ?? []).filter((t) => t.strSport === "Soccer");
-  const want = keyOf(query);
-  const pick = soccer.find((t) => keyOf(t.strTeam ?? "") === want) ?? soccer[0];
-  const badge = pick?.strBadge || pick?.strTeamBadge || "";
-  return badge ? `${badge}/tiny` : "";
+  const r = await getOpponentCrest({ data: { query } });
+  if (r.status === "rate") throw new Error("rate");
+  if (r.status === "error") throw new Error("http");
+  return r.url;
 }
 
 async function run(): Promise<void> {
