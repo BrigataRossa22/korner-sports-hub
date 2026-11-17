@@ -1,0 +1,158 @@
+import { useEffect, useSyncExternalStore } from "react";
+
+// Grbovi evropskih protivnika: traže se automatski u besplatnoj bazi TheSportsDB
+// i pamte se u pregledniku (localStorage), pa se svaki klub traži samo jednom.
+
+const STORE_KEY = "korner-opponent-crests-v1";
+const MISS_TTL = 7 * 24 * 3600 * 1000; // klub koji nije pronađen traži se opet tek nakon sedam dana
+const GAP_MS = 2300; // besplatna baza dozvoljava oko 30 upita u minuti
+const RATE_WAIT_MS = 65000;
+const API = "https://www.thesportsdb.com/api/v1/json/3/searchteams.php?t=";
+
+type Entry = { url: string; at: number };
+type ApiTeam = {
+  strTeam?: string | null;
+  strSport?: string | null;
+  strBadge?: string | null;
+  strTeamBadge?: string | null;
+};
+
+const cache = new Map<string, Entry>();
+const pending = new Set<string>();
+const queue: string[] = [];
+const listeners = new Set<() => void>();
+let version = 0;
+let running = false;
+let loaded = false;
+
+function keyOf(name: string): string {
+  return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/đ/g, "d")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function emit(): void {
+  version++;
+  listeners.forEach((l) => l());
+}
+
+function ensureLoaded(): void {
+  if (loaded || typeof window === "undefined") return;
+  loaded = true;
+  try {
+    const raw = window.localStorage.getItem(STORE_KEY);
+    if (!raw) return;
+    const obj = JSON.parse(raw) as Record<string, Entry>;
+    for (const [k, v] of Object.entries(obj)) {
+      if (v && typeof v.url === "string" && typeof v.at === "number") cache.set(k, v);
+    }
+    emit();
+  } catch {
+    /* bez keša stranica radi isto */
+  }
+}
+
+function save(): void {
+  try {
+    const obj: Record<string, Entry> = {};
+    cache.forEach((v, k) => {
+      obj[k] = v;
+    });
+    window.localStorage.setItem(STORE_KEY, JSON.stringify(obj));
+  } catch {
+    /* ignoriši */
+  }
+}
+
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+function variants(name: string): string[] {
+  const base = name.trim();
+  const stripped = base
+    .replace(/^(fc|fk|sk|nk|cf|ac|as|ss|sc|bk|if|kf|hnk|gnk)\s+/i, "")
+    .replace(/\s+(fc|fk|sk|cf|ac)$/i, "")
+    .trim();
+  return stripped && stripped !== base ? [base, stripped] : [base];
+}
+
+async function fetchBadge(query: string): Promise<string> {
+  const res = await fetch(`${API}${encodeURIComponent(query)}`);
+  if (res.status === 429) throw new Error("rate");
+  if (!res.ok) throw new Error("http");
+  const json = (await res.json()) as { teams?: ApiTeam[] | null };
+  const soccer = (json.teams ?? []).filter((t) => t.strSport === "Soccer");
+  const want = keyOf(query);
+  const pick = soccer.find((t) => keyOf(t.strTeam ?? "") === want) ?? soccer[0];
+  const badge = pick?.strBadge || pick?.strTeamBadge || "";
+  return badge ? `${badge}/tiny` : "";
+}
+
+async function run(): Promise<void> {
+  if (running) return;
+  running = true;
+  while (queue.length) {
+    const name = queue.shift()!;
+    const k = keyOf(name);
+    let url = "";
+    let failed = false;
+    try {
+      for (const q of variants(name)) {
+        url = await fetchBadge(q);
+        if (url) break;
+        await sleep(GAP_MS);
+      }
+    } catch (e) {
+      failed = true;
+      if (e instanceof Error && e.message === "rate") {
+        queue.unshift(name);
+        await sleep(RATE_WAIT_MS);
+        continue;
+      }
+    }
+    pending.delete(k);
+    if (!failed) {
+      cache.set(k, { url, at: Date.now() });
+      save();
+      emit();
+    }
+    await sleep(GAP_MS);
+  }
+  running = false;
+}
+
+function request(name: string): void {
+  const k = keyOf(name);
+  if (!k) return;
+  const e = cache.get(k);
+  if (e && (e.url || Date.now() - e.at < MISS_TTL)) return;
+  if (pending.has(k)) return;
+  pending.add(k);
+  queue.push(name);
+  void run();
+}
+
+function subscribe(l: () => void): () => void {
+  listeners.add(l);
+  return () => {
+    listeners.delete(l);
+  };
+}
+
+/** Vraća funkciju: ime protivnika -> adresa grba ("" dok se ne pronađe ili ako ga nema). */
+export function useOpponentCrests(names: string[]): (name: string) => string {
+  useSyncExternalStore(
+    subscribe,
+    () => version,
+    () => 0,
+  );
+  const sig = names.join("|");
+  useEffect(() => {
+    ensureLoaded();
+    for (const n of sig.split("|")) request(n);
+  }, [sig]);
+  return (name: string) => cache.get(keyOf(name))?.url ?? "";
+}
