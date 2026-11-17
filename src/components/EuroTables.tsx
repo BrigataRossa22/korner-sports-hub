@@ -91,11 +91,6 @@ function Table({ title, rows: rawRows }: { title: string; rows: EuroMatch[] }) {
                 : x.lastOfClub
                   ? "border-b border-border"
                   : "";
-              const flag = r.opponent_flag
-                ? r.opponent_flag.startsWith("http")
-                  ? r.opponent_flag
-                  : `https://flagcdn.com/w40/${r.opponent_flag.toLowerCase()}.png`
-                : "";
               const crest = crestFor(r.club) || r.club_crest;
               const oppLogo = oppCrest(r.opponent);
               return (
@@ -148,7 +143,6 @@ function Table({ title, rows: rawRows }: { title: string; rows: EuroMatch[] }) {
                           />
                         )}
                       </span>
-                      {flag && <img src={flag} alt="" className="h-4 w-6 shrink-0 object-cover" />}
                       {r.opponent}
                     </span>
                   </td>
