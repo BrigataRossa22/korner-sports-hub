@@ -238,12 +238,24 @@ export function ClubSeasons({ name }: { name: string }) {
                       </thead>
                       <tbody>
                         {list.map((e) => {
-                          const flag = flagSrc(e.opponent_flag);
+                          const oppLogo = crestFor(e.opponent);
+                          const flag = oppLogo ? "" : flagSrc(e.opponent_flag);
                           return (
                             <tr key={e.id} className="border-t border-border">
                               <td className="px-4 py-3">{e.round}</td>
                               <td className="px-4 py-3">
                                 <span className="flex items-center gap-2 font-medium">
+                                  {oppLogo && (
+                                    <img
+                                      src={oppLogo}
+                                      alt=""
+                                      loading="lazy"
+                                      className="size-6 shrink-0 object-contain"
+                                      onError={(ev) => {
+                                        ev.currentTarget.style.display = "none";
+                                      }}
+                                    />
+                                  )}
                                   {flag && (
                                     <img src={flag} alt="" className="h-4 w-6 shrink-0 object-cover" />
                                   )}
