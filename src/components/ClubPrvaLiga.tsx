@@ -70,7 +70,6 @@ export function ClubPrvaLiga({ name }: { name: string }) {
                 >
                   {r.season}
                 </Link>
-                {r.grp && <span className="ml-2 text-xs text-muted-foreground">{r.grp}</span>}
               </td>
               <td className="px-3 py-3 text-center font-semibold text-primary">{r.position}</td>
               <td className="px-3 py-3 text-right">{r.played}</td>
@@ -103,4 +102,4 @@ export function ClubPrvaLiga({ name }: { name: string }) {
       </table>
     </div>
   );
-} 
+}
