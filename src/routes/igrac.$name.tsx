@@ -1,9 +1,11 @@
+import { Fragment, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { ChevronDown } from "lucide-react";
 import { LoadError } from "@/components/RouteFallbacks";
 import { TableSkeleton } from "@/components/TableSkeleton";
 import { displayClub, normClub, sameClub } from "@/lib/club-match";
-import { getPlayerGoals } from "@/lib/playergoals.functions";
+import { getPlayerGoals, type PlayerGoal } from "@/lib/playergoals.functions";
 import { useClubCrest } from "@/lib/use-club-crest";
 
 export const Route = createFileRoute("/igrac/$name")({
@@ -35,6 +37,7 @@ function mergeTeams(teams: Iterable<string>): string {
 function Igrac() {
   const { name } = Route.useParams();
   const crestFor = useClubCrest();
+  const [open, setOpen] = useState<Set<string>>(new Set());
   const { data, isLoading } = useQuery({
     queryKey: ["player-goals-v2", name],
     queryFn: () => getPlayerGoals({ data: { name } }),
@@ -42,17 +45,24 @@ function Igrac() {
   });
 
   const goals = data ?? [];
-  const seasons = [...new Set(goals.map((g) => g.season))].filter(Boolean);
 
-  // Golovi po sezonama (najnovija sezona prva)
-  const bySeason = new Map<string, { goals: number; teams: Set<string> }>();
+  // Golovi po sezonama (najnovija sezona prva), a unutar sezone redom kako su postignuti
+  const bySeason = new Map<string, { goals: PlayerGoal[]; teams: Set<string> }>();
   for (const g of goals) {
-    const e = bySeason.get(g.season) ?? { goals: 0, teams: new Set<string>() };
-    e.goals += 1;
+    const e = bySeason.get(g.season) ?? { goals: [], teams: new Set<string>() };
+    e.goals.push(g);
     if (g.team) e.teams.add(g.team);
     bySeason.set(g.season, e);
   }
   const seasonRows = [...bySeason.entries()].sort((a, b) => b[0].localeCompare(a[0]));
+
+  const toggle = (season: string) =>
+    setOpen((prev) => {
+      const next = new Set(prev);
+      if (next.has(season)) next.delete(season);
+      else next.add(season);
+      return next;
+    });
 
   // Grbovi klubova za koje je postigao gol
   const teams = [...new Set(goals.map((g) => g.team).filter(Boolean))];
@@ -64,8 +74,6 @@ function Igrac() {
     seen.add(src);
     crests.push({ src, name: displayClub(t) });
   }
-
-  const newestFirst = [...goals].reverse();
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:py-12">
@@ -91,19 +99,12 @@ function Igrac() {
         <p className="border-y border-border py-8 text-muted-foreground">Nema podataka o golovima.</p>
       ) : (
         <>
-          <section className="mb-8 grid grid-cols-2 gap-3">
-            {[
-              { label: "Golova", value: goals.length },
-              { label: "Sezona", value: seasons.length },
-            ].map((s) => (
-              <div key={s.label} className="rounded-lg border border-border bg-card px-4 py-3 text-center">
-                <p className="font-display text-3xl font-bold">{s.value}</p>
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{s.label}</p>
-              </div>
-            ))}
+          <section className="mb-8 rounded-lg border border-border bg-card px-4 py-3 text-center">
+            <p className="font-display text-3xl font-bold">{goals.length}</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Golova</p>
           </section>
 
-          <section className="mb-8 overflow-hidden rounded-lg border border-border bg-card">
+          <section className="overflow-hidden rounded-lg border border-border bg-card">
             <h2 className="border-b border-border px-4 py-3 font-display text-lg font-bold uppercase">
               Golovi po sezonama
             </h2>
@@ -113,16 +114,77 @@ function Igrac() {
                   <th className="px-3 py-2 text-left">Sezona</th>
                   <th className="px-2 py-2 text-left">Klub</th>
                   <th className="w-24 px-3 py-2 text-right">Golova</th>
+                  <th className="w-8 px-2 py-2" />
                 </tr>
               </thead>
               <tbody>
-                {seasonRows.map(([season, e]) => (
-                  <tr key={season} className="border-b border-border/70 last:border-0 even:bg-surface/50">
-                    <td className="whitespace-nowrap px-3 py-2 font-semibold">{season}</td>
-                    <td className="px-2 py-2 text-muted-foreground">{mergeTeams(e.teams)}</td>
-                    <td className="px-3 py-2 text-right text-base font-bold">{e.goals}</td>
-                  </tr>
-                ))}
+                {seasonRows.map(([season, e]) => {
+                  const isOpen = open.has(season);
+                  return (
+                    <Fragment key={season}>
+                      <tr
+                        onClick={() => toggle(season)}
+                        onKeyDown={(ev) => {
+                          if (ev.key === "Enter" || ev.key === " ") {
+                            ev.preventDefault();
+                            toggle(season);
+                          }
+                        }}
+                        tabIndex={0}
+                        aria-expanded={isOpen}
+                        title="Prikaži golove iz ove sezone"
+                        className={`cursor-pointer border-b border-border/70 hover:bg-muted/40 ${
+                          isOpen ? "bg-muted" : ""
+                        }`}
+                      >
+                        <td className="whitespace-nowrap px-3 py-2.5 font-semibold text-primary">{season}</td>
+                        <td className="px-2 py-2.5 text-muted-foreground">{mergeTeams(e.teams)}</td>
+                        <td className="px-3 py-2.5 text-right text-base font-bold">{e.goals.length}</td>
+                        <td className="px-2 py-2.5">
+                          <ChevronDown
+                            className={`size-4 text-muted-foreground transition-transform ${
+                              isOpen ? "rotate-180" : ""
+                            }`}
+                          />
+                        </td>
+                      </tr>
+
+                      {isOpen && (
+                        <tr className="border-b border-border/70 bg-muted">
+                          <td colSpan={4} className="px-3 pb-3 pt-1">
+                            <ul className="divide-y divide-border/60 text-sm">
+                              {e.goals.map((g, i) => {
+                                const homeScored = g.team && g.team === g.home;
+                                const awayScored = g.team && g.team === g.away;
+                                return (
+                                  <li
+                                    key={i}
+                                    className="grid grid-cols-[2.5rem_1fr_auto] items-center gap-2 py-2"
+                                  >
+                                    <span className="text-xs text-muted-foreground">
+                                      {g.round != null ? `${g.round}. k.` : "—"}
+                                    </span>
+                                    <span className="min-w-0">
+                                      <span className={homeScored ? "font-semibold" : ""}>{g.home}</span>
+                                      <span className="text-muted-foreground"> – </span>
+                                      <span className={awayScored ? "font-semibold" : ""}>{g.away}</span>
+                                    </span>
+                                    <span className="whitespace-nowrap text-right">
+                                      {g.minute != null ? `${g.minute}${g.extra ? `+${g.extra}` : ""}'` : "—"}
+                                      {g.penalty && (
+                                        <span className="ml-1 text-xs text-muted-foreground">(pen.)</span>
+                                      )}
+                                    </span>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  );
+                })}
               </tbody>
               <tfoot>
                 <tr className="border-t-4 border-foreground/30 bg-surface font-bold">
@@ -130,50 +192,12 @@ function Igrac() {
                     Ukupno
                   </td>
                   <td className="px-3 py-2 text-right">{goals.length}</td>
+                  <td />
                 </tr>
               </tfoot>
             </table>
-          </section>
-
-          <section className="overflow-hidden rounded-lg border border-border bg-card">
-            <h2 className="border-b border-border px-4 py-3 font-display text-lg font-bold uppercase">
-              Svi golovi
-            </h2>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[520px] border-collapse text-sm tabular-nums">
-                <thead>
-                  <tr className="border-b border-border bg-surface text-xs uppercase text-muted-foreground">
-                    <th className="px-3 py-2 text-left">Sezona</th>
-                    <th className="px-2 py-2 text-center">Kolo</th>
-                    <th className="px-2 py-2 text-left">Utakmica</th>
-                    <th className="px-3 py-2 text-right">Minut</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {newestFirst.map((g, i) => {
-                    const homeScored = g.team && g.team === g.home;
-                    const awayScored = g.team && g.team === g.away;
-                    return (
-                      <tr key={i} className="border-b border-border/70 last:border-0 even:bg-surface/50">
-                        <td className="whitespace-nowrap px-3 py-2">{g.season}</td>
-                        <td className="px-2 py-2 text-center text-muted-foreground">{g.round ?? "—"}</td>
-                        <td className="px-2 py-2">
-                          <span className={homeScored ? "font-semibold" : ""}>{g.home}</span>
-                          <span className="text-muted-foreground"> – </span>
-                          <span className={awayScored ? "font-semibold" : ""}>{g.away}</span>
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-2 text-right">
-                          {g.minute != null ? `${g.minute}${g.extra ? `+${g.extra}` : ""}'` : "—"}
-                          {g.penalty && <span className="ml-1 text-xs text-muted-foreground">(p)</span>}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
             <p className="border-t border-border px-4 py-2 text-xs text-muted-foreground">
-              Najnoviji golovi su prvi. Podebljan je klub koji je dao gol, a (p) označava gol iz penala.
+              Klikni na sezonu da vidiš sve golove iz nje. Podebljan je klub koji je dao gol.
             </p>
           </section>
         </>
