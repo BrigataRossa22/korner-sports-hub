@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 
-export type TopRow = { name: string; count: number; clubs: string[] };
+// first i last: sezona prvog i zadnjeg gola (ili asistencije), npr. "2002-03" i "2018-19"
+export type TopRow = { name: string; count: number; clubs: string[]; first: string; last: string };
 export type BrojkeData = {
   scorers: TopRow[];
   assists: TopRow[];
@@ -100,11 +101,20 @@ const isOwn = (k: string | null) => {
 };
 
 type ClubInfo = { name: string; first: string; n: number };
-type Counts = Map<string, { n: number; names: Map<string, number>; clubs: Map<string, ClubInfo> }>;
+type Counts = Map<
+  string,
+  {
+    n: number;
+    names: Map<string, number>;
+    clubs: Map<string, ClubInfo>;
+    first: string;
+    last: string;
+  }
+>;
 
 function top(counts: Counts): TopRow[] {
   const rows: TopRow[] = [];
-  for (const { n, names, clubs } of counts.values()) {
+  for (const { n, names, clubs, first, last } of counts.values()) {
     let best = "";
     let bestN = -1;
     for (const [name, c] of names) {
@@ -116,7 +126,7 @@ function top(counts: Counts): TopRow[] {
     const clubList = [...clubs.values()]
       .sort((a, b) => a.first.localeCompare(b.first) || b.n - a.n)
       .map((c) => c.name);
-    rows.push({ name: best, count: n, clubs: clubList });
+    rows.push({ name: best, count: n, clubs: clubList, first, last });
   }
   rows.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "bs"));
   return rows.slice(0, 25);
@@ -172,8 +182,18 @@ export const getBrojke = createServerFn({ method: "GET" }).handler(async (): Pro
     if (!name) return;
     const k = norm(name);
     if (!k) return;
-    const e = map.get(k) ?? { n: 0, names: new Map<string, number>(), clubs: new Map<string, ClubInfo>() };
+    const e = map.get(k) ?? {
+      n: 0,
+      names: new Map<string, number>(),
+      clubs: new Map<string, ClubInfo>(),
+      first: "",
+      last: "",
+    };
     e.n += inc;
+    if (season) {
+      if (!e.first || season < e.first) e.first = season;
+      if (!e.last || season > e.last) e.last = season;
+    }
     e.names.set(name, (e.names.get(name) ?? 0) + inc);
     if (team) {
       const ck = norm(team);
