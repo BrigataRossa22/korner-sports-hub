@@ -44,7 +44,7 @@ type Coach = {
 };
 
 const COACHES: Coach[] = [
-  { name: "Sergej Barbarez", born: "17.09.1971.", from: "19.04.2024.", to: null, time: "2 god. 6 mj.", m: 30, w: 11, d: 9, l: 10 },
+  { name: "Sergej Barbarez", born: "17.09.1971.", from: "19.04.2024.", to: null, time: "2 god. 6 mj.", m: 32, w: 12, d: 9, l: 11 },
   { name: "Savo Milošević", born: "02.09.1973.", from: "29.09.2023.", to: "16.04.2024.", time: "6 mj.", m: 5, w: 1, d: 0, l: 4 },
   { name: "Meho Kodro", born: "12.01.1967.", from: "03.08.2023.", to: "21.09.2023.", time: "1 mj.", m: 2, w: 1, d: 0, l: 1 },
   { name: "Faruk Hadžibegić", born: "07.10.1957.", from: "04.01.2023.", to: "23.06.2023.", time: "5 mj.", m: 4, w: 1, d: 0, l: 3 },
@@ -73,6 +73,10 @@ type CoachTotal = {
   d: number;
   l: number;
 };
+
+// Aktivni selektor: tanka zelena linija lijevo i blaga zelena pozadina reda
+const ACTIVE_ROW = "bg-green-500/10";
+const ACTIVE_CELL = "border-l-2 border-green-500";
 
 const ppg = (w: number, d: number, m: number) => (m ? (3 * w + d) / m : 0);
 const pct = (w: number, m: number) => (m ? Math.round((w / m) * 100) : 0);
@@ -214,6 +218,7 @@ function CoachesView() {
     return [...map.values()].sort((a, b) => b.m - a.m || b.w - a.w);
   }, []);
 
+  const activeNames = new Set(COACHES.filter((c) => c.to === null).map((c) => c.name));
   const allMatches = COACHES.reduce((s, c) => s + c.m, 0);
   const best = totals
     .filter((t) => t.m >= 10)
@@ -314,9 +319,9 @@ function CoachesView() {
               {COACHES.map((c) => (
                 <tr
                   key={`${c.name}${c.from}`}
-                  className="border-b border-border/70 last:border-0"
+                  className={`border-b border-border/70 last:border-0 ${c.to === null ? ACTIVE_ROW : ""}`}
                 >
-                  <td className="px-2 py-2 sm:px-4">
+                  <td className={`px-2 py-2 sm:px-4 ${c.to === null ? ACTIVE_CELL : ""}`}>
                     <div className="flex items-center gap-2 sm:gap-3">
                       <CoachAvatar name={c.name} />
                       <div className="min-w-0">
@@ -370,8 +375,15 @@ function CoachesView() {
             </thead>
             <tbody>
               {totals.map((t, i) => (
-                <tr key={t.name} className="border-b border-border/70 last:border-0">
-                  <td className="px-2 py-2 text-muted-foreground sm:px-4">{i + 1}</td>
+                <tr
+                  key={t.name}
+                  className={`border-b border-border/70 last:border-0 ${activeNames.has(t.name) ? ACTIVE_ROW : ""}`}
+                >
+                  <td
+                    className={`px-2 py-2 text-muted-foreground sm:px-4 ${activeNames.has(t.name) ? ACTIVE_CELL : ""}`}
+                  >
+                    {i + 1}
+                  </td>
                   <td className="px-2 py-2 sm:px-3">
                     <div className="flex items-center gap-2 sm:gap-3">
                       <CoachAvatar name={t.name} />
