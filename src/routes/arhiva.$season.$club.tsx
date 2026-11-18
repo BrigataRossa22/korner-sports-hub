@@ -5,6 +5,8 @@ import { ChevronDown } from "lucide-react";
 import { LoadError } from "@/components/RouteFallbacks";
 import { TableSkeleton } from "@/components/TableSkeleton";
 import { sameClub } from "@/lib/club-match";
+import { getLeagueMatches } from "@/lib/leaguematches.functions";
+import { getMatchGoals } from "@/lib/matchgoals.functions";
 import { getSeasonGoals, type SeasonGoal } from "@/lib/seasongoals.functions";
 import { getSeasonMatches, type SeasonMatch } from "@/lib/seasonmatches.functions";
 import { useClubCrest } from "@/lib/use-club-crest";
@@ -16,6 +18,9 @@ export const Route = createFileRoute("/arhiva/$season/$club")({
   errorComponent: LoadError,
   component: ArhivaKlub,
 });
+
+// Tekuća sezona: utakmice i golovi su u tabelama club_matches i match_goals
+const CURRENT_SEASON = "2026-27";
 
 const BALL_URL =
   "https://wxyxcfalnqttwchxebpn.supabase.co/storage/v1/object/public/slike/lopta.webp";
@@ -50,14 +55,59 @@ function ArhivaKlub() {
   const crestFor = useClubCrest();
   const [open, setOpen] = useState<Set<string>>(new Set());
 
-  const { data, isLoading } = useQuery({
+  const isCurrent = season === CURRENT_SEASON;
+
+  const { data: pastData, isLoading: pastLoading } = useQuery({
     queryKey: ["season-matches", season],
     queryFn: () => getSeasonMatches({ data: { season } }),
+    enabled: !isCurrent,
   });
-  const { data: goalsData } = useQuery({
+  const { data: pastGoals } = useQuery({
     queryKey: ["season-goals", season],
     queryFn: () => getSeasonGoals({ data: { season } }),
+    enabled: !isCurrent,
   });
+  const { data: curMatches, isLoading: curLoading } = useQuery({
+    queryKey: ["league-matches"],
+    queryFn: () => getLeagueMatches(),
+    enabled: isCurrent,
+  });
+  const { data: curGoals } = useQuery({
+    queryKey: ["match-goals"],
+    queryFn: () => getMatchGoals(),
+    enabled: isCurrent,
+  });
+
+  const isLoading = isCurrent ? curLoading : pastLoading;
+
+  // Tekuću sezonu pretvaramo u isti oblik kao arhivu, pa se prikazuje potpuno isto
+  const data: SeasonMatch[] | undefined = isCurrent
+    ? curMatches?.map((m) => ({
+        id: m.id,
+        season,
+        round: m.round,
+        match_date: m.match_date,
+        home: m.home,
+        away: m.away,
+        score_home: m.score_home,
+        score_away: m.score_away,
+        attendance: m.attendance,
+      }))
+    : pastData;
+  const goalsData: SeasonGoal[] | undefined = isCurrent
+    ? curGoals?.map((g) => ({
+        id: g.id,
+        season,
+        round: g.round,
+        home: g.home,
+        away: g.away,
+        side: sameClub(g.team, g.home) ? ("H" as const) : ("A" as const),
+        player: g.player,
+        minute: g.minute,
+        extra: g.extra,
+        kind: g.kind === "penalty" ? ("p" as const) : g.kind === "own" ? ("o" as const) : ("g" as const),
+      }))
+    : pastGoals;
 
   // Isti klub pod različitim imenima ("Slavija" i "Slavija Sarajevo") se prepoznaje kao isti
   const isMine = (name: string) => sameClub(name, club);
@@ -123,9 +173,15 @@ function ArhivaKlub() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
-      <Link to="/stare-sezone" className="text-sm text-muted-foreground hover:underline">
-        ← Nazad na arhivu sezona
-      </Link>
+      {isCurrent ? (
+        <Link to="/tabela" className="text-sm text-muted-foreground hover:underline">
+          ← Nazad na tabelu
+        </Link>
+      ) : (
+        <Link to="/stare-sezone" className="text-sm text-muted-foreground hover:underline">
+          ← Nazad na arhivu sezona
+        </Link>
+      )}
       <div className="rule-top mb-5 mt-3 flex items-center gap-4 pt-3">
         {crest && <img src={crest} alt="" className="size-16 object-contain" />}
         <div>
