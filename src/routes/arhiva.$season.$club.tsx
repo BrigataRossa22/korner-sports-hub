@@ -138,9 +138,9 @@ function ArhivaKlub() {
   }
 
   const pill: Record<string, string> = {
-    W: "bg-primary/15 text-primary",
-    D: "bg-muted text-foreground",
-    L: "bg-destructive/15 text-destructive",
+    W: "bg-green-500/30 text-green-700 dark:text-green-300",
+    D: "bg-yellow-400/30 text-yellow-700 dark:text-yellow-300",
+    L: "bg-red-500/25 text-red-700 dark:text-red-300",
   };
 
   const goalsOf = (m: SeasonMatch): SeasonGoal[] =>
@@ -342,15 +342,15 @@ function ArhivaKlub() {
 
             <div className="flex items-center justify-center gap-5 border-t border-border px-3 py-3 text-xs text-muted-foreground">
               <span className="flex items-center gap-1.5">
-                <span className="size-2.5 rounded-full bg-primary" />
+                <span className="size-2.5 rounded-full bg-green-500" />
                 Pobjeda
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="size-2.5 rounded-full bg-muted-foreground/40" />
+                <span className="size-2.5 rounded-full bg-yellow-400" />
                 Remi
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="size-2.5 rounded-full bg-destructive" />
+                <span className="size-2.5 rounded-full bg-red-500" />
                 Poraz
               </span>
             </div>
