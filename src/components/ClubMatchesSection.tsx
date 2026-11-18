@@ -205,18 +205,20 @@ export function ClubMatchesSection({
     away,
     sh,
     sa,
+    tone,
   }: {
     home: string;
     away: string;
     sh: number | null;
     sa: number | null;
+    tone: string;
   }) => (
     <div className="flex items-center gap-3">
       <span className="flex flex-1 items-center justify-end gap-2 text-right font-medium">
         {home}
         <Badge club={home} />
       </span>
-      <span className="min-w-14 text-center font-bold">
+      <span className={`min-w-14 rounded-md px-2 py-1 text-center font-bold ${tone}`}>
         {sh !== null && sa !== null ? `${sh}:${sa}` : "–"}
       </span>
       <span className="flex flex-1 items-center gap-2 font-medium">
@@ -226,7 +228,7 @@ export function ClubMatchesSection({
     </div>
   );
 
-  // Boja rezultata iz ugla ovog kluba
+  // Boja rezultata iz ugla ovog kluba: pobjeda zeleno, remi žuto, poraz crveno
   const pillClass = (r: MatchRow): string => {
     if (r.sh === null || r.sa === null) return "bg-muted text-foreground";
     const isHome = sameClub(r.home, name);
@@ -238,9 +240,9 @@ export function ClubMatchesSection({
       mine = isHome ? r.penPair[0] : r.penPair[1];
       theirs = isHome ? r.penPair[1] : r.penPair[0];
     }
-    if (mine > theirs) return "bg-primary/15 text-primary";
-    if (mine < theirs) return "bg-destructive/15 text-destructive";
-    return "bg-muted text-foreground";
+    if (mine > theirs) return "bg-green-500/30 text-green-700 dark:text-green-300";
+    if (mine < theirs) return "bg-red-500/25 text-red-700 dark:text-red-300";
+    return "bg-yellow-400/30 text-yellow-700 dark:text-yellow-300";
   };
 
   const clubCup = (cup ?? []).filter((m) => sameClub(m.home, name) || sameClub(m.away, name));
@@ -527,15 +529,15 @@ export function ClubMatchesSection({
 
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border px-3 py-3 text-[10px] uppercase text-muted-foreground">
                   <span className="flex items-center gap-1">
-                    <span className="size-2.5 rounded-sm bg-primary/15 ring-1 ring-primary/40" />
+                    <span className="size-2.5 rounded-sm bg-green-500/60 ring-1 ring-green-600/60" />
                     Pobjeda
                   </span>
                   <span className="flex items-center gap-1">
-                    <span className="size-2.5 rounded-sm bg-muted ring-1 ring-border" />
+                    <span className="size-2.5 rounded-sm bg-yellow-400/70 ring-1 ring-yellow-500/60" />
                     Remi
                   </span>
                   <span className="flex items-center gap-1">
-                    <span className="size-2.5 rounded-sm bg-destructive/15 ring-1 ring-destructive/40" />
+                    <span className="size-2.5 rounded-sm bg-red-500/60 ring-1 ring-red-600/60" />
                     Poraz
                   </span>
                 </div>
@@ -563,7 +565,7 @@ export function ClubMatchesSection({
                           )}
                         </td>
                         <td className="px-4 py-3">
-                          <MatchCell home={r.home} away={r.away} sh={r.sh} sa={r.sa} />
+                          <MatchCell home={r.home} away={r.away} sh={r.sh} sa={r.sa} tone={pillClass(r)} />
                           {r.pen && (
                             <p className="mt-0.5 text-center text-[10px] font-semibold uppercase text-muted-foreground">
                               {r.pen}
