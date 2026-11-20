@@ -16,6 +16,7 @@ import { getEuroMatches } from "@/lib/euromatches.functions";
 import { displayClub, sameClub } from "@/lib/club-match";
 import { useCrest } from "@/lib/use-crest";
 import { useClubCrest } from "@/lib/use-club-crest";
+import { Att } from "@/components/MemberBlur";
 
 const SUPA = "https://wxyxcfalnqttwchxebpn.supabase.co/storage/v1/object/public/slike/";
 
@@ -105,7 +106,7 @@ function wavg(sum: number, count: number): number | null {
   return count > 0 ? Math.round(sum / count) : null;
 }
 
-const fmtAvg = (n: number | null) => (n !== null ? n.toLocaleString("de-DE") : "—");
+const fmtAvg = (n: number | null, season?: string) => <Att n={n} season={season} />;
 
 type MobileRow = {
   season: string;
@@ -183,7 +184,7 @@ function Klub() {
                 <td className="px-1.5 py-2.5 text-right">{r.w}</td>
                 <td className="px-1.5 py-2.5 text-right">{r.d}</td>
                 <td className="px-1.5 py-2.5 text-right">{r.l}</td>
-                <td className="px-3 py-2.5 text-right">{fmtAvg(r.avg)}</td>
+                <td className="px-3 py-2.5 text-right">{fmtAvg(r.avg, r.season)}</td>
               </tr>
             );
           })}
@@ -688,7 +689,7 @@ function Klub() {
                         <td className="px-3 py-3 text-center">{r.gf}</td>
                         <td className="px-3 py-3 text-center">{r.ga}</td>
                         <td className="px-3 py-3 text-center font-semibold">{r.position ?? "—"}</td>
-                        <td className="px-3 py-3 text-center">{fmtAvg(r.avg)}</td>
+                        <td className="px-3 py-3 text-center">{fmtAvg(r.avg, r.season)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -761,7 +762,7 @@ function Klub() {
                       <td className="px-3 py-3 text-center">{r.losses}</td>
                       <td className="px-3 py-3 text-center">{r.gf}</td>
                       <td className="px-3 py-3 text-center">{r.ga}</td>
-                      <td className="px-3 py-3 text-center">{fmtAvg(r.avg)}</td>
+                      <td className="px-3 py-3 text-center">{fmtAvg(r.avg, r.season)}</td>
                     </tr>
                   ))}
                 </tbody>
