@@ -6,6 +6,10 @@ export type GledanostData = { rows: AttRow[]; seasons: string[] };
 // Mora biti ista oznaka kao u clubhistory.functions.ts
 const CURRENT_SEASON = "2026-27";
 
+// Gledanost se prikazuje samo od ove sezone nadalje (starije sezone se ne računaju)
+const FIRST_SEASON = "2002-03";
+const fromFirstSeason = (s: string) => s.replace(/[–—]/g, "-").trim() >= FIRST_SEASON;
+
 // Supabase vraća najviše 1000 redova po zahtjevu, pa čitamo po stranicama.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function getAll(url: string, key: string, path: string): Promise<any[]> {
@@ -44,6 +48,7 @@ export const getGledanost = createServerFn({ method: "GET" }).handler(
 
     for (const r of archive) {
       if (!r.home || !r.season || !(r.attendance > 0)) continue;
+      if (!fromFirstSeason(String(r.season))) continue;
       rows.push({ season: String(r.season), club: String(r.home), att: Number(r.attendance) });
       seasons.add(String(r.season));
     }
