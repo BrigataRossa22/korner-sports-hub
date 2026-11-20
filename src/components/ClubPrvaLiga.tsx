@@ -3,8 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { TableSkeleton } from "@/components/TableSkeleton";
 import { getClubPrva } from "@/lib/clubprva.functions";
 import { groupRank } from "@/lib/season-groups";
+import { Att } from "@/components/MemberBlur";
 
-const fmtAvg = (n: number | null) => (n !== null ? n.toLocaleString("de-DE") : "—");
+const fmtAvg = (n: number | null, season?: string) => <Att n={n} season={season} />;
 
 // Boje samo u zaglavlju: P zeleno, N žuto, I crveno (isto kao u ostalim takmičenjima)
 const WIN = "text-green-600 dark:text-green-500";
@@ -83,7 +84,7 @@ export function ClubPrvaLiga({ name }: { name: string }) {
                 <td className="px-1.5 py-2.5 text-right">{r.wins}</td>
                 <td className="px-1.5 py-2.5 text-right">{r.draws}</td>
                 <td className="px-1.5 py-2.5 text-right">{r.losses}</td>
-                <td className="px-3 py-2.5 text-right">{fmtAvg(r.avg)}</td>
+                <td className="px-3 py-2.5 text-right">{fmtAvg(r.avg, r.season)}</td>
               </tr>
             ))}
           </tbody>
@@ -126,7 +127,7 @@ export function ClubPrvaLiga({ name }: { name: string }) {
                 <td className="px-3 py-3 text-center">{r.gf}</td>
                 <td className="px-3 py-3 text-center">{r.ga}</td>
                 <td className="px-3 py-3 text-center font-semibold">{r.position}</td>
-                <td className="px-3 py-3 text-center">{fmtAvg(r.avg)}</td>
+                <td className="px-3 py-3 text-center">{fmtAvg(r.avg, r.season)}</td>
               </tr>
             ))}
           </tbody>
@@ -149,4 +150,4 @@ export function ClubPrvaLiga({ name }: { name: string }) {
       </div>
     </>
   );
-}
+} 
