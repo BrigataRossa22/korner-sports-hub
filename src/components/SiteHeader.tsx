@@ -6,6 +6,9 @@ import { getLeagueMatches, type LeagueMatch } from "@/lib/leaguematches.function
 import { displayClub, sameClub } from "@/lib/club-match";
 import { getH2HData } from "@/lib/h2h.functions";
 import { useClubCrest } from "@/lib/use-club-crest";
+import { MemberMenu } from "@/components/MemberMenu";
+import { LockedBox } from "@/components/MemberLock";
+import { useMembership } from "@/lib/use-membership";
 import { useHydrated } from "@/lib/use-hydrated";
 
 const linkClass =
@@ -158,11 +161,13 @@ const fmtShort = (d: string | null, season: string) => {
 function H2HDialog({ home, away, onClose }: { home: string; away: string; onClose: () => void }) {
   const hydrated = useHydrated();
   const crestFor = useClubCrest();
+  const member = useMembership();
+  // Međusobni omjer vide samo članovi i admini
   const { data, isLoading } = useQuery({
     queryKey: ["h2h-data-v3"],
     queryFn: () => getH2HData(),
     staleTime: 60 * 60 * 1000,
-    enabled: hydrated,
+    enabled: hydrated && member.hasAccess,
   });
 
   useEffect(() => {
@@ -247,7 +252,11 @@ function H2HDialog({ home, away, onClose }: { home: string; away: string; onClos
           </div>
         </div>
 
-        {isLoading || !data ? (
+        {member.loading ? (
+          <p className="py-8 text-center text-sm text-neutral-500">Učitavam…</p>
+        ) : !member.hasAccess ? (
+          <LockedBox />
+        ) : isLoading || !data ? (
           <p className="py-8 text-center text-sm text-neutral-500">Učitavam…</p>
         ) : total === 0 ? (
           <p className="py-8 text-center text-sm text-neutral-500">
@@ -389,17 +398,20 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <button
-          type="button"
-          aria-label="Meni"
-          onClick={() => {
-            setOpen((v) => !v);
-            setOpenGroup(null);
-          }}
-          className="ml-auto md:hidden"
-        >
-          {open ? <X className="size-6" /> : <Menu className="size-6" />}
-        </button>
+        <div className="ml-auto flex items-center gap-3">
+          <MemberMenu />
+          <button
+            type="button"
+            aria-label="Meni"
+            onClick={() => {
+              setOpen((v) => !v);
+              setOpenGroup(null);
+            }}
+            className="md:hidden"
+          >
+            {open ? <X className="size-6" /> : <Menu className="size-6" />}
+          </button>
+        </div>
       </div>
 
       {open && (
