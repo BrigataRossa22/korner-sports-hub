@@ -9,6 +9,7 @@ import { getCupMatches } from "@/lib/cupmatches.functions";
 import { getEuroMatches, type EuroMatch } from "@/lib/euromatches.functions";
 import { getSeasonMatches } from "@/lib/seasonmatches.functions";
 import { useClubCrest } from "@/lib/use-club-crest";
+import { Att } from "@/components/MemberBlur";
 
 type Tab = "liga" | "kup" | "evropa";
 
@@ -195,11 +196,7 @@ export function ClubSeasons({ name }: { name: string }) {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        {m.attendance > 0
-                          ? m.attendance.toLocaleString("de-DE")
-                          : m.attendance < 0
-                            ? "x"
-                            : "—"}
+                        <Att n={m.attendance} season={m.season} />
                       </td>
                     </tr>
                   ))}
