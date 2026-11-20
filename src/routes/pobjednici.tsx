@@ -4,6 +4,7 @@ import { LoadError } from "@/components/RouteFallbacks";
 import { TableSkeleton } from "@/components/TableSkeleton";
 import { getSeasonWinners } from "@/lib/winners.functions";
 import { useClubCrest } from "@/lib/use-club-crest";
+import { Gate, isFreeSeason } from "@/components/MemberBlur";
 
 export const Route = createFileRoute("/pobjednici")({
   head: () => ({
@@ -35,13 +36,15 @@ function Pobjednici() {
     );
   };
 
-  const Scorer = ({ name, club }: { name: string; club: string }) => {
+  const Scorer = ({ name, club, season }: { name: string; club: string; season: string }) => {
     if (!name) return <span className="text-muted-foreground">—</span>;
     const c = club ? crestFor(club) : "";
     return (
       <span className="flex items-center gap-2 font-medium" title={club || undefined}>
         {c ? <img src={c} alt="" className="size-6 shrink-0 object-contain" /> : <span className="size-6 shrink-0" />}
-        {name}
+        <Gate free={isFreeSeason(season)} fake="Ime Prezime">
+          {name}
+        </Gate>
       </span>
     );
   };
@@ -79,8 +82,16 @@ function Pobjednici() {
                   <td className="px-3 py-3"><Club name={r.champion} bold /></td>
                   <td className="px-3 py-3"><Club name={r.second} /></td>
                   <td className="px-3 py-3"><Club name={r.third} /></td>
-                  <td className="px-3 py-3"><Scorer name={r.top_scorer} club={r.scorer_club} /></td>
-                  <td className="px-3 py-3 text-right font-bold">{r.goals > 0 ? r.goals : "—"}</td>
+                  <td className="px-3 py-3"><Scorer name={r.top_scorer} club={r.scorer_club} season={r.season} /></td>
+                  <td className="px-3 py-3 text-right font-bold">
+                    {r.goals > 0 ? (
+                      <Gate free={isFreeSeason(r.season)} fake="25">
+                        {r.goals}
+                      </Gate>
+                    ) : (
+                      "—"
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
