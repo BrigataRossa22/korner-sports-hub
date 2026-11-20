@@ -161,8 +161,8 @@ function Igrac() {
                                     key={i}
                                     className="grid grid-cols-[2.5rem_1fr_auto] items-center gap-2 py-2"
                                   >
-                                    <span className="text-xs text-muted-foreground">
-                                      {g.round != null ? `${g.round}. k.` : "—"}
+                                    <span className="text-xs tabular-nums text-muted-foreground">
+                                      {g.round ?? "—"}
                                     </span>
                                     <span className="min-w-0">
                                       <span className={homeScored ? "font-semibold" : ""}>{g.home}</span>
