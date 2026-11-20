@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { TableSkeleton } from "@/components/TableSkeleton";
 import { getClubTopScorers, type ScorerComp } from "@/lib/clubscorers.functions";
+import { Gate } from "@/components/MemberBlur";
 
 const COMPS: { id: ScorerComp; label: string; note: string; empty: string }[] = [
   {
@@ -80,8 +81,12 @@ export function ClubTopScorers({ name }: { name: string }) {
           {ranked.map((r, i) => (
             <li key={`${r.name}-${i}`} className="flex items-center gap-4 px-4 py-3">
               <span className="w-6 shrink-0 text-center font-bold tabular-nums">{r.rank}</span>
-              <span className="min-w-0 flex-1 truncate font-semibold">{r.name}</span>
-              <span className="shrink-0 text-xl font-bold tabular-nums">{r.goals}</span>
+              <span className="min-w-0 flex-1 truncate font-semibold">
+                <Gate fake="Ime Prezime">{r.name}</Gate>
+              </span>
+              <span className="shrink-0 text-xl font-bold tabular-nums">
+                <Gate fake="99">{r.goals}</Gate>
+              </span>
             </li>
           ))}
         </ol>
