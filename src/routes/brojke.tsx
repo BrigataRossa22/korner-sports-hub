@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { TableSkeleton } from "@/components/TableSkeleton";
 import { getBrojke, type TopRow } from "@/lib/brojke.functions";
+import { useClubCrest } from "@/lib/use-club-crest";
 
 export const Route = createFileRoute("/brojke")({
   head: () => ({ meta: [{ title: "Brojke — Korner BiH" }] }),
@@ -24,10 +25,24 @@ function withRank(rows: TopRow[]) {
   });
 }
 
-// Sezona prvog i zadnjeg gola, npr. "2002-03 – 2018-19"
-function period(first: string, last: string): string {
-  if (!first) return "";
-  return first === last || !last ? first : `${first} – ${last}`;
+// Grbovi svih klubova za koje je igrač postigao gol (ili asistirao), redom kako je mijenjao klubove
+function ClubCrests({ clubs, crestFor }: { clubs: string[]; crestFor: (club: string) => string }) {
+  const seen = new Set<string>();
+  const items: { src: string; name: string }[] = [];
+  for (const c of clubs) {
+    const src = crestFor(c);
+    if (!src || seen.has(src)) continue;
+    seen.add(src);
+    items.push({ src, name: c });
+  }
+  if (items.length === 0) return null;
+  return (
+    <span className="flex items-center gap-1">
+      {items.map((it) => (
+        <img key={it.src} src={it.src} alt={it.name} title={it.name} className="size-5 shrink-0 object-contain" />
+      ))}
+    </span>
+  );
 }
 
 function TopTable({
@@ -44,6 +59,7 @@ function TopTable({
   linkPlayers?: boolean;
 }) {
   const ranked = withRank(rows);
+  const crestFor = useClubCrest();
   return (
     <section className="overflow-hidden rounded-xl border border-border bg-card">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-surface px-4 py-3">
@@ -68,7 +84,7 @@ function TopTable({
                   {r.rank}
                 </td>
                 <td className="px-2 py-2.5">
-                  <span className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+                  <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
                     {linkPlayers ? (
                       <Link
                         to="/igrac/$name"
@@ -81,7 +97,7 @@ function TopTable({
                     ) : (
                       <span className={`font-semibold ${r.rank <= 3 ? "text-primary" : ""}`}>{r.name}</span>
                     )}
-                    <span className="text-xs text-muted-foreground">{period(r.first, r.last)}</span>
+                    <ClubCrests clubs={r.clubs} crestFor={crestFor} />
                   </span>
                 </td>
                 <td className="px-3 py-2.5 text-right text-base font-bold">{r.count}</td>
@@ -96,7 +112,7 @@ function TopTable({
 
 function BrojkePage() {
   const { data, isLoading } = useQuery({
-    queryKey: ["brojke-v4"],
+    queryKey: ["brojke-v3"],
     queryFn: () => getBrojke(),
     staleTime: 60 * 60 * 1000,
   });
