@@ -8,6 +8,7 @@ import { sameClub } from "@/lib/club-match";
 import { getLeagueMatches, type LeagueMatch } from "@/lib/leaguematches.functions";
 import { getMatchGoals, type MatchGoal } from "@/lib/matchgoals.functions";
 import { useClubCrest } from "@/lib/use-club-crest";
+import { Att, CURRENT_SEASON } from "@/components/MemberBlur";
 
 export const Route = createFileRoute("/raspored-i-rezultati")({
   head: () => ({
@@ -98,8 +99,7 @@ function Raspored() {
       return next;
     });
 
-  const attText = (n: number): string =>
-    n > 0 ? n.toLocaleString("de-DE") : n < 0 ? "x" : "—";
+  const attText = (n: number) => <Att n={n} season={CURRENT_SEASON} />;
 
   const Crest = ({ club }: { club: string }) => {
     const c = crestFor(club);
