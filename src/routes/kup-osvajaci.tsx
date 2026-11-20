@@ -6,6 +6,7 @@ import { sameClub } from "@/lib/club-match";
 import { getCupGoals, type CupGoal } from "@/lib/cupgoals.functions";
 import { getCupMatches, type CupMatch } from "@/lib/cupmatches.functions";
 import { useClubCrest } from "@/lib/use-club-crest";
+import { Att, Gate, isFreeSeason } from "@/components/MemberBlur";
 
 export const Route = createFileRoute("/kup-osvajaci")({
   head: () => ({
@@ -218,11 +219,7 @@ function Osvajaci() {
                             <span>
                               Gledalaca:{" "}
                               <span className="font-semibold text-foreground">
-                                {m.attendance > 0
-                                  ? m.attendance.toLocaleString("de-DE")
-                                  : m.attendance < 0
-                                    ? "x"
-                                    : "—"}
+                                <Att n={m.attendance} season={m.season} />
                               </span>
                             </span>
                           </div>
@@ -268,7 +265,11 @@ function Osvajaci() {
                               <ul className="space-y-1 text-right">
                                 {homeGoals.map((g) => (
                                   <li key={g.id}>
-                                    <span className="font-semibold">{g.player}</span>
+                                    <span className="font-semibold">
+                                      <Gate free={isFreeSeason(g.season)} fake="Ime Prezime">
+                                        {g.player}
+                                      </Gate>
+                                    </span>
                                     <span className="text-muted-foreground">
                                       {tagOf(g)} {minuteOf(g)}
                                     </span>
@@ -278,7 +279,11 @@ function Osvajaci() {
                               <ul className="space-y-1 text-left">
                                 {awayGoals.map((g) => (
                                   <li key={g.id}>
-                                    <span className="font-semibold">{g.player}</span>
+                                    <span className="font-semibold">
+                                      <Gate free={isFreeSeason(g.season)} fake="Ime Prezime">
+                                        {g.player}
+                                      </Gate>
+                                    </span>
                                     <span className="text-muted-foreground">
                                       {tagOf(g)} {minuteOf(g)}
                                     </span>
