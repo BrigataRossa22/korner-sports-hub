@@ -249,8 +249,13 @@ export function ClubMatchesSection({
   const clubEuro = (euro ?? []).filter((e) => sameClub(e.club, name));
 
   const options = (() => {
-    const set = new Set<string>([CURRENT_SEASON]);
-    for (const r of history ?? []) set.add(ns(r.season));
+    // 2026-27 se nudi samo klubovima koji tu sezonu zaista igraju (liga, kup ili Evropa)
+    const set = new Set<string>();
+    if ((data?.matches.length ?? 0) > 0) set.add(CURRENT_SEASON);
+    for (const r of history ?? []) {
+      const s = ns(r.season);
+      if (s !== CURRENT_SEASON) set.add(s);
+    }
     for (const m of clubCup) set.add(ns(m.season));
     for (const e of clubEuro) set.add(ns(e.season));
     return [...set].sort((a, b) => b.localeCompare(a));
