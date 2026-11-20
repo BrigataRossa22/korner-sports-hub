@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getSeasonGoals } from "@/lib/seasongoals.functions";
 import { useClubCrest } from "@/lib/use-club-crest";
+import { Gate, isFreeSeason } from "@/components/MemberBlur";
 
 type Scorer = {
   player: string;
@@ -22,7 +23,7 @@ const isPen = (k: string | null | undefined) => {
 const normPlayer = (s: string) =>
   s
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
     .replace(/đ/g, "d")
     .replace(/\s+/g, " ")
@@ -89,13 +90,21 @@ export function TopScorers({ season }: { season: string }) {
                         <span className="size-7 shrink-0" />
                       )}
                       <span>
-                        <span className="block font-semibold">{s.player}</span>
+                        <span className="block font-semibold">
+                          <Gate free={isFreeSeason(season)} fake="Ime Prezime">
+                            {s.player}
+                          </Gate>
+                        </span>
                         <span className="block text-xs text-muted-foreground">{s.team}</span>
                       </span>
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <span className="text-base font-bold">{s.goals}</span>
+                    <span className="text-base font-bold">
+                      <Gate free={isFreeSeason(season)} fake="9">
+                        {s.goals}
+                      </Gate>
+                    </span>
                     {s.pens > 0 && (
                       <span className="block text-xs text-muted-foreground">od toga {s.pens} pen.</span>
                     )}
