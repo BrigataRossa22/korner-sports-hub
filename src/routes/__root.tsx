@@ -15,8 +15,10 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { LockedPage } from "@/components/MemberLock";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useMembership } from "@/lib/use-membership";
 
 // Primijeni sačuvanu temu (ili postavku uređaja) prije prvog prikaza, da nema bljeska.
 const THEME_SCRIPT = `(function(){try{var t=localStorage.getItem('theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;if(d)document.documentElement.classList.add('dark');}catch(e){}})();`;
@@ -131,11 +133,23 @@ function RootShell({ children }: { children: ReactNode }) {
 /** Zaglavlje i podnožje portala se ne prikazuju u panelu i na stranicama prijave. */
 const BARE_PREFIXES = ["/admin", "/auth", "/reset-password"];
 
+/** Stranice samo za Korner članove (i admine). Vraća naziv stranice ili null. */
+function lockedTitle(pathname: string): string | null {
+  const p = pathname.replace(/\/+$/, "") || "/";
+  if (p === "/medjusobni-susreti") return "Međusobni susreti";
+  if (p === "/brojke") return "Brojke";
+  if (p === "/gledanost") return "Gledanost";
+  if (p.startsWith("/igrac/")) return "Golovi igrača";
+  return null;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const bare = BARE_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+  const member = useMembership();
+  const gate = lockedTitle(pathname);
 
   useEffect(() => {
     const { data } = supabase.auth.onAuthStateChange((event) => {
@@ -152,7 +166,11 @@ function RootComponent() {
         {!bare && <SiteHeader />}
         <main className="flex-1">
           {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-          <Outlet />
+          {gate && !member.hasAccess ? (
+            member.loading ? <div className="min-h-[60vh]" /> : <LockedPage title={gate} />
+          ) : (
+            <Outlet />
+          )}
         </main>
         {!bare && <SiteFooter />}
       </div>
