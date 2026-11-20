@@ -6,6 +6,7 @@ import { normClub, sameClub } from "@/lib/club-match";
 import { getCupGoals, type CupGoal } from "@/lib/cupgoals.functions";
 import { getCupMatches, type CupMatch } from "@/lib/cupmatches.functions";
 import { useClubCrest } from "@/lib/use-club-crest";
+import { Att, Gate, isFreeSeason } from "@/components/MemberBlur";
 
 // Aktuelna sezona kupa. Kad počne nova sezona, promijeni ovu oznaku.
 export const CURRENT_CUP_SEASON = "2026-27";
@@ -55,7 +56,11 @@ function initials(name: string): string {
 function GoalText({ g }: { g: CupGoal }) {
   return (
     <span>
-      <span className="font-semibold">{g.player}</span>
+      <span className="font-semibold">
+        <Gate free={isFreeSeason(g.season)} fake="Ime Prezime">
+          {g.player}
+        </Gate>
+      </span>
       <span className="text-muted-foreground">{tagOf(g)}</span>
     </span>
   );
@@ -164,8 +169,7 @@ export function RoundTable({
       )
       .sort((a, b) => a.minute - b.minute || a.extra - b.extra);
 
-  const attText = (n: number): string =>
-    n > 0 ? n.toLocaleString("de-DE") : n < 0 ? "x" : "—";
+  const attText = (n: number, s: string) => <Att n={n} season={s} />;
 
   return (
     <section className="mt-8 rounded-lg border border-border bg-card">
@@ -245,7 +249,7 @@ export function RoundTable({
                 </div>
 
                 <div className="flex items-center justify-end gap-1 text-sm tabular-nums">
-                  <span>{attText(m.attendance)}</span>
+                  <span>{attText(m.attendance, m.season)}</span>
                   <span className="inline-flex size-4 shrink-0 items-center justify-center">
                     {canOpen && (
                       <ChevronDown
@@ -376,7 +380,7 @@ export function RoundTable({
                     </td>
                     <td className="px-4 py-3 text-right">
                       <span className="inline-flex items-center justify-end gap-2">
-                        {attText(m.attendance)}
+                        {attText(m.attendance, m.season)}
                         <span className="inline-flex size-4 shrink-0 items-center justify-center">
                           {canOpen && (
                             <ChevronDown
