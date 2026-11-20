@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { TableSkeleton } from "@/components/TableSkeleton";
 import { getNationalMatches } from "@/lib/nationalmatches.functions";
+import { Att } from "@/components/MemberBlur";
 
 const isBih = (name: string) => /bosna|bih/i.test(name);
 
@@ -102,8 +103,7 @@ export function NationalMatches() {
     return "bg-muted text-foreground";
   };
 
-  const attText = (n: number): string =>
-    n > 0 ? n.toLocaleString("de-DE") : "—";
+  const attText = (n: number, date: string) => <Att n={n} season={date} />;
 
   return (
     <section className="mt-10 rounded-lg border border-border bg-card">
@@ -158,7 +158,7 @@ export function NationalMatches() {
                   </span>
                 </div>
 
-                <span className="text-right text-xs tabular-nums">{attText(m.attendance)}</span>
+                <span className="text-right text-xs tabular-nums">{attText(m.attendance, m.match_date)}</span>
               </div>
             ))}
 
@@ -203,7 +203,7 @@ export function NationalMatches() {
                         <Team name={m.away} flag={m.away_flag} align="left" />
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-right">{attText(m.attendance)}</td>
+                    <td className="px-4 py-3 text-right">{attText(m.attendance, m.match_date)}</td>
                   </tr>
                 ))}
               </tbody>
