@@ -1,9 +1,10 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, Menu, X } from "lucide-react";
 import { getLeagueMatches, type LeagueMatch } from "@/lib/leaguematches.functions";
-import { displayClub } from "@/lib/club-match";
+import { displayClub, sameClub } from "@/lib/club-match";
+import { getH2HData } from "@/lib/h2h.functions";
 import { useClubCrest } from "@/lib/use-club-crest";
 import { useHydrated } from "@/lib/use-hydrated";
 
@@ -138,20 +139,203 @@ function Dropdown({
   );
 }
 
+const fmtShort = (d: string | null, season: string) => {
+  if (!d) return season;
+  const [y, m, day] = d.split("-");
+  return y && m && day ? `${day}.${m}.${y}.` : season;
+};
+
+// Međusobni omjer dva kluba (liga i Kup BiH, sve sezone)
+function H2HPanel({ home, away }: { home: string; away: string }) {
+  const hydrated = useHydrated();
+  const crestFor = useClubCrest();
+  const { data, isLoading } = useQuery({
+    queryKey: ["h2h-data-v3"],
+    queryFn: () => getH2HData(),
+    staleTime: 60 * 60 * 1000,
+    enabled: hydrated,
+  });
+
+  const list = (data?.matches ?? [])
+    .filter(
+      (m) =>
+        (sameClub(m.home, home) && sameClub(m.away, away)) ||
+        (sameClub(m.home, away) && sameClub(m.away, home)),
+    )
+    .sort((x, y) =>
+      (y.date ?? `${y.season.slice(0, 4)}-07-01`).localeCompare(
+        x.date ?? `${x.season.slice(0, 4)}-07-01`,
+      ),
+    );
+
+  let winsA = 0;
+  let winsB = 0;
+  let draws = 0;
+  let goalsA = 0;
+  let goalsB = 0;
+  for (const m of list) {
+    const aHome = sameClub(m.home, home);
+    const a = aHome ? m.sh : m.sa;
+    const b = aHome ? m.sa : m.sh;
+    goalsA += a;
+    goalsB += b;
+    if (a > b) winsA++;
+    else if (a < b) winsB++;
+    else draws++;
+  }
+  const total = list.length;
+  const pct = (n: number) => (total ? (n / total) * 100 : 0);
+
+  const crestA = crestFor(home);
+  const crestB = crestFor(away);
+
+  return (
+    <div className="mt-3 rounded-xl bg-white/95 p-4 text-card-foreground shadow-lg">
+      <p className="text-center text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+        Međusobni omjer
+      </p>
+
+      {isLoading || !data ? (
+        <p className="py-4 text-center text-sm text-muted-foreground">Učitavam…</p>
+      ) : total === 0 ? (
+        <p className="py-4 text-center text-sm text-muted-foreground">
+          Ovi klubovi se još nisu sastajali u ligi ni Kupu BiH.
+        </p>
+      ) : (
+        <>
+          <div className="mt-3 flex items-center justify-between gap-2">
+            <div className="flex w-1/3 flex-col items-center gap-1 text-center">
+              {crestA ? (
+                <img src={crestA} alt="" className="size-10 object-contain" />
+              ) : (
+                <span className="size-10" />
+              )}
+              <span className="text-[11px] font-bold uppercase leading-tight">
+                {displayClub(home)}
+              </span>
+            </div>
+
+            <div className="flex flex-1 items-center justify-center gap-3 font-display tabular-nums">
+              <span className="text-3xl font-bold text-green-700">{winsA}</span>
+              <span className="text-xl font-bold text-yellow-600">{draws}</span>
+              <span className="text-3xl font-bold text-red-700">{winsB}</span>
+            </div>
+
+            <div className="flex w-1/3 flex-col items-center gap-1 text-center">
+              {crestB ? (
+                <img src={crestB} alt="" className="size-10 object-contain" />
+              ) : (
+                <span className="size-10" />
+              )}
+              <span className="text-[11px] font-bold uppercase leading-tight">
+                {displayClub(away)}
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-3 flex h-2 overflow-hidden rounded-full bg-muted">
+            <span className="bg-green-600" style={{ width: `${pct(winsA)}%` }} />
+            <span className="bg-yellow-400" style={{ width: `${pct(draws)}%` }} />
+            <span className="bg-red-600" style={{ width: `${pct(winsB)}%` }} />
+          </div>
+          <p className="mt-2 text-center text-xs text-muted-foreground">
+            Pobjede · Neriješeno · Pobjede &nbsp;|&nbsp; golovi {goalsA}:{goalsB} u {total}{" "}
+            {total === 1 ? "utakmici" : "utakmica"}
+          </p>
+
+          <ul className="mt-3 divide-y divide-border/70 border-t border-border/70 text-xs">
+            {list.slice(0, 5).map((m, i) => (
+              <li key={i} className="grid grid-cols-[4.5rem_1fr_auto] items-center gap-2 py-1.5">
+                <span className="text-[10px] text-muted-foreground">{fmtShort(m.date, m.season)}</span>
+                <span className="truncate">
+                  {displayClub(m.home)} – {displayClub(m.away)}
+                </span>
+                <span className="font-bold tabular-nums">
+                  {m.sh}:{m.sa}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </div>
+  );
+}
+
+// Najava sljedećeg kola na početnoj stranici
+function MatchStrip({ ticker }: { ticker: Ticker }) {
+  const crestFor = useClubCrest();
+  const [selected, setSelected] = useState<string | null>(null);
+  const sel = ticker.matches.find((m) => m.id === selected) ?? null;
+
+  return (
+    <div className="bg-gradient-to-b from-[#1f5a3a] to-[#143d28]">
+      <div className="mx-auto max-w-6xl px-4 py-4">
+        <div className="mb-2 flex items-baseline justify-between gap-3">
+          <p className="font-display text-sm font-bold uppercase tracking-wider text-white">
+            {ticker.round}. kolo
+          </p>
+          <p className="text-[11px] text-white/60">Dodirni utakmicu za međusobni omjer</p>
+        </div>
+
+        <div
+          className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-2"
+          style={{ scrollbarWidth: "none" }}
+        >
+          {ticker.matches.map((m) => {
+            const active = selected === m.id;
+            return (
+              <button
+                key={m.id}
+                type="button"
+                aria-pressed={active}
+                onClick={() => setSelected(active ? null : m.id)}
+                className={`w-[78%] shrink-0 snap-start rounded-xl bg-white/95 px-3.5 py-3 text-left text-card-foreground shadow-md transition sm:w-64 ${
+                  active ? "ring-2 ring-emerald-300" : "hover:bg-white"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-semibold uppercase text-muted-foreground">
+                    {dayLabel(m.match_date)}
+                  </span>
+                  <span className="rounded-full bg-[#1f5a3a]/10 px-2 py-0.5 font-display text-sm font-bold tabular-nums text-[#1f5a3a]">
+                    {timeLabel(m.match_date)}
+                  </span>
+                </div>
+                <div className="mt-2 space-y-1.5">
+                  {[m.home, m.away].map((team) => {
+                    const c = crestFor(team);
+                    return (
+                      <div key={team} className="flex items-center gap-2.5">
+                        {c ? (
+                          <img src={c} alt="" className="size-6 shrink-0 object-contain" />
+                        ) : (
+                          <span className="size-6 shrink-0" />
+                        )}
+                        <span className="truncate text-[13px] font-bold uppercase">
+                          {displayClub(team)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {sel && <H2HPanel key={sel.id} home={sel.home} away={sel.away} />}
+      </div>
+    </div>
+  );
+}
+
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const ticker = useTicker();
-  const crestFor = useClubCrest();
-  const strip = useRef<HTMLDivElement>(null);
   // Traka sa sljedećim kolom se prikazuje samo na prvoj (početnoj) stranici
   const isHome = useRouterState({ select: (s) => s.location.pathname === "/" });
-
-  const slide = (dir: number) => {
-    const el = strip.current;
-    if (!el) return;
-    el.scrollBy({ left: dir * Math.max(240, el.clientWidth * 0.8), behavior: "smooth" });
-  };
 
   const closeAll = () => {
     setOpen(false);
@@ -246,59 +430,7 @@ export function SiteHeader() {
 
     </header>
 
-    {isHome && ticker && (
-      <div className="bg-primary/25">
-        <div className="relative mx-auto max-w-6xl px-4 py-3">
-          <div
-            ref={strip}
-            className="flex snap-x gap-3 overflow-x-auto pb-1 pr-12"
-            style={{ scrollbarWidth: "none" }}
-          >
-            {ticker.matches.map((m) => (
-              <div
-                key={m.id}
-                className="w-60 shrink-0 snap-start rounded-lg border border-border bg-card px-3 py-2 text-card-foreground shadow-sm sm:w-64"
-              >
-                <div className="flex items-center justify-between text-[10px] font-semibold uppercase text-muted-foreground">
-                  <span>{dayLabel(m.match_date)}</span>
-                  <span>{ticker.round}. kolo</span>
-                </div>
-                <div className="mt-1.5 flex items-center justify-between gap-3">
-                  <div className="min-w-0 flex-1 space-y-1">
-                    {[m.home, m.away].map((team) => {
-                      const c = crestFor(team);
-                      return (
-                        <div key={team} className="flex items-center gap-2">
-                          {c ? (
-                            <img src={c} alt="" className="size-5 shrink-0 object-contain" />
-                          ) : (
-                            <span className="size-5 shrink-0" />
-                          )}
-                          <span className="truncate text-xs font-bold uppercase">
-                            {displayClub(team)}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <span className="font-display text-xl font-bold tabular-nums">
-                    {timeLabel(m.match_date)}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-          <button
-            type="button"
-            onClick={() => slide(1)}
-            aria-label="Sljedeće utakmice"
-            className="absolute right-4 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full bg-primary text-lg text-primary-foreground shadow-md hover:opacity-90"
-          >
-            ›
-          </button>
-        </div>
-      </div>
-    )}
+    {isHome && ticker && <MatchStrip ticker={ticker} />}
     </>
   );
 }
