@@ -10,6 +10,7 @@ import { getMatchGoals } from "@/lib/matchgoals.functions";
 import { getSeasonGoals, type SeasonGoal } from "@/lib/seasongoals.functions";
 import { getSeasonMatches, type SeasonMatch } from "@/lib/seasonmatches.functions";
 import { useClubCrest } from "@/lib/use-club-crest";
+import { Att, Gate, isFreeSeason } from "@/components/MemberBlur";
 
 export const Route = createFileRoute("/arhiva/$season/$club")({
   head: ({ params }) => ({
@@ -216,12 +217,7 @@ function ArhivaKlub() {
               const mg = goalsOf(m);
               const canOpen = mg.length > 0;
               const isOpen = canOpen && open.has(m.id);
-              const att =
-                m.attendance > 0
-                  ? m.attendance.toLocaleString("de-DE")
-                  : m.attendance < 0
-                    ? "x"
-                    : "—";
+              const att = <Att n={m.attendance} season={season} />;
 
               return (
                 <div key={m.id} className="border-t border-border">
@@ -313,7 +309,11 @@ function ArhivaKlub() {
                             );
                             const who = (
                               <span>
-                                <span className="font-semibold">{g.player}</span>
+                                <span className="font-semibold">
+                                  <Gate free={isFreeSeason(season)} fake="Ime Prezime">
+                                    {g.player}
+                                  </Gate>
+                                </span>
                                 <span className="text-muted-foreground">{tagOf(g)}</span>
                               </span>
                             );
