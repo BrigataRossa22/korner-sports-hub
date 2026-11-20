@@ -2,8 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { TableSkeleton } from "@/components/TableSkeleton";
 import { getAttendance } from "@/lib/attendance.functions";
 import { useCrest } from "@/lib/use-crest";
-
-const fmt = (n: number) => n.toLocaleString("de-DE");
+import { Att, CURRENT_SEASON } from "@/components/MemberBlur";
 
 export function Attendance() {
   const { data, isLoading } = useQuery({ queryKey: ["attendance"], queryFn: () => getAttendance() });
@@ -39,8 +38,8 @@ export function Attendance() {
                         {r.team}
                       </span>
                     </td>
-                    <td className="px-4 py-2 text-right">{fmt(r.total)}</td>
-                    <td className="px-4 py-2 text-right font-semibold">{fmt(r.average)}</td>
+                    <td className="px-4 py-2 text-right"><Att n={r.total} season={CURRENT_SEASON} /></td>
+                    <td className="px-4 py-2 text-right font-semibold"><Att n={r.average} season={CURRENT_SEASON} /></td>
                   </tr>
                 );
               })}
