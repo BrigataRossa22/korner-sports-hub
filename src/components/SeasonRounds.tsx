@@ -6,6 +6,7 @@ import { sameClub } from "@/lib/club-match";
 import { getSeasonGoals, type SeasonGoal } from "@/lib/seasongoals.functions";
 import { getSeasonMatches, type SeasonMatch } from "@/lib/seasonmatches.functions";
 import { useClubCrest } from "@/lib/use-club-crest";
+import { Att, Gate, isFreeSeason } from "@/components/MemberBlur";
 
 const BALL_URL =
   "https://wxyxcfalnqttwchxebpn.supabase.co/storage/v1/object/public/slike/lopta.webp";
@@ -38,7 +39,11 @@ function initials(name: string): string {
 function GoalText({ g }: { g: SeasonGoal }) {
   return (
     <span>
-      <span className="font-semibold">{g.player}</span>
+      <span className="font-semibold">
+        <Gate free={isFreeSeason(g.season)} fake="Ime Prezime">
+          {g.player}
+        </Gate>
+      </span>
       <span className="text-muted-foreground">{tagOf(g)}</span>
     </span>
   );
@@ -92,8 +97,7 @@ export function SeasonRounds({ season, grp: grpProp }: { season: string; grp?: s
       return next;
     });
 
-  const attText = (n: number): string =>
-    n > 0 ? n.toLocaleString("de-DE") : n < 0 ? "x" : "—";
+  const attText = (n: number) => <Att n={n} season={season} />;
 
   const Crest = ({ club }: { club: string }) => {
     const c = crestFor(club);
