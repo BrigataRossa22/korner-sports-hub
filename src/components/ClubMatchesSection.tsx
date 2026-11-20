@@ -10,6 +10,7 @@ import { getSeasonGoals } from "@/lib/seasongoals.functions";
 import { getSeasonMatches } from "@/lib/seasonmatches.functions";
 import { normClub, sameClub } from "@/lib/club-match";
 import { useClubCrest } from "@/lib/use-club-crest";
+import { Att, Gate, isFreeSeason } from "@/components/MemberBlur";
 
 // Mora biti ista oznaka kao u clubhistory.functions.ts
 const CURRENT_SEASON = "2026-27";
@@ -39,11 +40,6 @@ function fmtDate(iso: string | null): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
   return `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}.`;
-}
-
-function attendanceText(n: number | null): string {
-  if (n === null) return "—";
-  return n > 0 ? n.toLocaleString("de-DE") : n < 0 ? "x" : "—";
 }
 
 function initials(name: string): string {
@@ -520,7 +516,7 @@ export function ClubMatchesSection({
                       </div>
 
                       <span className="text-right text-xs tabular-nums">
-                        {attendanceText(r.att)}
+                        <Att n={r.att} season={season} />
                       </span>
                     </div>
 
@@ -577,7 +573,7 @@ export function ClubMatchesSection({
                             </p>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-right">{attendanceText(r.att)}</td>
+                        <td className="px-4 py-3 text-right"><Att n={r.att} season={season} /></td>
                       </tr>
                     ))}
                   </tbody>
@@ -604,8 +600,16 @@ export function ClubMatchesSection({
                     {scorers.map((r, i) => (
                       <tr key={r.player} className="border-t border-border">
                         <td className="px-4 py-3 font-semibold text-primary">{i + 1}</td>
-                        <td className="px-4 py-3 font-semibold">{r.player}</td>
-                        <td className="px-4 py-3 text-right text-base font-bold">{r.goals}</td>
+                        <td className="px-4 py-3 font-semibold">
+                          <Gate free={isFreeSeason(season)} fake="Ime Prezime">
+                            {r.player}
+                          </Gate>
+                        </td>
+                        <td className="px-4 py-3 text-right text-base font-bold">
+                          <Gate free={isFreeSeason(season)} fake="9">
+                            {r.goals}
+                          </Gate>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
