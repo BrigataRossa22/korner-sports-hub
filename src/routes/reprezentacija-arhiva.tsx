@@ -5,6 +5,7 @@ import { Fragment, useMemo, useState } from "react";
 import { TableSkeleton } from "@/components/TableSkeleton";
 import { getNationalMatches, type NationalMatch } from "@/lib/nationalmatches.functions";
 import { getNationalGoals, type NationalGoal } from "@/lib/nationalgoals.functions";
+import { Att } from "@/components/MemberBlur";
 
 export const Route = createFileRoute("/reprezentacija-arhiva")({
   head: () => ({
@@ -203,8 +204,7 @@ function ArhivaReprezentacije() {
     return s;
   }, [list]);
 
-  const attText = (n: number): string =>
-    n > 0 ? n.toLocaleString("de-DE") : n < 0 ? "x" : "—";
+  const attText = (n: number, date: string) => <Att n={n} season={date} />;
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
@@ -363,7 +363,7 @@ function ArhivaReprezentacije() {
                       </div>
 
                       <div className="flex items-center justify-end gap-1 text-sm tabular-nums">
-                        <span>{attText(m.attendance)}</span>
+                        <span>{attText(m.attendance, m.match_date)}</span>
                         <span className="inline-flex size-4 shrink-0 items-center justify-center">
                           {canOpen && (
                             <ChevronDown
@@ -470,7 +470,7 @@ function ArhivaReprezentacije() {
                               <Team name={m.away} flag={m.away_flag} align="left" />
                             </div>
                           </td>
-                          <td className="px-4 py-3 text-right">{attText(m.attendance)}</td>
+                          <td className="px-4 py-3 text-right">{attText(m.attendance, m.match_date)}</td>
                         </tr>
                         {(homeTxt || awayTxt) && (
                           <tr>
