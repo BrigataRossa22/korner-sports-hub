@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { ArticleCard } from "@/components/ArticleCard";
+import { ArticleFeedItem, ArticleTile } from "@/components/ArticleCard";
 import { Sidebar } from "@/components/Sidebar";
 import { byCategory, categoryLabels } from "@/lib/content";
 import type { Category, PublicContent } from "@/lib/content.functions";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 12;
 
 export function CategoryPage({
   category,
@@ -17,36 +17,45 @@ export function CategoryPage({
 }) {
   const list = byCategory(content.articles, category);
   const [visible, setVisible] = useState(PAGE_SIZE);
-  const shown = list.slice(0, visible);
+  const first = list[0] ?? null;
+  const rest = list.slice(1, visible + 1);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
-      <div className="rule-top pt-3">
+      <div className="border-b-2 border-primary pb-3">
         <h1 className="text-4xl uppercase">{categoryLabels[category]}</h1>
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{intro}</p>
       </div>
 
-      <div className="mt-8 grid gap-10 lg:grid-cols-[1fr_320px]">
+      <div className="mt-6 grid gap-10 lg:grid-cols-[1fr_320px]">
         <div>
-          <div className="grid gap-8 sm:grid-cols-2">
-            {shown.map((article) => (
-              <ArticleCard key={article.id} article={article} />
-            ))}
-            {list.length === 0 && (
-              <p className="text-sm text-muted-foreground">
-                U ovoj rubrici još nema vijesti. Navratite uskoro.
-              </p>
-            )}
-          </div>
+          {first ? (
+            <>
+              <ArticleTile
+                article={first}
+                className="aspect-[16/9]"
+                titleClass="text-2xl sm:text-3xl"
+              />
+              <div className="mt-6">
+                {rest.map((article) => (
+                  <ArticleFeedItem key={article.id} article={article} />
+                ))}
+              </div>
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              U ovoj rubrici još nema vijesti. Navratite uskoro.
+            </p>
+          )}
 
-          {visible < list.length && (
-            <div className="mt-10 text-center">
+          {visible + 1 < list.length && (
+            <div className="mt-8 text-center">
               <button
                 type="button"
                 onClick={() => setVisible((v) => v + PAGE_SIZE)}
-                className="rounded-md border border-border px-6 py-2.5 font-display text-sm font-semibold uppercase tracking-wide hover:bg-muted"
+                className="rounded-md bg-primary px-8 py-2.5 font-display text-sm font-semibold uppercase tracking-wide text-primary-foreground hover:opacity-90"
               >
-                Učitaj još
+                Učitaj još vijesti
               </button>
             </div>
           )}
