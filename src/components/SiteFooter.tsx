@@ -4,6 +4,8 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { contentOptions } from "@/lib/content";
 import { useHydrated } from "@/lib/use-hydrated";
 
+const CONTACT_EMAIL = "kornerbih@outlook.com";
+
 export function SiteFooter() {
   const hydrated = useHydrated();
   const { data } = useQuery({ ...contentOptions, enabled: hydrated });
@@ -43,6 +45,11 @@ export function SiteFooter() {
             <li>
               <Link to="/o-nama">O nama</Link>
             </li>
+            <li>
+              <Link to="/kontakt" className="font-semibold text-ink-foreground">
+                Kontakt
+              </Link>
+            </li>
           </ul>
         </div>
         <div>
@@ -74,13 +81,16 @@ export function SiteFooter() {
                 </a>
               </li>
             )}
-            {settings?.contactEmail && (
-              <li>
-                <a href={`mailto:${settings.contactEmail}`} className="underline underline-offset-4">
-                  {settings.contactEmail}
-                </a>
-              </li>
-            )}
+            <li>
+              <a href={`mailto:${CONTACT_EMAIL}`} className="underline underline-offset-4">
+                {CONTACT_EMAIL}
+              </a>
+            </li>
+            <li>
+              <Link to="/kontakt" className="underline underline-offset-4">
+                Za saradnju nam se javite
+              </Link>
+            </li>
           </ul>
         </div>
       </div>
