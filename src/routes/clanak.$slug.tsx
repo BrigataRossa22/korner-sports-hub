@@ -1,8 +1,7 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import { ArticleRow } from "@/components/ArticleCard";
+import { ArticleCard, ArticleRow, timeAgo } from "@/components/ArticleCard";
 import { Sidebar } from "@/components/Sidebar";
 import { ArticleMissing, LoadError } from "@/components/RouteFallbacks";
-import { formatDate } from "@/lib/content";
 import { getPublicContent, type ArticleDTO, type PublicContent } from "@/lib/content.functions";
 
 export const Route = createFileRoute("/clanak/$slug")({
@@ -49,7 +48,9 @@ function Clanak() {
   const { content, article } = Route.useLoaderData();
   const related = content.articles
     .filter((a) => a.category === article.category && a.slug !== article.slug)
-    .slice(0, 4);
+    .slice(0, 5);
+  // Još vijesti ispod članka: najnovije koje nisu ovaj članak
+  const more = content.articles.filter((a) => a.slug !== article.slug).slice(0, 6);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
@@ -63,7 +64,7 @@ function Clanak() {
 
           <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 border-y border-border py-3 text-sm text-muted-foreground">
             <span>{article.author}</span>
-            <span>{formatDate(article.publishedAt)}</span>
+            <span suppressHydrationWarning>{timeAgo(article.publishedAt)}</span>
             <span>{article.comments} komentara</span>
           </div>
 
@@ -88,6 +89,21 @@ function Clanak() {
               </p>
             ))}
           </div>
+
+          {more.length > 0 && (
+            <section className="mt-12">
+              <div className="border-b-2 border-primary pb-1.5">
+                <h2 className="font-display text-xl font-bold uppercase tracking-wide">
+                  Pročitajte još
+                </h2>
+              </div>
+              <div className="mt-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {more.map((item) => (
+                  <ArticleCard key={item.id} article={item} size="sm" />
+                ))}
+              </div>
+            </section>
+          )}
         </article>
 
         <div className="space-y-8">
@@ -106,4 +122,4 @@ function Clanak() {
       </div>
     </div>
   );
-}
+} 
