@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Crown, Lock, MapPin } from "lucide-react";
+import { ChevronDown, Crown, Lock, LogOut, MapPin, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMembership } from "@/lib/use-membership";
 
@@ -15,6 +15,7 @@ export function MemberMenu() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [profOpen, setProfOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
 
   // Zaključane stranice otvaraju prijavu preko ovog događaja
@@ -109,18 +110,30 @@ export function MemberMenu() {
           {m.loading ? (
             <p className="mt-3 text-sm text-muted-foreground">Učitavam…</p>
           ) : m.signedIn ? (
-            <div className="mt-3 space-y-3 text-sm">
-              <p className="break-all text-muted-foreground">{m.email}</p>
+            <div className="mt-3 text-sm">
+              {/* Ko je prijavljen */}
+              <div className="flex items-center gap-3">
+                <div className="grid size-11 shrink-0 place-items-center rounded-full bg-primary font-display text-base font-bold text-primary-foreground">
+                  {(m.nick || m.email.split("@")[0] || "?").slice(0, 2).toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate font-display text-base font-bold">
+                    {m.nick || m.email.split("@")[0]}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">{m.email}</p>
+                </div>
+              </div>
+
               {m.isAdmin ? (
-                <p className="rounded-md bg-primary/10 px-3 py-2 font-medium text-primary">
+                <p className="mt-3 rounded-md bg-primary/10 px-3 py-2 font-medium text-primary">
                   Admin · vidiš sve
                 </p>
               ) : m.isMember ? (
-                <p className="rounded-md bg-primary/10 px-3 py-2 font-medium text-primary">
+                <p className="mt-3 rounded-md bg-primary/10 px-3 py-2 font-medium text-primary">
                   Korner član · sve je otključano
                 </p>
               ) : (
-                <div className="rounded-md bg-muted px-3 py-2 text-muted-foreground">
+                <div className="mt-3 rounded-md bg-muted px-3 py-2 text-muted-foreground">
                   Ovaj profil nema aktivno članstvo.{" "}
                   <a
                     href={INSTAGRAM}
@@ -133,24 +146,57 @@ export function MemberMenu() {
                   .
                 </div>
               )}
-              {m.hasAccess && (
-                <Link
-                  to="/moj-profil"
-                  onClick={() => setOpen(false)}
-                  className="flex items-center gap-2 rounded-md bg-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90"
+
+              <div className="mt-3 border-t border-border pt-2">
+                {m.hasAccess && (
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => setProfOpen((v) => !v)}
+                      aria-expanded={profOpen}
+                      className="flex w-full items-center gap-2.5 rounded-md px-2 py-2.5 font-semibold hover:bg-muted"
+                    >
+                      <User className="size-4 text-primary" />
+                      Moj profil
+                      <ChevronDown
+                        className={`ml-auto size-4 text-muted-foreground transition-transform ${
+                          profOpen ? "rotate-180" : ""
+                        }`}
+                      />
+                    </button>
+                    {profOpen && (
+                      <div className="ml-4 border-l-2 border-primary/30 pl-2">
+                        <Link
+                          to="/moj-profil"
+                          search={{ dio: "profil" }}
+                          onClick={() => setOpen(false)}
+                          className="flex items-center gap-2.5 rounded-md px-2 py-2 hover:bg-muted"
+                        >
+                          <User className="size-4 text-muted-foreground" />
+                          Profil i nadimak
+                        </Link>
+                        <Link
+                          to="/moj-profil"
+                          search={{ dio: "groundhopping" }}
+                          onClick={() => setOpen(false)}
+                          className="flex items-center gap-2.5 rounded-md px-2 py-2 hover:bg-muted"
+                        >
+                          <MapPin className="size-4 text-muted-foreground" />
+                          Groundhopping
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={signOut}
+                  className="flex w-full items-center gap-2.5 rounded-md px-2 py-2.5 font-semibold text-muted-foreground hover:bg-muted hover:text-foreground"
                 >
-                  <MapPin className="size-4" />
-                  Moj profil
-                  <span className="ml-auto text-xs font-medium opacity-80">Groundhopping</span>
-                </Link>
-              )}
-              <button
-                type="button"
-                onClick={signOut}
-                className="w-full rounded-md border border-border px-3 py-2 text-sm font-semibold hover:bg-muted"
-              >
-                Odjava
-              </button>
+                  <LogOut className="size-4" />
+                  Odjava
+                </button>
+              </div>
             </div>
           ) : (
             <form onSubmit={signIn} className="mt-3 space-y-3">
