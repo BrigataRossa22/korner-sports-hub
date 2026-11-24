@@ -19,6 +19,7 @@ import { useSeasons } from "@/components/ArchiveTable";
 import { Avatar } from "@/components/Avatar";
 import { FavClubForm } from "@/components/FavClubForm";
 import { FavCrest } from "@/components/FavCrest";
+import { StadiumMap } from "@/components/StadiumMap";
 import { SavedList } from "@/components/SavedList";
 import { CURRENT_SEASON } from "@/components/MemberBlur";
 import { LockedPage } from "@/components/MemberLock";
@@ -324,7 +325,7 @@ function NickForm({ userId, nick }: { userId: string; nick: string }) {
   );
 }
 
-type Tab = "stat" | "add" | "mine";
+type Tab = "stat" | "map" | "add" | "mine";
 
 function Profile({
   email,
@@ -658,10 +659,11 @@ function Profile({
               stadionima.
             </p>
 
-        <div className="mt-6 grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
+        <div className="mt-6 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
           {tabBtn("stat", "Statistika")}
-          {tabBtn("add", "Dodaj")}
-          {tabBtn("mine", `Moje (${hops.length})`)}
+          {tabBtn("map", "Mapa")}
+          {tabBtn("add", "Dodaj utakmice")}
+          {tabBtn("mine", `Moje utakmice (${hops.length})`)}
         </div>
 
         {msg && (
@@ -781,6 +783,30 @@ function Profile({
                   </section>
                 </div>
               </div>
+            )}
+          </div>
+        )}
+
+        {/* ---- Mapa stadiona ---- */}
+        {active === "map" && (
+          <div className="mt-6">
+            {stats.stadiums.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-border p-8 text-center">
+                <MapPin className="mx-auto size-8 text-primary" />
+                <p className="mt-3 font-semibold">Mapa je prazna</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Dodaj utakmice na kojima si bio i stadioni će se pojaviti na mapi.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setTab("add")}
+                  className="mt-4 rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90"
+                >
+                  Dodaj utakmice
+                </button>
+              </div>
+            ) : (
+              <StadiumMap stadiums={stats.stadiums} />
             )}
           </div>
         )}
