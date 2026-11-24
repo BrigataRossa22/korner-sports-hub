@@ -48,8 +48,7 @@ export function FavClubForm({ userId, favClub }: { userId: string; favClub: stri
     <div className="max-w-md rounded-xl border border-border bg-surface p-5">
       <p className="font-display text-sm font-bold uppercase tracking-wide">Moj klub</p>
       <p className="mt-1 text-xs text-muted-foreground">
-        Grb kluba se vidi uz tvoj nadimak, a na početnoj stranici dobiješ vijesti, tabelu i sljedeću
-        utakmicu tvog kluba.
+        Grb tvog kluba se vidi uz tvoj nadimak.
       </p>
       <div className="mt-3 flex items-center gap-3">
         {value && <FavCrest club={value} className="size-9" />}
