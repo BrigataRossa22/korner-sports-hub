@@ -81,36 +81,49 @@ function Index() {
   );
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
+    <div className="mx-auto max-w-6xl px-4 py-5 sm:py-8">
       <h1 className="sr-only">Korner BiH — sportske vijesti iz Bosne i Hercegovine</h1>
 
       {!lead ? (
         <p className="py-10 text-muted-foreground">Još nema objavljenih vijesti. Navratite uskoro.</p>
       ) : (
         <>
-          {/* ---- Naslovnica: glavna vijest + dvije uz nju + red malih ---- */}
+          {/* ---- Naslovnica: glavna vijest + dvije uz nju ---- */}
           <section className="grid gap-3 lg:grid-cols-3 lg:grid-rows-2">
             <ArticleTile
               article={lead}
-              className="aspect-[16/10] lg:col-span-2 lg:row-span-2 lg:aspect-auto lg:min-h-[26rem]"
+              className="aspect-[4/3] sm:aspect-[16/10] lg:col-span-2 lg:row-span-2 lg:aspect-auto lg:min-h-[26rem]"
               titleClass="text-2xl sm:text-4xl"
             />
             {side.map((a) => (
-              <ArticleTile key={a.id} article={a} className="aspect-[16/10] lg:aspect-auto lg:min-h-[12.5rem]" />
+              <ArticleTile
+                key={a.id}
+                article={a}
+                className="aspect-[16/10] lg:aspect-auto lg:min-h-[12.5rem]"
+                titleClass="text-lg sm:text-xl"
+              />
             ))}
           </section>
 
+          {/* ---- Red malih: na telefonu kartice, na većem ekranu preko slike ---- */}
           {row.length > 0 && (
-            <section className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
-              {row.map((a) => (
-                <ArticleTile
-                  key={a.id}
-                  article={a}
-                  className="aspect-[4/3]"
-                  titleClass="text-sm sm:text-base"
-                />
-              ))}
-            </section>
+            <>
+              <section className="mt-6 grid grid-cols-2 gap-x-3 gap-y-6 sm:hidden">
+                {row.map((a) => (
+                  <ArticleCard key={a.id} article={a} size="sm" />
+                ))}
+              </section>
+              <section className="mt-3 hidden gap-3 sm:grid sm:grid-cols-2 lg:grid-cols-4">
+                {row.map((a) => (
+                  <ArticleTile
+                    key={a.id}
+                    article={a}
+                    className="aspect-[4/3]"
+                    titleClass="text-sm sm:text-base"
+                  />
+                ))}
+              </section>
+            </>
           )}
 
           {/* ---- Najnovije (dugi popis) + desna kolona ---- */}
@@ -145,7 +158,7 @@ function Index() {
           {blocks.map((b) => (
             <section key={b.category} className="mt-12">
               <SectionTitle to={b.to}>{categoryLabels[b.category]}</SectionTitle>
-              <div className="mt-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="mt-4 grid grid-cols-2 gap-x-3 gap-y-6 sm:gap-6 lg:grid-cols-4">
                 {b.list.map((a) => (
                   <ArticleCard key={a.id} article={a} size="sm" />
                 ))}
