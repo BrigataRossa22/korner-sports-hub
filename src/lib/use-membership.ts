@@ -11,6 +11,8 @@ export type Membership = {
   nick: string;
   /** Adresa slike profila (prazno ako je nema) */
   avatarUrl: string;
+  /** Omiljeni klub ("Moj klub"), prazno ako nije izabran */
+  favClub: string;
   /** Urednik (admin): vidi sve bez članstva */
   isAdmin: boolean;
   /** Ima aktivno Korner članstvo */
@@ -26,6 +28,7 @@ const LOADING: Membership = {
   email: "",
   nick: "",
   avatarUrl: "",
+  favClub: "",
   isAdmin: false,
   isMember: false,
   hasAccess: false,
@@ -55,9 +58,10 @@ async function load() {
     const names = (roles ?? []).map((r) => String(r.role));
     const isAdmin = names.includes("editor");
     const isMember = names.includes("member");
-    // Nadimak i slika (tabela profiles); ako tabele još nema, samo ih preskačemo
+    // Nadimak, slika i klub (tabela profiles); ako tabele još nema, samo ih preskačemo
     let nick = "";
     let avatarUrl = "";
+    let favClub = "";
     try {
       const { data: prof } = await (
         supabase as unknown as {
@@ -66,14 +70,16 @@ async function load() {
         }
       )
         .from("profiles")
-        .select("nick, avatar_url")
+        .select("nick, avatar_url, fav_club")
         .eq("user_id", user.id)
         .maybeSingle();
       nick = String(prof?.nick ?? "");
       avatarUrl = String(prof?.avatar_url ?? "");
+      favClub = String(prof?.fav_club ?? "");
     } catch {
       nick = "";
       avatarUrl = "";
+      favClub = "";
     }
     set({
       loading: false,
@@ -82,6 +88,7 @@ async function load() {
       email: user.email ?? "",
       nick,
       avatarUrl,
+      favClub,
       isAdmin,
       isMember,
       hasAccess: isAdmin || isMember,
