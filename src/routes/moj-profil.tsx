@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  Bookmark,
   Camera,
   CalendarDays,
   Check,
@@ -15,6 +16,9 @@ import {
 } from "lucide-react";
 import { useSeasons } from "@/components/ArchiveTable";
 import { Avatar } from "@/components/Avatar";
+import { FavClubForm } from "@/components/FavClubForm";
+import { FavCrest } from "@/components/FavCrest";
+import { SavedList } from "@/components/SavedList";
 import { CURRENT_SEASON } from "@/components/MemberBlur";
 import { LockedPage } from "@/components/MemberLock";
 import { LoadError } from "@/components/RouteFallbacks";
@@ -26,6 +30,8 @@ import { getLeagueMatches } from "@/lib/leaguematches.functions";
 import { getSeasonMatches } from "@/lib/seasonmatches.functions";
 import { refreshMembership, useMembership } from "@/lib/use-membership";
 
+type Dio = "profil" | "groundhopping" | "kasnije";
+
 export const Route = createFileRoute("/moj-profil")({
   head: () => ({
     meta: [
@@ -33,8 +39,11 @@ export const Route = createFileRoute("/moj-profil")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  validateSearch: (s: Record<string, unknown>): { dio?: "profil" | "groundhopping" } => ({
-    dio: s["dio"] === "groundhopping" ? "groundhopping" : s["dio"] === "profil" ? "profil" : undefined,
+  validateSearch: (s: Record<string, unknown>): { dio?: Dio } => ({
+    dio:
+      s["dio"] === "groundhopping" || s["dio"] === "profil" || s["dio"] === "kasnije"
+        ? (s["dio"] as Dio)
+        : undefined,
   }),
   errorComponent: LoadError,
   component: MojProfil,
@@ -94,6 +103,7 @@ function MojProfil() {
       isAdmin={m.isAdmin}
       nick={m.nick}
       avatarUrl={m.avatarUrl}
+      favClub={m.favClub}
       userId={m.userId}
       dio={dio ?? "profil"}
     />
@@ -313,6 +323,7 @@ function Profile({
   isAdmin,
   nick,
   avatarUrl,
+  favClub,
   userId,
   dio,
 }: {
@@ -320,8 +331,9 @@ function Profile({
   isAdmin: boolean;
   nick: string;
   avatarUrl: string;
+  favClub: string;
   userId: string;
-  dio: "profil" | "groundhopping";
+  dio: Dio;
 }) {
   const qc = useQueryClient();
   const navigate = useNavigate();
@@ -525,7 +537,10 @@ function Profile({
             <p className="font-display text-xs uppercase tracking-[0.2em] text-primary">
               Moj profil
             </p>
-            <p className="mt-1 break-all font-display text-xl font-bold sm:text-2xl">{shownName}</p>
+            <p className="mt-1 flex items-center gap-2 font-display text-xl font-bold sm:text-2xl">
+              <span className="break-all">{shownName}</span>
+              {favClub && <FavCrest club={favClub} className="size-7" />}
+            </p>
             <p className="break-all text-xs text-ink-foreground/60">{email}</p>
             <p className="mt-1 inline-flex items-center gap-1.5 text-sm text-ink-foreground/75">
               <Crown className="size-4 text-primary" />
@@ -543,7 +558,7 @@ function Profile({
       </section>
 
       <div className="mx-auto max-w-6xl px-4 py-8">
-        {/* Glavni izbor: Profil / Groundhopping */}
+        {/* Glavni izbor: Profil / Groundhopping / Za kasnije */}
         <nav className="flex flex-wrap gap-2 border-b-2 border-primary pb-3">
           <Link
             to="/moj-profil"
@@ -567,18 +582,40 @@ function Profile({
           >
             <MapPin className="size-4" /> Groundhopping
           </Link>
+          <Link
+            to="/moj-profil"
+            search={{ dio: "kasnije" }}
+            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 font-display text-sm font-semibold uppercase tracking-wide ${
+              dio === "kasnije"
+                ? "bg-primary text-primary-foreground"
+                : "border border-border bg-card hover:bg-muted"
+            }`}
+          >
+            <Bookmark className="size-4" /> Za kasnije
+          </Link>
         </nav>
 
         {dio === "profil" && (
           <section className="mt-6">
             <h1 className="font-display text-3xl font-bold uppercase">Moj profil</h1>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-              Ovdje biraš kako ćeš se zvati na Korneru, dodaješ svoju sliku, a utakmice bilježiš u dijelu Groundhopping.
+              Ovdje biraš nadimak, sliku i svoj klub, a utakmice bilježiš u dijelu Groundhopping.
             </p>
             <div className="mt-6 grid gap-5 md:grid-cols-2">
               <AvatarForm userId={userId} avatarUrl={avatarUrl} name={shownName} />
               <NickForm userId={userId} nick={nick} />
+              <FavClubForm userId={userId} favClub={favClub} />
             </div>
+          </section>
+        )}
+
+        {dio === "kasnije" && (
+          <section className="mt-6">
+            <h1 className="font-display text-3xl font-bold uppercase">Za kasnije</h1>
+            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+              Vijesti koje si sačuvao da ih pročitaš kasnije.
+            </p>
+            <SavedList />
           </section>
         )}
 
