@@ -5,7 +5,10 @@ export type Membership = {
   /** Još provjeravamo prijavu i ulogu */
   loading: boolean;
   signedIn: boolean;
+  userId: string;
   email: string;
+  /** Nadimak koji je korisnik sam izabrao (prazno ako ga nema) */
+  nick: string;
   /** Urednik (admin): vidi sve bez članstva */
   isAdmin: boolean;
   /** Ima aktivno Korner članstvo */
@@ -17,7 +20,9 @@ export type Membership = {
 const LOADING: Membership = {
   loading: true,
   signedIn: false,
+  userId: "",
   email: "",
+  nick: "",
   isAdmin: false,
   isMember: false,
   hasAccess: false,
@@ -47,10 +52,29 @@ async function load() {
     const names = (roles ?? []).map((r) => String(r.role));
     const isAdmin = names.includes("editor");
     const isMember = names.includes("member");
+    // Nadimak (tabela profiles); ako tabele još nema, samo ga preskačemo
+    let nick = "";
+    try {
+      const { data: prof } = await (
+        supabase as unknown as {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          from: (t: string) => any;
+        }
+      )
+        .from("profiles")
+        .select("nick")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      nick = String(prof?.nick ?? "");
+    } catch {
+      nick = "";
+    }
     set({
       loading: false,
       signedIn: true,
+      userId: user.id,
       email: user.email ?? "",
+      nick,
       isAdmin,
       isMember,
       hasAccess: isAdmin || isMember,
@@ -58,6 +82,11 @@ async function load() {
   } catch {
     set(SIGNED_OUT);
   }
+}
+
+/** Ponovo učitaj prijavu, uloge i nadimak (npr. nakon promjene nadimka). */
+export function refreshMembership() {
+  void load();
 }
 
 function start() {
