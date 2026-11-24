@@ -9,6 +9,8 @@ export type Membership = {
   email: string;
   /** Nadimak koji je korisnik sam izabrao (prazno ako ga nema) */
   nick: string;
+  /** Adresa slike profila (prazno ako je nema) */
+  avatarUrl: string;
   /** Urednik (admin): vidi sve bez članstva */
   isAdmin: boolean;
   /** Ima aktivno Korner članstvo */
@@ -23,6 +25,7 @@ const LOADING: Membership = {
   userId: "",
   email: "",
   nick: "",
+  avatarUrl: "",
   isAdmin: false,
   isMember: false,
   hasAccess: false,
@@ -52,8 +55,9 @@ async function load() {
     const names = (roles ?? []).map((r) => String(r.role));
     const isAdmin = names.includes("editor");
     const isMember = names.includes("member");
-    // Nadimak (tabela profiles); ako tabele još nema, samo ga preskačemo
+    // Nadimak i slika (tabela profiles); ako tabele još nema, samo ih preskačemo
     let nick = "";
+    let avatarUrl = "";
     try {
       const { data: prof } = await (
         supabase as unknown as {
@@ -62,12 +66,14 @@ async function load() {
         }
       )
         .from("profiles")
-        .select("nick")
+        .select("nick, avatar_url")
         .eq("user_id", user.id)
         .maybeSingle();
       nick = String(prof?.nick ?? "");
+      avatarUrl = String(prof?.avatar_url ?? "");
     } catch {
       nick = "";
+      avatarUrl = "";
     }
     set({
       loading: false,
@@ -75,6 +81,7 @@ async function load() {
       userId: user.id,
       email: user.email ?? "",
       nick,
+      avatarUrl,
       isAdmin,
       isMember,
       hasAccess: isAdmin || isMember,
@@ -84,7 +91,7 @@ async function load() {
   }
 }
 
-/** Ponovo učitaj prijavu, uloge i nadimak (npr. nakon promjene nadimka). */
+/** Ponovo učitaj prijavu, uloge, nadimak i sliku (npr. nakon promjene). */
 export function refreshMembership() {
   void load();
 }
