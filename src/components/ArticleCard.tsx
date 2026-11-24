@@ -20,7 +20,19 @@ export function timeAgo(iso: string): string {
 
 function Thumb({ article, className }: { article: ArticleDTO; className: string }) {
   if (!article.image) {
-    return <div className={`${className} bg-muted`} aria-hidden="true" />;
+    // Vijest bez slike: zeleni prelaz s logom
+    return (
+      <div
+        className={`${className} grid place-items-center bg-gradient-to-br from-primary to-ink`}
+        aria-hidden="true"
+      >
+        <img
+          src="/korner-logo.png"
+          alt=""
+          className="size-1/4 max-h-20 min-h-8 min-w-8 max-w-20 rounded-md object-contain opacity-40"
+        />
+      </div>
+    );
   }
   return (
     <img
@@ -63,7 +75,7 @@ export function ArticleCard({
   return (
     <article className="group">
       <Link to="/clanak/$slug" params={{ slug: article.slug }} className="block">
-        <div className="overflow-hidden rounded-md bg-muted">
+        <div className="overflow-hidden rounded-lg bg-muted">
           <Thumb
             article={article}
             className={hero ? "aspect-[16/9] w-full" : "aspect-[3/2] w-full"}
@@ -75,7 +87,7 @@ export function ArticleCard({
             hero
               ? "mt-1 text-3xl leading-tight group-hover:text-primary"
               : size === "sm"
-                ? "mt-1 text-base leading-snug group-hover:text-primary"
+                ? "mt-1 line-clamp-3 text-[0.95rem] font-bold leading-snug group-hover:text-primary"
                 : "mt-1 text-xl group-hover:text-primary"
           }
         >
@@ -139,7 +151,7 @@ export function ArticleTile({
       className={`group relative block overflow-hidden rounded-lg bg-ink ${className}`}
     >
       <Thumb article={article} className="absolute inset-0 size-full" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
       <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
         {article.kicker && (
           <span className="inline-block rounded-sm bg-primary px-2 py-0.5 font-display text-[10px] font-semibold uppercase tracking-wider text-primary-foreground">
@@ -147,7 +159,7 @@ export function ArticleTile({
           </span>
         )}
         <h3
-          className={`mt-1.5 font-display font-bold leading-tight text-white group-hover:underline ${titleClass}`}
+          className={`mt-1.5 line-clamp-4 font-display font-bold leading-tight text-white group-hover:underline ${titleClass}`}
         >
           {article.title}
         </h3>
@@ -168,12 +180,12 @@ export function ArticleFeedItem({ article }: { article: ArticleDTO }) {
         params={{ slug: article.slug }}
         className="flex gap-4"
       >
-        <div className="w-32 shrink-0 overflow-hidden rounded-md bg-muted sm:w-52">
+        <div className="w-32 shrink-0 overflow-hidden rounded-lg bg-muted sm:w-52">
           <Thumb article={article} className="aspect-[3/2] w-full" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="kicker">{article.kicker}</p>
-          <h3 className="mt-1 text-base leading-snug group-hover:text-primary sm:text-xl">
+          <h3 className="mt-1 line-clamp-3 text-base leading-snug group-hover:text-primary sm:text-xl">
             {article.title}
           </h3>
           <p className="mt-1.5 hidden line-clamp-2 text-sm text-muted-foreground sm:block">
