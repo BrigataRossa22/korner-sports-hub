@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArticleCard, ArticleFeedItem, ArticleTile } from "@/components/ArticleCard";
+import { MojKlubBox } from "@/components/MojKlubBox";
 import { Sidebar } from "@/components/Sidebar";
 import { LoadError } from "@/components/RouteFallbacks";
 import { byCategory, categoryLabels } from "@/lib/content";
@@ -125,6 +126,9 @@ function Index() {
               </section>
             </>
           )}
+
+          {/* ---- Moj klub (samo za prijavljene člane koji su izabrali klub) ---- */}
+          <MojKlubBox content={content} />
 
           {/* ---- Najnovije (dugi popis) + desna kolona ---- */}
           <div className="mt-10 grid gap-10 lg:grid-cols-[1fr_320px]">
