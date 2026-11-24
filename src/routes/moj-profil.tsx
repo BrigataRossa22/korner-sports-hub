@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Bookmark,
   Camera,
+  ChevronDown,
   CalendarDays,
   Check,
   Crown,
@@ -85,6 +86,13 @@ const keyOf = (
 
 const score = (m: { score_home: number | null; score_away: number | null }) =>
   m.score_home == null || m.score_away == null ? "–" : `${m.score_home}:${m.score_away}`;
+
+const utakmica = (n: number) =>
+  n % 10 === 1 && n % 100 !== 11
+    ? "utakmica"
+    : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)
+      ? "utakmice"
+      : "utakmica";
 
 function errText(err: { code?: string }) {
   return err.code === "42P01"
@@ -343,6 +351,7 @@ function Profile({
   const [club, setClub] = useState("");
   const [msg, setMsg] = useState("");
   const [pending, setPending] = useState<Set<string>>(new Set());
+  const [openSeasons, setOpenSeasons] = useState<Set<string> | null>(null);
 
   const hopsQ = useQuery({
     queryKey: ["groundhopping", email],
@@ -364,6 +373,27 @@ function Profile({
       ),
     [hopsQ.data],
   );
+  // Moje utakmice po sezonama (najnovija sezona prva, unutar sezone po kolima)
+  const mineBySeason = useMemo(() => {
+    const map = new Map<string, Hop[]>();
+    for (const h of hops) map.set(h.season, [...(map.get(h.season) ?? []), h]);
+    return [...map.entries()]
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([s, list]): [string, Hop[]] => [
+        s,
+        [...list].sort(
+          (a, b) =>
+            (a.round ?? 999) - (b.round ?? 999) || (a.match_date ?? "").localeCompare(b.match_date ?? ""),
+        ),
+      ]);
+  }, [hops]);
+  const openSet = openSeasons ?? new Set(mineBySeason[0] ? [mineBySeason[0][0]] : []);
+  const toggleSeason = (s: string) => {
+    const n = new Set(openSet);
+    if (n.has(s)) n.delete(s);
+    else n.add(s);
+    setOpenSeasons(n);
+  };
   const savedByKey = useMemo(() => new Map(hops.map((h) => [keyOf(h.season, h), h])), [hops]);
 
   const pickerQ = useQuery({
@@ -517,7 +547,7 @@ function Profile({
     <button
       type="button"
       onClick={() => setTab(id)}
-      className={`rounded-full px-4 py-2 font-display text-xs font-semibold uppercase tracking-wide transition-colors sm:text-sm ${
+      className={`rounded-full px-2 py-2 text-center font-display text-xs font-semibold uppercase tracking-wide transition-colors sm:px-4 sm:text-sm ${
         active === id
           ? "bg-primary text-primary-foreground"
           : "border border-border bg-card hover:bg-muted"
@@ -559,11 +589,11 @@ function Profile({
 
       <div className="mx-auto max-w-6xl px-4 py-8">
         {/* Glavni izbor: Profil / Groundhopping / Za kasnije */}
-        <nav className="flex flex-wrap gap-2 border-b-2 border-primary pb-3">
+        <nav className="-mx-4 flex gap-2 overflow-x-auto border-b-2 border-primary px-4 pb-3">
           <Link
             to="/moj-profil"
             search={{ dio: "profil" }}
-            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 font-display text-sm font-semibold uppercase tracking-wide ${
+            className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-2 font-display text-xs font-semibold uppercase tracking-wide sm:gap-2 sm:px-4 sm:text-sm ${
               dio === "profil"
                 ? "bg-primary text-primary-foreground"
                 : "border border-border bg-card hover:bg-muted"
@@ -574,7 +604,7 @@ function Profile({
           <Link
             to="/moj-profil"
             search={{ dio: "groundhopping" }}
-            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 font-display text-sm font-semibold uppercase tracking-wide ${
+            className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-2 font-display text-xs font-semibold uppercase tracking-wide sm:gap-2 sm:px-4 sm:text-sm ${
               dio === "groundhopping"
                 ? "bg-primary text-primary-foreground"
                 : "border border-border bg-card hover:bg-muted"
@@ -585,7 +615,7 @@ function Profile({
           <Link
             to="/moj-profil"
             search={{ dio: "kasnije" }}
-            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 font-display text-sm font-semibold uppercase tracking-wide ${
+            className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-2 font-display text-xs font-semibold uppercase tracking-wide sm:gap-2 sm:px-4 sm:text-sm ${
               dio === "kasnije"
                 ? "bg-primary text-primary-foreground"
                 : "border border-border bg-card hover:bg-muted"
@@ -628,10 +658,10 @@ function Profile({
               stadionima.
             </p>
 
-        <div className="mt-6 flex flex-wrap gap-2">
+        <div className="mt-6 grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
           {tabBtn("stat", "Statistika")}
-          {tabBtn("add", "Dodaj utakmice")}
-          {tabBtn("mine", `Moje utakmice (${hops.length})`)}
+          {tabBtn("add", "Dodaj")}
+          {tabBtn("mine", `Moje (${hops.length})`)}
         </div>
 
         {msg && (
@@ -669,48 +699,40 @@ function Profile({
                   <h2 className="flex items-center gap-2 border-b border-border pb-2 font-display text-lg font-bold uppercase">
                     <Trophy className="size-5 text-primary" /> Klubovi koje si gledao
                   </h2>
-                  <div className="overflow-x-auto">
-                    <table className="w-full min-w-[420px] text-sm tabular-nums">
-                      <thead>
-                        <tr className="text-xs uppercase text-muted-foreground">
-                          <th className="py-2 text-left">Klub</th>
-                          <th className="w-12 py-2 text-center">Puta</th>
-                          <th className="w-9 py-2 text-center" title="Pobjede">
-                            P
-                          </th>
-                          <th className="w-9 py-2 text-center" title="Neriješeno">
-                            N
-                          </th>
-                          <th className="w-9 py-2 text-center" title="Izgubljeno">
-                            I
-                          </th>
-                          <th className="w-16 py-2 text-center">Golovi</th>
+                  <table className="w-full text-xs tabular-nums sm:text-sm">
+                    <thead>
+                      <tr className="text-[11px] uppercase text-muted-foreground sm:text-xs">
+                        <th className="py-2 text-left">Klub</th>
+                        <th className="w-10 py-2 text-center">Puta</th>
+                        <th className="w-16 py-2 text-center" title="Pobjede-Neriješeno-Izgubljeno">
+                          P-N-I
+                        </th>
+                        <th className="w-12 py-2 text-center">Gol</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {stats.clubs.map((c) => (
+                        <tr key={c.name} className="border-t border-border">
+                          <td className="py-2 pr-2">
+                            <p className="font-semibold leading-tight">{c.name}</p>
+                            <div className="mt-1 h-1.5 rounded-full bg-muted">
+                              <div
+                                className="h-1.5 rounded-full bg-primary"
+                                style={{ width: `${(c.seen / maxClub) * 100}%` }}
+                              />
+                            </div>
+                          </td>
+                          <td className="py-2 text-center font-bold text-primary">{c.seen}</td>
+                          <td className="py-2 text-center">
+                            {c.w}-{c.d}-{c.l}
+                          </td>
+                          <td className="py-2 text-center text-muted-foreground">
+                            {c.gf}:{c.ga}
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {stats.clubs.map((c) => (
-                          <tr key={c.name} className="border-t border-border">
-                            <td className="py-2 pr-2">
-                              <p className="font-semibold">{c.name}</p>
-                              <div className="mt-1 h-1.5 rounded-full bg-muted">
-                                <div
-                                  className="h-1.5 rounded-full bg-primary"
-                                  style={{ width: `${(c.seen / maxClub) * 100}%` }}
-                                />
-                              </div>
-                            </td>
-                            <td className="py-2 text-center font-bold text-primary">{c.seen}</td>
-                            <td className="py-2 text-center">{c.w}</td>
-                            <td className="py-2 text-center">{c.d}</td>
-                            <td className="py-2 text-center">{c.l}</td>
-                            <td className="py-2 text-center text-muted-foreground">
-                              {c.gf}:{c.ga}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                      ))}
+                    </tbody>
+                  </table>
                 </section>
 
                 <div className="space-y-8">
@@ -751,7 +773,7 @@ function Profile({
                         <li key={s} className="flex justify-between py-2">
                           <span className="font-semibold">{s}</span>
                           <span className="tabular-nums text-muted-foreground">
-                            {n} {n === 1 ? "utakmica" : "utakmica"}
+                            {n} {utakmica(n)}
                           </span>
                         </li>
                       ))}
@@ -766,7 +788,7 @@ function Profile({
         {/* ---- Dodaj utakmice ---- */}
         {active === "add" && (
           <div className="mt-6">
-            <div className="flex flex-wrap items-end gap-3">
+            <div className="grid grid-cols-2 items-end gap-3 sm:flex sm:flex-wrap">
               <label className="text-xs font-semibold uppercase text-muted-foreground">
                 Sezona
                 <select
@@ -775,7 +797,7 @@ function Profile({
                     setSeason(e.target.value);
                     setClub("");
                   }}
-                  className="mt-1 block rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold normal-case text-foreground"
+                  className="mt-1 block w-full rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold normal-case text-foreground"
                 >
                   {seasonOptions.map((s) => (
                     <option key={s} value={s}>
@@ -789,7 +811,7 @@ function Profile({
                 <select
                   value={club}
                   onChange={(e) => setClub(e.target.value)}
-                  className="mt-1 block max-w-[14rem] rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold normal-case text-foreground"
+                  className="mt-1 block w-full rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold normal-case text-foreground"
                 >
                   <option value="">Svi klubovi</option>
                   {clubOptions.map((c) => (
@@ -863,7 +885,7 @@ function Profile({
           </div>
         )}
 
-        {/* ---- Moje utakmice ---- */}
+        {/* ---- Moje utakmice (po sezonama) ---- */}
         {active === "mine" && (
           <div className="mt-6">
             {hops.length === 0 ? (
@@ -871,31 +893,76 @@ function Profile({
                 Još nisi dodao nijednu utakmicu.
               </p>
             ) : (
-              <ul className="divide-y divide-border border-y border-border">
-                {hops.map((h) => (
-                  <li key={h.id} className="flex items-center gap-3 py-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold leading-snug">
-                        {h.home} <span className="tabular-nums text-primary">{score(h)}</span>{" "}
-                        {h.away}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {h.match_date ? `${formatDate(h.match_date)} · ` : ""}
-                        {h.season}
-                        {h.round ? ` · ${h.round}. kolo` : ""}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => void removeHop(h)}
-                      aria-label="Ukloni utakmicu"
-                      className="grid size-9 shrink-0 place-items-center rounded-full border border-border text-muted-foreground hover:bg-muted hover:text-destructive"
-                    >
-                      <Trash2 className="size-4" />
-                    </button>
-                  </li>
-                ))}
-              </ul>
+              <div className="space-y-3">
+                {mineBySeason.map(([s, list]) => {
+                  const isOpen = openSet.has(s);
+                  return (
+                    <section key={s} className="overflow-hidden rounded-xl border border-border">
+                      <button
+                        type="button"
+                        onClick={() => toggleSeason(s)}
+                        aria-expanded={isOpen}
+                        className="flex w-full items-center gap-3 bg-surface px-4 py-3 text-left"
+                      >
+                        <CalendarDays className="size-4 shrink-0 text-primary" />
+                        <span className="font-display text-base font-bold">{s}</span>
+                        <span className="ml-auto text-xs text-muted-foreground">
+                          {list.length} {utakmica(list.length)}
+                        </span>
+                        <ChevronDown
+                          className={`size-4 shrink-0 text-muted-foreground transition-transform ${
+                            isOpen ? "rotate-180" : ""
+                          }`}
+                        />
+                      </button>
+                      {isOpen && (
+                        <table className="w-full text-xs sm:text-sm">
+                          <thead>
+                            <tr className="border-t border-border text-[11px] uppercase text-muted-foreground sm:text-xs">
+                              <th className="w-10 px-3 py-2 text-center">Kolo</th>
+                              <th className="py-2 text-left">Utakmica</th>
+                              <th className="w-12 py-2 text-center">Rez.</th>
+                              <th className="w-10 py-2" />
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {list.map((h) => (
+                              <tr key={h.id} className="border-t border-border">
+                                <td className="px-3 py-2.5 text-center tabular-nums text-muted-foreground">
+                                  {h.round ?? "–"}
+                                </td>
+                                <td className="py-2.5 pr-2">
+                                  <p className="font-semibold leading-snug">
+                                    {h.home} – {h.away}
+                                  </p>
+                                  {h.match_date && (
+                                    <p className="text-[11px] text-muted-foreground sm:text-xs">
+                                      {formatDate(h.match_date)}
+                                    </p>
+                                  )}
+                                </td>
+                                <td className="py-2.5 text-center font-bold tabular-nums text-primary">
+                                  {score(h)}
+                                </td>
+                                <td className="py-2.5 pr-2 text-right">
+                                  <button
+                                    type="button"
+                                    onClick={() => void removeHop(h)}
+                                    aria-label="Ukloni utakmicu"
+                                    className="grid size-8 place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-destructive"
+                                  >
+                                    <Trash2 className="size-4" />
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                    </section>
+                  );
+                })}
+              </div>
             )}
           </div>
         )}
