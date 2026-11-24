@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ChevronDown, Crown, Lock, LogOut, MapPin, User } from "lucide-react";
+import { Avatar } from "@/components/Avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useMembership } from "@/lib/use-membership";
 
@@ -113,9 +114,11 @@ export function MemberMenu() {
             <div className="mt-3 text-sm">
               {/* Ko je prijavljen */}
               <div className="flex items-center gap-3">
-                <div className="grid size-11 shrink-0 place-items-center rounded-full bg-primary font-display text-base font-bold text-primary-foreground">
-                  {(m.nick || m.email.split("@")[0] || "?").slice(0, 2).toUpperCase()}
-                </div>
+                <Avatar
+                  url={m.avatarUrl}
+                  name={m.nick || m.email.split("@")[0] || "?"}
+                  className="size-11 text-base"
+                />
                 <div className="min-w-0">
                   <p className="truncate font-display text-base font-bold">
                     {m.nick || m.email.split("@")[0]}
