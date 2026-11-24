@@ -1,5 +1,6 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { ArticleCard, ArticleRow, timeAgo } from "@/components/ArticleCard";
+import { SaveButton } from "@/components/SaveButton";
 import { Sidebar } from "@/components/Sidebar";
 import { ArticleMissing, LoadError } from "@/components/RouteFallbacks";
 import { getPublicContent, type ArticleDTO, type PublicContent } from "@/lib/content.functions";
@@ -66,6 +67,9 @@ function Clanak() {
             <span>{article.author}</span>
             <span suppressHydrationWarning>{timeAgo(article.publishedAt)}</span>
             <span>{article.comments} komentara</span>
+            <span className="sm:ml-auto">
+              <SaveButton slug={article.slug} title={article.title} />
+            </span>
           </div>
 
           {article.image && (
@@ -122,4 +126,4 @@ function Clanak() {
       </div>
     </div>
   );
-} 
+}
