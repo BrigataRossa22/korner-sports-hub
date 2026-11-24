@@ -1,7 +1,17 @@
-import { useMemo, useState } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarDays, Check, Crown, LogOut, MapPin, Plus, Trash2, Trophy } from "lucide-react";
+import {
+  CalendarDays,
+  Check,
+  Crown,
+  LogOut,
+  MapPin,
+  Plus,
+  Trash2,
+  Trophy,
+  User,
+} from "lucide-react";
 import { useSeasons } from "@/components/ArchiveTable";
 import { CURRENT_SEASON } from "@/components/MemberBlur";
 import { LockedPage } from "@/components/MemberLock";
@@ -12,7 +22,7 @@ import { formatDate } from "@/lib/content";
 import { getStadiums } from "@/lib/groundhopping.functions";
 import { getLeagueMatches } from "@/lib/leaguematches.functions";
 import { getSeasonMatches } from "@/lib/seasonmatches.functions";
-import { useMembership } from "@/lib/use-membership";
+import { refreshMembership, useMembership } from "@/lib/use-membership";
 
 export const Route = createFileRoute("/moj-profil")({
   head: () => ({
@@ -20,6 +30,9 @@ export const Route = createFileRoute("/moj-profil")({
       { title: "Moj profil — Korner BiH" },
       { name: "robots", content: "noindex" },
     ],
+  }),
+  validateSearch: (s: Record<string, unknown>): { dio?: "profil" | "groundhopping" } => ({
+    dio: s["dio"] === "groundhopping" ? "groundhopping" : s["dio"] === "profil" ? "profil" : undefined,
   }),
   errorComponent: LoadError,
   component: MojProfil,
@@ -48,7 +61,11 @@ type Hop = {
 
 // Tabela groundhopping nije u generisanim tipovima, pa je čitamo bez njih
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const table = () => (supabase as unknown as { from: (t: string) => any }).from("groundhopping");
+const db = (name: string) => (supabase as unknown as { from: (t: string) => any }).from(name);
+const table = () => db("groundhopping");
+
+// Nadimak: 3 do 20 znakova, slova, brojevi, razmak, tačka, crtica, donja crta
+const NICK_RE = /^[\p{L}\p{N}._ -]{3,20}$/u;
 
 const keyOf = (
   season: string,
@@ -66,14 +83,108 @@ function errText(err: { code?: string }) {
 
 function MojProfil() {
   const m = useMembership();
+  const { dio } = Route.useSearch();
   if (m.loading) return <div className="min-h-[60vh]" />;
   if (!m.hasAccess) return <LockedPage title="Moj profil" />;
-  return <Profile email={m.email} isAdmin={m.isAdmin} />;
+  return (
+    <Profile
+      email={m.email}
+      isAdmin={m.isAdmin}
+      nick={m.nick}
+      userId={m.userId}
+      dio={dio ?? "profil"}
+    />
+  );
+}
+
+/** Forma za izbor nadimka */
+function NickForm({ userId, nick }: { userId: string; nick: string }) {
+  const [value, setValue] = useState(nick);
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
+
+  useEffect(() => {
+    setValue(nick);
+  }, [nick]);
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    setNote(null);
+    const v = value.trim().replace(/\s+/g, " ");
+    if (!NICK_RE.test(v)) {
+      setNote({
+        ok: false,
+        text: "Nadimak mora imati 3 do 20 znakova: slova, brojeve, razmak, tačku, crticu ili donju crtu.",
+      });
+      return;
+    }
+    setBusy(true);
+    const { error } = await db("profiles").upsert({ user_id: userId, nick: v }, { onConflict: "user_id" });
+    setBusy(false);
+    if (error) {
+      setNote({
+        ok: false,
+        text:
+          error.code === "23505"
+            ? "Taj nadimak je već zauzet. Probaj drugi."
+            : error.code === "42P01"
+              ? "Nadimci još nisu uključeni u bazi (nedostaje tabela)."
+              : "Spremanje nije uspjelo. Pokušaj ponovo.",
+      });
+      return;
+    }
+    setValue(v);
+    setNote({ ok: true, text: "Nadimak je sačuvan." });
+    refreshMembership();
+  }
+
+  return (
+    <form onSubmit={save} className="max-w-md rounded-xl border border-border bg-surface p-5">
+      <label htmlFor="nick" className="font-display text-sm font-bold uppercase tracking-wide">
+        Tvoj nadimak
+      </label>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Tako ćeš se zvati na Korneru. Može biti ime, nadimak ili ime navijačke grupe.
+      </p>
+      <input
+        id="nick"
+        value={value}
+        maxLength={20}
+        onChange={(e) => setValue(e.target.value)}
+        placeholder="npr. Brigata Rossa"
+        className="mt-3 w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm"
+      />
+      {note && (
+        <p className={`mt-2 text-xs font-medium ${note.ok ? "text-primary" : "text-destructive"}`}>
+          {note.text}
+        </p>
+      )}
+      <button
+        type="submit"
+        disabled={busy}
+        className="mt-3 rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
+      >
+        {busy ? "Spremam…" : "Spremi nadimak"}
+      </button>
+    </form>
+  );
 }
 
 type Tab = "stat" | "add" | "mine";
 
-function Profile({ email, isAdmin }: { email: string; isAdmin: boolean }) {
+function Profile({
+  email,
+  isAdmin,
+  nick,
+  userId,
+  dio,
+}: {
+  email: string;
+  isAdmin: boolean;
+  nick: string;
+  userId: string;
+  dio: "profil" | "groundhopping";
+}) {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const { seasons } = useSeasons();
@@ -248,7 +359,8 @@ function Profile({ email, isAdmin }: { email: string; isAdmin: boolean }) {
       }));
   }, [pickerQ.data, club]);
 
-  const initials = (email.split("@")[0] ?? "?").slice(0, 2).toUpperCase();
+  const shownName = nick || (email.split("@")[0] ?? "");
+  const initials = shownName.slice(0, 2).toUpperCase() || "?";
   const maxClub = stats.clubs[0]?.seen ?? 1;
   const maxStadium = stats.stadiums[0]?.seen ?? 1;
 
@@ -278,7 +390,8 @@ function Profile({ email, isAdmin }: { email: string; isAdmin: boolean }) {
             <p className="font-display text-xs uppercase tracking-[0.2em] text-primary">
               Moj profil
             </p>
-            <p className="mt-1 break-all font-display text-xl font-bold sm:text-2xl">{email}</p>
+            <p className="mt-1 break-all font-display text-xl font-bold sm:text-2xl">{shownName}</p>
+            <p className="break-all text-xs text-ink-foreground/60">{email}</p>
             <p className="mt-1 inline-flex items-center gap-1.5 text-sm text-ink-foreground/75">
               <Crown className="size-4 text-primary" />
               {isAdmin ? "Admin" : "Korner član"}
@@ -295,34 +408,52 @@ function Profile({ email, isAdmin }: { email: string; isAdmin: boolean }) {
       </section>
 
       <div className="mx-auto max-w-6xl px-4 py-8">
-        <div className="flex flex-wrap items-end justify-between gap-3 border-b-2 border-primary pb-2">
-          <div>
-            <p className="kicker">Moje opcije</p>
-            <h1 className="font-display text-3xl font-bold uppercase">Groundhopping</h1>
-          </div>
-        </div>
-        <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
-          Bilježi utakmice koje si gledao uživo. Izaberi sezonu iz arhive, označi utakmice na kojima
-          si bio, pa dobij statistiku: koje klubove si gledao, koliko puta i na kojim stadionima.
-        </p>
+        {/* Glavni izbor: Profil / Groundhopping */}
+        <nav className="flex flex-wrap gap-2 border-b-2 border-primary pb-3">
+          <Link
+            to="/moj-profil"
+            search={{ dio: "profil" }}
+            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 font-display text-sm font-semibold uppercase tracking-wide ${
+              dio === "profil"
+                ? "bg-primary text-primary-foreground"
+                : "border border-border bg-card hover:bg-muted"
+            }`}
+          >
+            <User className="size-4" /> Profil
+          </Link>
+          <Link
+            to="/moj-profil"
+            search={{ dio: "groundhopping" }}
+            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 font-display text-sm font-semibold uppercase tracking-wide ${
+              dio === "groundhopping"
+                ? "bg-primary text-primary-foreground"
+                : "border border-border bg-card hover:bg-muted"
+            }`}
+          >
+            <MapPin className="size-4" /> Groundhopping
+          </Link>
+        </nav>
 
-        {/* Brojke */}
-        <section className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
-          {[
-            ["Utakmica", hops.length],
-            ["Klubova", stats.clubs.length],
-            ["Stadiona", stats.stadiums.length],
-            ["Golova", stats.goals],
-            ["Sezona", stats.seasons.length],
-          ].map(([label, value]) => (
-            <div key={label as string} className="rounded-xl border border-border bg-surface p-4">
-              <p className="font-display text-3xl font-bold tabular-nums text-primary">{value}</p>
-              <p className="mt-0.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                {label}
-              </p>
+        {dio === "profil" && (
+          <section className="mt-6">
+            <h1 className="font-display text-3xl font-bold uppercase">Moj profil</h1>
+            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+              Ovdje biraš kako ćeš se zvati na Korneru i bilježiš utakmice u dijelu Groundhopping.
+            </p>
+            <div className="mt-6">
+              <NickForm userId={userId} nick={nick} />
             </div>
-          ))}
-        </section>
+          </section>
+        )}
+
+        {dio === "groundhopping" && (
+          <>
+            <h1 className="mt-6 font-display text-3xl font-bold uppercase">Groundhopping</h1>
+            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+              Bilježi utakmice koje si gledao uživo. Izaberi sezonu iz arhive, označi utakmice na
+              kojima si bio, pa dobij statistiku: koje klubove si gledao, koliko puta i na kojim
+              stadionima.
+            </p>
 
         <div className="mt-6 flex flex-wrap gap-2">
           {tabBtn("stat", "Statistika")}
@@ -594,6 +725,8 @@ function Profile({ email, isAdmin }: { email: string; isAdmin: boolean }) {
               </ul>
             )}
           </div>
+        )}
+          </>
         )}
       </div>
     </div>
