@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ChevronDown, Crown, Lock, LogOut, MapPin, User } from "lucide-react";
+import { Bookmark, ChevronDown, Crown, Lock, LogOut, MapPin, User } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
+import { FavCrest } from "@/components/FavCrest";
 import { supabase } from "@/integrations/supabase/client";
 import { useMembership } from "@/lib/use-membership";
 
@@ -120,8 +121,9 @@ export function MemberMenu() {
                   className="size-11 text-base"
                 />
                 <div className="min-w-0">
-                  <p className="truncate font-display text-base font-bold">
-                    {m.nick || m.email.split("@")[0]}
+                  <p className="flex items-center gap-1.5 font-display text-base font-bold">
+                    <span className="truncate">{m.nick || m.email.split("@")[0]}</span>
+                    {m.favClub && <FavCrest club={m.favClub} className="size-5" />}
                   </p>
                   <p className="truncate text-xs text-muted-foreground">{m.email}</p>
                 </div>
@@ -186,6 +188,15 @@ export function MemberMenu() {
                         >
                           <MapPin className="size-4 text-muted-foreground" />
                           Groundhopping
+                        </Link>
+                        <Link
+                          to="/moj-profil"
+                          search={{ dio: "kasnije" }}
+                          onClick={() => setOpen(false)}
+                          className="flex items-center gap-2.5 rounded-md px-2 py-2 hover:bg-muted"
+                        >
+                          <Bookmark className="size-4 text-muted-foreground" />
+                          Za kasnije
                         </Link>
                       </div>
                     )}
