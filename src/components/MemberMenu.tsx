@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Crown, Lock } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Crown, Lock, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMembership } from "@/lib/use-membership";
 
@@ -131,6 +132,17 @@ export function MemberMenu() {
                   </a>
                   .
                 </div>
+              )}
+              {m.hasAccess && (
+                <Link
+                  to="/moj-profil"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-2 rounded-md bg-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90"
+                >
+                  <MapPin className="size-4" />
+                  Moj profil
+                  <span className="ml-auto text-xs font-medium opacity-80">Groundhopping</span>
+                </Link>
               )}
               <button
                 type="button"
