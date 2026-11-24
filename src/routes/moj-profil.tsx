@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  Camera,
   CalendarDays,
   Check,
   Crown,
@@ -13,6 +14,7 @@ import {
   User,
 } from "lucide-react";
 import { useSeasons } from "@/components/ArchiveTable";
+import { Avatar } from "@/components/Avatar";
 import { CURRENT_SEASON } from "@/components/MemberBlur";
 import { LockedPage } from "@/components/MemberLock";
 import { LoadError } from "@/components/RouteFallbacks";
@@ -91,9 +93,143 @@ function MojProfil() {
       email={m.email}
       isAdmin={m.isAdmin}
       nick={m.nick}
+      avatarUrl={m.avatarUrl}
       userId={m.userId}
       dio={dio ?? "profil"}
     />
+  );
+}
+
+/** Izreže sliku u kvadrat i smanji je na 256 px (JPEG), da bude mala i brza. */
+async function toSquareJpeg(file: File, size = 256): Promise<Blob> {
+  const bmp = await createImageBitmap(file);
+  const side = Math.min(bmp.width, bmp.height);
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("canvas");
+  ctx.drawImage(bmp, (bmp.width - side) / 2, (bmp.height - side) / 2, side, side, 0, 0, size, size);
+  return await new Promise<Blob>((resolve, reject) =>
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("blob"))), "image/jpeg", 0.85),
+  );
+}
+
+/** Dodavanje, mijenjanje i uklanjanje slike profila */
+function AvatarForm({
+  userId,
+  avatarUrl,
+  name,
+}: {
+  userId: string;
+  avatarUrl: string;
+  name: string;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
+  const path = `${userId}/avatar.jpg`;
+
+  async function onPick(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setNote(null);
+    if (!file.type.startsWith("image/")) {
+      setNote({ ok: false, text: "Izaberi sliku (JPG ili PNG)." });
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setNote({ ok: false, text: "Slika je prevelika. Najviše 10 MB." });
+      return;
+    }
+    setBusy(true);
+    try {
+      let blob: Blob;
+      try {
+        blob = await toSquareJpeg(file);
+      } catch {
+        setNote({ ok: false, text: "Ova vrsta slike nije podržana. Probaj JPG ili PNG." });
+        return;
+      }
+      const up = await supabase.storage
+        .from("avatars")
+        .upload(path, blob, { upsert: true, contentType: "image/jpeg", cacheControl: "3600" });
+      if (up.error) {
+        setNote({
+          ok: false,
+          text: "Slanje nije uspjelo. Provjeri da je u bazi uključeno spremište za slike.",
+        });
+        return;
+      }
+      const url = `${supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl}?v=${Date.now()}`;
+      const { error } = await db("profiles").upsert(
+        { user_id: userId, avatar_url: url },
+        { onConflict: "user_id" },
+      );
+      if (error) {
+        setNote({ ok: false, text: "Slika je poslana, ali se nije spremila u profil." });
+        return;
+      }
+      setNote({ ok: true, text: "Slika je sačuvana." });
+      refreshMembership();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function remove() {
+    setNote(null);
+    setBusy(true);
+    await supabase.storage.from("avatars").remove([path]);
+    const { error } = await db("profiles").upsert(
+      { user_id: userId, avatar_url: null },
+      { onConflict: "user_id" },
+    );
+    setBusy(false);
+    if (error) {
+      setNote({ ok: false, text: "Uklanjanje nije uspjelo. Pokušaj ponovo." });
+      return;
+    }
+    setNote({ ok: true, text: "Slika je uklonjena." });
+    refreshMembership();
+  }
+
+  return (
+    <div className="max-w-md rounded-xl border border-border bg-surface p-5">
+      <p className="font-display text-sm font-bold uppercase tracking-wide">Tvoja slika</p>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Slika se vidi uz tvoj nadimak. Automatski se izreže u kvadrat.
+      </p>
+      <div className="mt-4 flex items-center gap-4">
+        <Avatar url={avatarUrl} name={name} className="size-20 text-2xl" />
+        <div className="flex flex-wrap gap-2">
+          <label
+            className={`inline-flex cursor-pointer items-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 ${
+              busy ? "pointer-events-none opacity-60" : ""
+            }`}
+          >
+            <Camera className="size-4" />
+            {busy ? "Šaljem…" : avatarUrl ? "Promijeni sliku" : "Dodaj sliku"}
+            <input type="file" accept="image/*" className="hidden" onChange={onPick} />
+          </label>
+          {avatarUrl && (
+            <button
+              type="button"
+              onClick={() => void remove()}
+              disabled={busy}
+              className="rounded-md border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted disabled:opacity-60"
+            >
+              Ukloni
+            </button>
+          )}
+        </div>
+      </div>
+      {note && (
+        <p className={`mt-3 text-xs font-medium ${note.ok ? "text-primary" : "text-destructive"}`}>
+          {note.text}
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -176,12 +312,14 @@ function Profile({
   email,
   isAdmin,
   nick,
+  avatarUrl,
   userId,
   dio,
 }: {
   email: string;
   isAdmin: boolean;
   nick: string;
+  avatarUrl: string;
   userId: string;
   dio: "profil" | "groundhopping";
 }) {
@@ -360,7 +498,6 @@ function Profile({
   }, [pickerQ.data, club]);
 
   const shownName = nick || (email.split("@")[0] ?? "");
-  const initials = shownName.slice(0, 2).toUpperCase() || "?";
   const maxClub = stats.clubs[0]?.seen ?? 1;
   const maxStadium = stats.stadiums[0]?.seen ?? 1;
 
@@ -383,9 +520,7 @@ function Profile({
       {/* Zaglavlje profila */}
       <section className="bg-ink text-ink-foreground">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-4 px-4 py-8 sm:py-10">
-          <div className="grid size-16 shrink-0 place-items-center rounded-full bg-primary font-display text-2xl font-bold text-primary-foreground">
-            {initials}
-          </div>
+          <Avatar url={avatarUrl} name={shownName} className="size-16 text-2xl" />
           <div className="min-w-0 flex-1">
             <p className="font-display text-xs uppercase tracking-[0.2em] text-primary">
               Moj profil
@@ -438,9 +573,10 @@ function Profile({
           <section className="mt-6">
             <h1 className="font-display text-3xl font-bold uppercase">Moj profil</h1>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-              Ovdje biraš kako ćeš se zvati na Korneru i bilježiš utakmice u dijelu Groundhopping.
+              Ovdje biraš kako ćeš se zvati na Korneru, dodaješ svoju sliku, a utakmice bilježiš u dijelu Groundhopping.
             </p>
-            <div className="mt-6">
+            <div className="mt-6 grid gap-5 md:grid-cols-2">
+              <AvatarForm userId={userId} avatarUrl={avatarUrl} name={shownName} />
               <NickForm userId={userId} nick={nick} />
             </div>
           </section>
