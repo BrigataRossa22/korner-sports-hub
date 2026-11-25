@@ -112,11 +112,16 @@ function TopTable({
 
 function BrojkePage() {
   const { data, isLoading } = useQuery({
-    queryKey: ["brojke-v3"],
+    queryKey: ["brojke-v4"],
     queryFn: () => getBrojke(),
     staleTime: 60 * 60 * 1000,
   });
   const [mode, setMode] = useState<Mode>("liga");
+  const [seasonSel, setSeasonSel] = useState("");
+
+  // Sezone za izbor (najnovija prva); ako izabrane sezone nema u ovom takmičenju, prikazuje se ukupno
+  const seasonList = data ? [...(mode === "liga" ? data.seasons : data.cupSeasons)].reverse() : [];
+  const season = seasonList.includes(seasonSel) ? seasonSel : "";
 
   const tabs = (
     <div className="flex gap-1">
@@ -135,6 +140,24 @@ function BrojkePage() {
     </div>
   );
 
+  const picker = (
+    <label className="mb-5 flex flex-wrap items-center gap-3">
+      <span className="text-xs font-semibold uppercase text-muted-foreground">Prikaz</span>
+      <select
+        value={season}
+        onChange={(e) => setSeasonSel(e.target.value)}
+        className="rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold"
+      >
+        <option value="">Ukupno (sve sezone)</option>
+        {seasonList.map((s) => (
+          <option key={s} value={s}>
+            Sezona {s}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+
   const cupFrom = data?.cupSeasons[0];
   const cupTo = data?.cupSeasons[data.cupSeasons.length - 1];
 
@@ -143,10 +166,12 @@ function BrojkePage() {
       <p className="text-xs font-semibold uppercase tracking-wider text-primary">Statistika</p>
       <h1 className="font-display text-3xl font-bold uppercase">Brojke</h1>
       <p className="mb-6 mt-1 text-sm text-muted-foreground">
-        {mode === "liga"
-          ? "Svi ligaški golovi i asistencije od 2002-03 do 2026-27 · klikni na igrača da vidiš sve njegove golove"
-          : "Svi golovi u Kupu BiH"}
-        {data
+        {season
+          ? `Najbolji strijelci${mode === "liga" ? " i asistenti" : ""} sezone ${season}`
+          : mode === "liga"
+            ? "Svi ligaški golovi i asistencije od 2002-03 do 2026-27 · klikni na igrača da vidiš sve njegove golove"
+            : "Svi golovi u Kupu BiH"}
+        {data && !season
           ? mode === "liga"
             ? ` · u obračunu ${data.seasons.length} ${data.seasons.length === 1 ? "sezona" : "sezona"}, ${data.goalsTotal} golova`
             : cupFrom && cupTo
@@ -155,6 +180,8 @@ function BrojkePage() {
           : ""}
       </p>
 
+      {data && picker}
+
       {isLoading || !data ? (
         <div className="rounded-lg border border-border bg-card">
           <TableSkeleton rows={10} cols={3} />
@@ -162,13 +189,31 @@ function BrojkePage() {
       ) : (
         <div className="grid gap-6 lg:grid-cols-2">
           <TopTable
-            title={mode === "liga" ? "Top 25 strijelaca · Liga" : "Top 25 strijelaca · Kup BiH"}
+            title={
+              season
+                ? `Top 10 strijelaca · ${mode === "liga" ? "Liga" : "Kup BiH"} ${season}`
+                : mode === "liga"
+                  ? "Top 25 strijelaca · Liga"
+                  : "Top 25 strijelaca · Kup BiH"
+            }
             unit="Golova"
-            rows={mode === "liga" ? data.scorers : data.cupScorers}
+            rows={
+              season
+                ? ((mode === "liga" ? data.scorersBySeason : data.cupBySeason)[season] ?? [])
+                : mode === "liga"
+                  ? data.scorers
+                  : data.cupScorers
+            }
             tabs={tabs}
             linkPlayers={mode === "liga"}
           />
-          <TopTable title="Top 25 asistenata · Liga" unit="Asistencija" rows={data.assists} />
+          <TopTable
+            title={
+              season && mode === "liga" ? `Top 10 asistenata · Liga ${season}` : "Top 25 asistenata · Liga"
+            }
+            unit="Asistencija"
+            rows={season && mode === "liga" ? (data.assistsBySeason[season] ?? []) : data.assists}
+          />
         </div>
       )}
     </main>
