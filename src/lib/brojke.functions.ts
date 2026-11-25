@@ -10,6 +10,10 @@ export type BrojkeData = {
   cupScorers: TopRow[];
   cupSeasons: string[];
   cupGoalsTotal: number;
+  /** Top 10 po sezoni (ključ je sezona, npr. "2024-25") */
+  scorersBySeason: Record<string, TopRow[]>;
+  assistsBySeason: Record<string, TopRow[]>;
+  cupBySeason: Record<string, TopRow[]>;
 };
 
 type Row = {
@@ -112,7 +116,7 @@ type Counts = Map<
   }
 >;
 
-function top(counts: Counts): TopRow[] {
+function top(counts: Counts, limit = 25): TopRow[] {
   const rows: TopRow[] = [];
   for (const { n, names, clubs, first, last } of counts.values()) {
     let best = "";
@@ -129,7 +133,7 @@ function top(counts: Counts): TopRow[] {
     rows.push({ name: best, count: n, clubs: clubList, first, last });
   }
   rows.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "bs"));
-  return rows.slice(0, 25);
+  return rows.slice(0, limit);
 }
 
 export const getBrojke = createServerFn({ method: "GET" }).handler(async (): Promise<BrojkeData> => {
@@ -143,6 +147,9 @@ export const getBrojke = createServerFn({ method: "GET" }).handler(async (): Pro
     cupScorers: [],
     cupSeasons: [],
     cupGoalsTotal: 0,
+    scorersBySeason: {},
+    assistsBySeason: {},
+    cupBySeason: {},
   };
   if (!url || !key) return empty;
 
@@ -166,6 +173,15 @@ export const getBrojke = createServerFn({ method: "GET" }).handler(async (): Pro
   const scorers: Counts = new Map();
   const assists: Counts = new Map();
   const cupScorers: Counts = new Map();
+  // Isto po sezonama
+  const sScorers = new Map<string, Counts>();
+  const sAssists = new Map<string, Counts>();
+  const sCup = new Map<string, Counts>();
+  const sub = (m: Map<string, Counts>, s: string): Counts => {
+    const c = m.get(s) ?? new Map();
+    m.set(s, c);
+    return c;
+  };
   const seasons = new Set<string>();
   const cupSeasons = new Set<string>();
   let goalsTotal = 0;
@@ -211,8 +227,13 @@ export const getBrojke = createServerFn({ method: "GET" }).handler(async (): Pro
       const s = season ?? r.season ?? "";
       if (s) seasons.add(s);
       const team = teamOf(r);
-      if (!isOwn(r.kind)) bump(scorers, r.player, team, s);
-      bump(assists, r.assist, isOwn(r.kind) ? "" : team, s);
+      if (!isOwn(r.kind)) {
+        bump(scorers, r.player, team, s);
+        if (s) bump(sub(sScorers, s), r.player, team, s);
+      }
+      const assistTeam = isOwn(r.kind) ? "" : team;
+      bump(assists, r.assist, assistTeam, s);
+      if (s) bump(sub(sAssists, s), r.assist, assistTeam, s);
     }
   };
 
@@ -224,14 +245,21 @@ export const getBrojke = createServerFn({ method: "GET" }).handler(async (): Pro
     const n = Number(a.assists ?? 0);
     if (!a.player || !a.player.trim() || !(n > 0)) continue;
     bump(assists, a.player, (a.team ?? "").trim(), a.season ?? "", n);
+    if (a.season) bump(sub(sAssists, a.season), a.player, (a.team ?? "").trim(), a.season, n);
   }
 
   for (const r of cup) {
     if (!r.player || !r.player.trim()) continue;
     cupGoalsTotal++;
     if (r.season) cupSeasons.add(r.season);
-    if (!isOwn(r.kind)) bump(cupScorers, r.player, teamOf(r), r.season ?? "");
+    if (!isOwn(r.kind)) {
+      bump(cupScorers, r.player, teamOf(r), r.season ?? "");
+      if (r.season) bump(sub(sCup, r.season), r.player, teamOf(r), r.season);
+    }
   }
+
+  const perSeason = (m: Map<string, Counts>): Record<string, TopRow[]> =>
+    Object.fromEntries([...m].map(([s, c]) => [s, top(c, 10)]));
 
   return {
     scorers: top(scorers),
@@ -241,5 +269,8 @@ export const getBrojke = createServerFn({ method: "GET" }).handler(async (): Pro
     cupScorers: top(cupScorers),
     cupSeasons: [...cupSeasons].sort(),
     cupGoalsTotal,
+    scorersBySeason: perSeason(sScorers),
+    assistsBySeason: perSeason(sAssists),
+    cupBySeason: perSeason(sCup),
   };
 });
