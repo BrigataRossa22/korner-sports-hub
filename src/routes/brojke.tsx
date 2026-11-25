@@ -12,19 +12,6 @@ export const Route = createFileRoute("/brojke")({
 
 type Mode = "liga" | "kup";
 
-// Mjesto u tabeli: isti broj = isto mjesto
-function withRank(rows: TopRow[]) {
-  let rank = 0;
-  let prev = -1;
-  return rows.map((r, i) => {
-    if (r.count !== prev) {
-      rank = i + 1;
-      prev = r.count;
-    }
-    return { ...r, rank };
-  });
-}
-
 // Grbovi svih klubova za koje je igrač postigao gol (ili asistirao), redom kako je mijenjao klubove
 function ClubCrests({ clubs, crestFor }: { clubs: string[]; crestFor: (club: string) => string }) {
   const seen = new Set<string>();
@@ -58,7 +45,6 @@ function TopTable({
   tabs?: React.ReactNode;
   linkPlayers?: boolean;
 }) {
-  const ranked = withRank(rows);
   const crestFor = useClubCrest();
   return (
     <section className="overflow-hidden rounded-xl border border-border bg-card">
@@ -66,7 +52,7 @@ function TopTable({
         <h2 className="font-display text-lg font-bold uppercase">{title}</h2>
         {tabs}
       </div>
-      {ranked.length === 0 ? (
+      {rows.length === 0 ? (
         <p className="px-4 py-8 text-center text-muted-foreground">Još nema podataka.</p>
       ) : (
         <table className="w-full border-collapse text-sm tabular-nums">
@@ -78,31 +64,34 @@ function TopTable({
             </tr>
           </thead>
           <tbody>
-            {ranked.map((r, i) => (
-              <tr key={`${r.name}-${i}`} className="border-b border-border/70 last:border-0 even:bg-surface/50">
-                <td className={`px-3 py-2.5 text-center font-semibold ${r.rank <= 3 ? "text-primary" : ""}`}>
-                  {r.rank}
-                </td>
-                <td className="px-2 py-2.5">
-                  <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                    {linkPlayers ? (
-                      <Link
-                        to="/igrac/$name"
-                        params={{ name: r.name }}
-                        title="Prikaži sve golove"
-                        className={`font-semibold hover:underline ${r.rank <= 3 ? "text-primary" : ""}`}
-                      >
-                        {r.name}
-                      </Link>
-                    ) : (
-                      <span className={`font-semibold ${r.rank <= 3 ? "text-primary" : ""}`}>{r.name}</span>
-                    )}
-                    <ClubCrests clubs={r.clubs} crestFor={crestFor} />
-                  </span>
-                </td>
-                <td className="px-3 py-2.5 text-right text-base font-bold">{r.count}</td>
-              </tr>
-            ))}
+            {rows.map((r, i) => {
+              const rank = i + 1;
+              return (
+                <tr key={`${r.name}-${i}`} className="border-b border-border/70 last:border-0 even:bg-surface/50">
+                  <td className={`px-3 py-2.5 text-center font-semibold ${rank <= 3 ? "text-primary" : ""}`}>
+                    {rank}
+                  </td>
+                  <td className="px-2 py-2.5">
+                    <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                      {linkPlayers ? (
+                        <Link
+                          to="/igrac/$name"
+                          params={{ name: r.name }}
+                          title="Prikaži sve golove"
+                          className={`font-semibold hover:underline ${rank <= 3 ? "text-primary" : ""}`}
+                        >
+                          {r.name}
+                        </Link>
+                      ) : (
+                        <span className={`font-semibold ${rank <= 3 ? "text-primary" : ""}`}>{r.name}</span>
+                      )}
+                      <ClubCrests clubs={r.clubs} crestFor={crestFor} />
+                    </span>
+                  </td>
+                  <td className="px-3 py-2.5 text-right text-base font-bold">{r.count}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       )}
@@ -148,10 +137,10 @@ function BrojkePage() {
         onChange={(e) => setSeasonSel(e.target.value)}
         className="rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold"
       >
-        <option value="">Ukupno (sve sezone)</option>
+        <option value="">Ukupno</option>
         {seasonList.map((s) => (
           <option key={s} value={s}>
-            Sezona {s}
+            {s}
           </option>
         ))}
       </select>
