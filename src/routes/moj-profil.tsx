@@ -27,6 +27,8 @@ import { LoadError } from "@/components/RouteFallbacks";
 import { supabase } from "@/integrations/supabase/client";
 import { displayClub, normClub, sameClub } from "@/lib/club-match";
 import { formatDate } from "@/lib/content";
+import { getCupMatches } from "@/lib/cupmatches.functions";
+import { getEuroMatches, type EuroMatch } from "@/lib/euromatches.functions";
 import { getStadiums } from "@/lib/groundhopping.functions";
 import { getLeagueMatches } from "@/lib/leaguematches.functions";
 import { getSeasonMatches } from "@/lib/seasonmatches.functions";
@@ -51,6 +53,8 @@ export const Route = createFileRoute("/moj-profil")({
   component: MojProfil,
 });
 
+type Comp = "liga" | "kup" | "evropa";
+
 type PickMatch = {
   round: number | null;
   match_date: string | null;
@@ -59,6 +63,12 @@ type PickMatch = {
   score_home: number | null;
   score_away: number | null;
   grp: string | null;
+  comp: Comp;
+  /** Naziv kola za kup i Evropu (za ligu prazno) */
+  round_label: string | null;
+  /** Naslov grupe u popisu i njen redoslijed */
+  gtitle: string;
+  gorder: number;
 };
 
 type Hop = {
@@ -70,7 +80,43 @@ type Hop = {
   away: string;
   score_home: number | null;
   score_away: number | null;
+  comp?: string | null;
+  round_label?: string | null;
 };
+
+const ns = (s: string) => s.replace(/[–—]/g, "-").trim();
+
+const CUP_ORDER = ["Q1", "Q2", "1/32", "1/16", "1/8", "1/4", "1/2", "Finale"];
+const CUP_TITLE: Record<string, string> = {
+  Q1: "Q1",
+  Q2: "Q2",
+  "1/32": "1/32 finala",
+  "1/16": "1/16 finala",
+  "1/8": "1/8 finala",
+  "1/4": "Četvrtfinale",
+  "1/2": "Polufinale",
+  Finale: "Finale",
+};
+const EURO_TITLE: Record<EuroMatch["competition"], string> = {
+  LP: "Liga prvaka",
+  LE: "Liga Evrope",
+  KL: "Konferencijska liga",
+  KPK: "Kup pobjednika kupova",
+};
+const COMP_RANK: Record<string, number> = { liga: 0, kup: 1, evropa: 2 };
+
+function pair(s: string | null | undefined): [number, number] | null {
+  const m = /^\s*(\d+)\s*[:\-–]\s*(\d+)/.exec(s ?? "");
+  return m ? [Number(m[1]), Number(m[2])] : null;
+}
+
+/** Opis uz utakmicu: takmičenje, kolo i datum */
+function metaOf(h: Hop): string {
+  const c = h.comp === "kup" ? "Kup BiH" : h.comp === "evropa" ? "Evropa" : "";
+  return [c, h.round_label ?? "", h.match_date ? formatDate(h.match_date) : ""]
+    .filter(Boolean)
+    .join(" · ");
+}
 
 // Tabela groundhopping nije u generisanim tipovima, pa je čitamo bez njih
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -82,8 +128,16 @@ const NICK_RE = /^[\p{L}\p{N}._ -]{3,20}$/u;
 
 const keyOf = (
   season: string,
-  m: { round: number | null; match_date: string | null; home: string; away: string },
-) => `${season}|${m.home}|${m.away}|${m.round ?? ""}|${m.match_date ?? ""}`;
+  m: {
+    comp?: string | null;
+    round_label?: string | null;
+    round: number | null;
+    match_date: string | null;
+    home: string;
+    away: string;
+  },
+) =>
+  `${m.comp ?? "liga"}|${season}|${m.home}|${m.away}|${m.round ?? ""}|${m.round_label ?? ""}|${m.match_date ?? ""}`;
 
 const score = (m: { score_home: number | null; score_away: number | null }) =>
   m.score_home == null || m.score_away == null ? "–" : `${m.score_home}:${m.score_away}`;
@@ -348,7 +402,8 @@ function Profile({
   const navigate = useNavigate();
   const { seasons } = useSeasons();
   const [tab, setTab] = useState<Tab | null>(null);
-  const [season, setSeason] = useState(CURRENT_SEASON);
+  const [comp, setComp] = useState<Comp>("liga");
+  const [seasonSel, setSeasonSel] = useState(CURRENT_SEASON);
   const [club, setClub] = useState("");
   const [msg, setMsg] = useState("");
   const [pending, setPending] = useState<Set<string>>(new Set());
@@ -374,7 +429,7 @@ function Profile({
       ),
     [hopsQ.data],
   );
-  // Moje utakmice po sezonama (najnovija sezona prva, unutar sezone po kolima)
+  // Moje utakmice po sezonama (najnovija sezona prva, unutar sezone po takmičenju i kolima)
   const mineBySeason = useMemo(() => {
     const map = new Map<string, Hop[]>();
     for (const h of hops) map.set(h.season, [...(map.get(h.season) ?? []), h]);
@@ -384,7 +439,9 @@ function Profile({
         s,
         [...list].sort(
           (a, b) =>
-            (a.round ?? 999) - (b.round ?? 999) || (a.match_date ?? "").localeCompare(b.match_date ?? ""),
+            (COMP_RANK[a.comp ?? "liga"] ?? 0) - (COMP_RANK[b.comp ?? "liga"] ?? 0) ||
+            (a.round ?? 999) - (b.round ?? 999) ||
+            (a.match_date ?? "").localeCompare(b.match_date ?? ""),
         ),
       ]);
   }, [hops]);
@@ -397,37 +454,121 @@ function Profile({
   };
   const savedByKey = useMemo(() => new Map(hops.map((h) => [keyOf(h.season, h), h])), [hops]);
 
-  const pickerQ = useQuery({
+  // Kup i Evropa se učitavaju tek kad se izabere to takmičenje
+  const cupQ = useQuery({
+    queryKey: ["cup-matches"],
+    queryFn: () => getCupMatches(),
+    enabled: comp === "kup",
+  });
+  const euroQ = useQuery({
+    queryKey: ["euro-matches"],
+    queryFn: () => getEuroMatches(),
+    enabled: comp === "evropa",
+  });
+
+  const seasonOptions = useMemo(() => {
+    if (comp === "liga") return [CURRENT_SEASON, ...seasons.filter((s) => s !== CURRENT_SEASON)];
+    const raw: string[] =
+      comp === "kup"
+        ? (cupQ.data ?? []).map((m) => String(m.season))
+        : (euroQ.data ?? []).map((m) => String(m.season));
+    return [...new Set(raw.map(ns))].filter(Boolean).sort((x, y) => y.localeCompare(x));
+  }, [comp, seasons, cupQ.data, euroQ.data]);
+  const season = seasonOptions.includes(seasonSel) ? seasonSel : (seasonOptions[0] ?? "");
+
+  const ligaQ = useQuery({
     queryKey: ["gh-matches", season],
+    enabled: comp === "liga" && season !== "",
     queryFn: async (): Promise<PickMatch[]> => {
-      if (season === CURRENT_SEASON) {
-        const rows = await getLeagueMatches();
-        return rows
-          .filter((r) => r.score_home != null && r.score_away != null)
-          .map((r) => ({
-            round: r.round,
-            match_date: r.match_date,
-            home: r.home,
-            away: r.away,
-            score_home: r.score_home,
-            score_away: r.score_away,
-            grp: null,
-          }));
-      }
-      const rows = await getSeasonMatches({ data: { season } });
-      return rows.map((r) => ({
+      const base = (r: {
+        round: number | null;
+        match_date: string | null;
+        home: string;
+        away: string;
+        score_home: number | null;
+        score_away: number | null;
+        grp: string | null;
+      }): PickMatch => ({
         round: r.round,
         match_date: r.match_date,
         home: r.home,
         away: r.away,
         score_home: r.score_home,
         score_away: r.score_away,
-        grp: r.grp ?? null,
-      }));
+        grp: r.grp,
+        comp: "liga",
+        round_label: null,
+        gtitle: r.round ? `${r.round}. kolo` : "Ostale utakmice",
+        gorder: r.round || 9999,
+      });
+      if (season === CURRENT_SEASON) {
+        const rows = await getLeagueMatches();
+        return rows
+          .filter((r) => r.score_home != null && r.score_away != null)
+          .map((r) => base({ ...r, grp: null }));
+      }
+      const rows = await getSeasonMatches({ data: { season } });
+      return rows.map((r) => base({ ...r, grp: r.grp ?? null }));
     },
   });
 
-  const seasonOptions = [CURRENT_SEASON, ...seasons.filter((s) => s !== CURRENT_SEASON)];
+  const picker = useMemo((): PickMatch[] => {
+    if (comp === "liga") return ligaQ.data ?? [];
+    if (comp === "kup") {
+      return (cupQ.data ?? [])
+        .filter((m) => ns(m.season) === season && m.score_home != null && m.score_away != null)
+        .map((m) => {
+          const i = CUP_ORDER.indexOf(m.round);
+          const t = CUP_TITLE[m.round] ?? m.round;
+          return {
+            round: null,
+            match_date: m.match_date,
+            home: m.home,
+            away: m.away,
+            score_home: m.score_home,
+            score_away: m.score_away,
+            grp: null,
+            comp: "kup" as const,
+            round_label: t,
+            gtitle: t,
+            gorder: i < 0 ? 50 : i,
+          };
+        });
+    }
+    // Evropa: svaki dvomeč se razdvaja na domaću i gostujuću utakmicu
+    const out: PickMatch[] = [];
+    for (const e of euroQ.data ?? []) {
+      if (ns(e.season) !== season) continue;
+      const label = `${EURO_TITLE[e.competition]} · ${e.round}`;
+      const mk = (
+        date: string | null,
+        home: string,
+        away: string,
+        sh: number,
+        sa: number,
+      ): PickMatch => ({
+        round: null,
+        match_date: date,
+        home,
+        away,
+        score_home: sh,
+        score_away: sa,
+        grp: null,
+        comp: "evropa",
+        round_label: label,
+        gtitle: label,
+        gorder: e.sort_order,
+      });
+      const h = pair(e.home);
+      const a = pair(e.away);
+      if (h) out.push(mk(e.home_date ?? null, e.club, e.opponent, h[0], h[1]));
+      if (a) out.push(mk(e.away_date ?? null, e.opponent, e.club, a[1], a[0]));
+    }
+    return out;
+  }, [comp, ligaQ.data, cupQ.data, euroQ.data, season]);
+  const pickerLoading =
+    comp === "liga" ? ligaQ.isLoading : comp === "kup" ? cupQ.isLoading : euroQ.isLoading;
+
   const active: Tab = tab ?? (hops.length > 0 ? "stat" : "add");
 
   // ---- Statistika ----
@@ -485,6 +626,8 @@ function Profile({
       ? await table().delete().eq("id", existing.id)
       : await table().insert({
           season,
+          comp: pm.comp,
+          round_label: pm.round_label,
           round: pm.round,
           match_date: pm.match_date,
           home: pm.home,
@@ -516,29 +659,28 @@ function Profile({
   // ---- Lista za dodavanje ----
   const clubOptions = useMemo(() => {
     const set = new Map<string, string>();
-    for (const x of pickerQ.data ?? []) {
+    for (const x of picker) {
       set.set(normClub(x.home), displayClub(x.home));
       set.set(normClub(x.away), displayClub(x.away));
     }
     return [...set.values()].sort((a, b) => a.localeCompare(b, "bs"));
-  }, [pickerQ.data]);
+  }, [picker]);
 
   const rounds = useMemo(() => {
-    const list = (pickerQ.data ?? []).filter(
-      (x) => !club || sameClub(x.home, club) || sameClub(x.away, club),
-    );
-    const map = new Map<number, PickMatch[]>();
+    const list = picker.filter((x) => !club || sameClub(x.home, club) || sameClub(x.away, club));
+    const map = new Map<string, { title: string; order: number; matches: PickMatch[] }>();
     for (const x of list) {
-      const r = x.round ?? 0;
-      map.set(r, [...(map.get(r) ?? []), x]);
+      const g = map.get(x.gtitle) ?? { title: x.gtitle, order: x.gorder, matches: [] };
+      g.matches.push(x);
+      map.set(x.gtitle, g);
     }
-    return [...map.entries()]
-      .sort((a, b) => (a[0] === 0 ? 1 : b[0] === 0 ? -1 : a[0] - b[0]))
-      .map(([round, matches]) => ({
-        round,
-        matches: matches.sort((a, b) => (a.match_date ?? "").localeCompare(b.match_date ?? "")),
+    return [...map.values()]
+      .sort((a, b) => a.order - b.order || a.title.localeCompare(b.title, "bs"))
+      .map((g) => ({
+        title: g.title,
+        matches: [...g.matches].sort((a, b) => (a.match_date ?? "").localeCompare(b.match_date ?? "")),
       }));
-  }, [pickerQ.data, club]);
+  }, [picker, club]);
 
   const shownName = nick || (email.split("@")[0] ?? "");
   const maxClub = stats.clubs[0]?.seen ?? 1;
@@ -654,9 +796,9 @@ function Profile({
           <>
             <h1 className="mt-6 font-display text-3xl font-bold uppercase">Groundhopping</h1>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-              Bilježi utakmice koje si gledao uživo. Izaberi sezonu iz arhive, označi utakmice na
-              kojima si bio, pa dobij statistiku: koje klubove si gledao, koliko puta i na kojim
-              stadionima.
+              Bilježi utakmice koje si gledao uživo: liga, Kup BiH i evropska takmičenja. Izaberi
+              takmičenje i sezonu, označi utakmice na kojima si bio, pa dobij statistiku: koje
+              klubove si gledao, koliko puta i na kojim stadionima.
             </p>
 
         <div className="mt-6 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
@@ -816,11 +958,26 @@ function Profile({
           <div className="mt-6">
             <div className="grid grid-cols-2 items-end gap-3 sm:flex sm:flex-wrap">
               <label className="text-xs font-semibold uppercase text-muted-foreground">
+                Takmičenje
+                <select
+                  value={comp}
+                  onChange={(e) => {
+                    setComp(e.target.value as Comp);
+                    setClub("");
+                  }}
+                  className="mt-1 block w-full rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold normal-case text-foreground"
+                >
+                  <option value="liga">Liga</option>
+                  <option value="kup">Kup BiH</option>
+                  <option value="evropa">Evropa</option>
+                </select>
+              </label>
+              <label className="text-xs font-semibold uppercase text-muted-foreground">
                 Sezona
                 <select
                   value={season}
                   onChange={(e) => {
-                    setSeason(e.target.value);
+                    setSeasonSel(e.target.value);
                     setClub("");
                   }}
                   className="mt-1 block w-full rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold normal-case text-foreground"
@@ -832,7 +989,7 @@ function Profile({
                   ))}
                 </select>
               </label>
-              <label className="text-xs font-semibold uppercase text-muted-foreground">
+              <label className="col-span-2 text-xs font-semibold uppercase text-muted-foreground sm:col-span-1">
                 Klub
                 <select
                   value={club}
@@ -849,7 +1006,7 @@ function Profile({
               </label>
             </div>
 
-            {pickerQ.isLoading ? (
+            {pickerLoading ? (
               <p className="mt-6 text-sm text-muted-foreground">Učitavam utakmice…</p>
             ) : rounds.length === 0 ? (
               <p className="mt-6 border-y border-border py-8 text-sm text-muted-foreground">
@@ -858,9 +1015,9 @@ function Profile({
             ) : (
               <div className="mt-4 space-y-6">
                 {rounds.map((r) => (
-                  <section key={r.round}>
+                  <section key={r.title}>
                     <h3 className="rounded-md bg-surface px-3 py-1.5 font-display text-sm font-bold uppercase tracking-wide">
-                      {r.round === 0 ? "Ostale utakmice" : `${r.round}. kolo`}
+                      {r.title}
                     </h3>
                     <ul className="divide-y divide-border">
                       {r.matches.map((x) => {
@@ -961,9 +1118,9 @@ function Profile({
                                   <p className="font-semibold leading-snug">
                                     {h.home} – {h.away}
                                   </p>
-                                  {h.match_date && (
+                                  {metaOf(h) && (
                                     <p className="text-[11px] text-muted-foreground sm:text-xs">
-                                      {formatDate(h.match_date)}
+                                      {metaOf(h)}
                                     </p>
                                   )}
                                 </td>
