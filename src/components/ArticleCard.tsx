@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { MessageSquare } from "lucide-react";
 import { formatDate } from "@/lib/content";
 import type { ArticleDTO } from "@/lib/content.functions";
+import { useCommentCounts } from "@/lib/use-comments";
 
 /** "prije 5 min", "prije 3 h", "jučer", a za starije vijesti datum. */
 export function timeAgo(iso: string): string {
@@ -47,6 +48,7 @@ function Thumb({ article, className }: { article: ArticleDTO; className: string 
 }
 
 function Meta({ article, light }: { article: ArticleDTO; light?: boolean }) {
+  const countOf = useCommentCounts();
   return (
     <p
       className={`flex items-center gap-3 text-xs ${
@@ -56,7 +58,7 @@ function Meta({ article, light }: { article: ArticleDTO; light?: boolean }) {
       <span suppressHydrationWarning>{timeAgo(article.publishedAt)}</span>
       <span className="flex items-center gap-1">
         <MessageSquare className="size-3" />
-        {article.comments}
+        {countOf(article.slug)}
       </span>
     </p>
   );
