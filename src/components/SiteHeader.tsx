@@ -18,11 +18,13 @@ const activeProps = { className: "text-primary-foreground border-primary" };
 type Item = { to: string; label: string };
 
 const wwinSub: ReadonlyArray<Item> = [
+  { to: "/wwin-liga", label: "Vijesti" },
   { to: "/tabela", label: "Tabela 26/27" },
   { to: "/raspored-i-rezultati", label: "Raspored i rezultati 26/27" },
 ];
 
 const kupSub: ReadonlyArray<Item> = [
+  { to: "/kup-bih", label: "Vijesti" },
   { to: "/kup-sezona", label: "Sezona 26/27" },
   { to: "/kup-arhiva", label: "Arhiva sezona" },
   { to: "/kup-osvajaci", label: "Osvajači" },
@@ -48,10 +50,10 @@ const navPlain = [
   { to: "/nize-lige", label: "Niže lige" },
 ] as const;
 
-// Na telefonu: WWiN liga i Kup BiH imaju i "Vijesti" kao prvu stavku
+// Na telefonu: iste stavke kao u izborniku na računaru (WWiN liga i Kup BiH počinju s "Vijesti")
 const mobileGroups: { id: string; label: string; items: ReadonlyArray<Item> }[] = [
-  { id: "wwin", label: "WWiN liga", items: [{ to: "/wwin-liga", label: "Vijesti" }, ...wwinSub] },
-  { id: "kup", label: "Kup BiH", items: [{ to: "/kup-bih", label: "Vijesti" }, ...kupSub] },
+  { id: "wwin", label: "WWiN liga", items: wwinSub },
+  { id: "kup", label: "Kup BiH", items: kupSub },
   { id: "stat", label: "Statistika", items: statSub },
   { id: "rep", label: "Reprezentacija", items: repSub },
 ];
