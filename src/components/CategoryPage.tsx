@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ArticleFeedItem, ArticleTile } from "@/components/ArticleCard";
 import { Sidebar } from "@/components/Sidebar";
 import { byCategory, categoryLabels } from "@/lib/content";
-import type { Category, PublicContent } from "@/lib/content.functions";
+import type { ArticleDTO, Category, PublicContent } from "@/lib/content.functions";
 
 const PAGE_SIZE = 12;
 
@@ -10,12 +10,15 @@ export function CategoryPage({
   category,
   intro,
   content,
+  articles,
 }: {
   category: Category;
   intro: string;
   content: PublicContent;
+  /** Ako je zadano, prikazuje se ovaj popis umjesto samo vijesti iz rubrike */
+  articles?: ArticleDTO[];
 }) {
-  const list = byCategory(content.articles, category);
+  const list = articles ?? byCategory(content.articles, category);
   const [visible, setVisible] = useState(PAGE_SIZE);
   const first = list[0] ?? null;
   const rest = list.slice(1, visible + 1);
