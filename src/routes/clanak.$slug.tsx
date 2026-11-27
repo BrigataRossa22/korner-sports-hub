@@ -1,8 +1,10 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { ArticleCard, ArticleRow, timeAgo } from "@/components/ArticleCard";
+import { Comments } from "@/components/Comments";
 import { SaveButton } from "@/components/SaveButton";
 import { Sidebar } from "@/components/Sidebar";
 import { ArticleMissing, LoadError } from "@/components/RouteFallbacks";
+import { useComments } from "@/lib/use-comments";
 import { getPublicContent, type ArticleDTO, type PublicContent } from "@/lib/content.functions";
 
 export const Route = createFileRoute("/clanak/$slug")({
@@ -47,6 +49,7 @@ export const Route = createFileRoute("/clanak/$slug")({
 
 function Clanak() {
   const { content, article } = Route.useLoaderData();
+  const live = useComments(article.slug);
   const related = content.articles
     .filter((a) => a.category === article.category && a.slug !== article.slug)
     .slice(0, 5);
@@ -66,7 +69,9 @@ function Clanak() {
           <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 border-y border-border py-3 text-sm text-muted-foreground">
             <span>{article.author}</span>
             <span suppressHydrationWarning>{timeAgo(article.publishedAt)}</span>
-            <span>{article.comments} komentara</span>
+            <a href="#komentari" className="hover:text-foreground">
+              {live.loading ? article.comments : live.rows.length} komentara
+            </a>
             <span className="sm:ml-auto">
               <SaveButton slug={article.slug} title={article.title} />
             </span>
@@ -93,6 +98,8 @@ function Clanak() {
               </p>
             ))}
           </div>
+
+          <Comments slug={article.slug} />
 
           {more.length > 0 && (
             <section className="mt-12">
