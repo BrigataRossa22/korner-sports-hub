@@ -16,11 +16,21 @@ export const Route = createFileRoute("/wwin-liga")({
     ],
   }),
   errorComponent: LoadError,
-  component: () => (
+  component: Page,
+});
+
+function Page() {
+  const content = Route.useLoaderData();
+  // Sve vijesti o ovome: iz rubrike, ali i one čija oznaka iznad naslova to spominje
+  const articles = content.articles.filter(
+    (a) => a.category === "wwin-liga" || /plbih|wwin|premijer/i.test(a.kicker),
+  );
+  return (
     <CategoryPage
       category="wwin-liga"
       intro="Sve o WWiN ligi BiH: kola, rezultati, transferi i analize."
-      content={Route.useLoaderData()}
+      content={content}
+      articles={articles}
     />
-  ),
-});
+  );
+}
