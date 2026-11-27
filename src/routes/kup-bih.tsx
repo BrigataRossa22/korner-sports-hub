@@ -16,11 +16,21 @@ export const Route = createFileRoute("/kup-bih")({
     ],
   }),
   errorComponent: LoadError,
-  component: () => (
+  component: Page,
+});
+
+function Page() {
+  const content = Route.useLoaderData();
+  // Sve vijesti o ovome: iz rubrike, ali i one čija oznaka iznad naslova to spominje
+  const articles = content.articles.filter(
+    (a) => a.category === "kup-bih" || /kup/i.test(a.kicker),
+  );
+  return (
     <CategoryPage
       category="kup-bih"
       intro="Sve o Kupu BiH: parovi, rezultati i najave."
-      content={Route.useLoaderData()}
+      content={content}
+      articles={articles}
     />
-  ),
-});
+  );
+}
